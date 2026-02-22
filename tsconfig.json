@@ -2,20 +2,13 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".server/**/*.ts",
-    ".server/**/*.tsx"
+    "**/.server/**/*.ts",
+    "**/.server/**/*.tsx",
+    ".react-router/types/**/*"
   ],
   "compilerOptions": {
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2022"
-    ],
-    "types": [
-      "@remix-run/node",
-      "vite/client",
-      "node"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "types": ["node", "vite/client"],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -28,10 +21,9 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./app/*"
-      ]
+      "~/*": ["./app/*"]
     },
+    "rootDirs": [".", "./.react-router/types"],
     "noEmit": true,
     "skipLibCheck": true
   }

@@ -1,5 +1,4 @@
-import { redirect } from "@remix-run/node";
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 import { createUserSession } from "~/utils/session.server";
 import { exchangeCodeForToken, fetchSpotifyProfile } from "~/utils/spotify.server";
 import { getUserBySpotifyUserId, upsertSpotifyUser } from "~/utils/user.server";

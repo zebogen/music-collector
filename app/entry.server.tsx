@@ -1,6 +1,6 @@
 import { PassThrough } from "node:stream";
-import { createReadableStreamFromReadable } from "@remix-run/node";
-import { RemixServer } from "@remix-run/react";
+import { createReadableStreamFromReadable } from "@react-router/node";
+import { EntryContext, ServerRouter } from "react-router";
 import { renderToPipeableStream } from "react-dom/server";
 import { env } from "~/utils/env.server";
 
@@ -39,28 +39,19 @@ export default function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: any,
+  routerContext: EntryContext,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  loadContext: any
+  _loadContext: unknown
 ) {
   if (!isAuthorized(request)) {
     return unauthorizedResponse();
   }
 
-  return handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);
-}
-
-function handleBrowserRequest(
-  request: Request,
-  responseStatusCode: number,
-  responseHeaders: Headers,
-  remixContext: any
-) {
   return new Promise((resolve, reject) => {
     let didError = false;
 
     const { pipe, abort } = renderToPipeableStream(
-      <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
+      <ServerRouter context={routerContext} url={request.url} />,
       {
         onShellReady() {
           const body = new PassThrough();

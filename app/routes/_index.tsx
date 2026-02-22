@@ -1,6 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigation } from "@remix-run/react";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { data, redirect } from "react-router";
+import { Form, useLoaderData, useNavigation } from "react-router";
 import {
   addAlbumToCollection,
   addArtistToCollection,
@@ -52,12 +52,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserId(request);
 
   if (!userId) {
-    return json({
+    return {
       connected: false,
       data: null,
       collections: [],
       filters: { genre: "", artist: "" }
-    });
+    };
   }
 
   const url = new URL(request.url);
@@ -76,12 +76,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     getCollections(userId)
   ]);
 
-  return json({
+  return {
     connected: true,
     data,
     collections,
     filters: { genre, artist, artistsPage, albumsPage, playlistsPage }
-  });
+  };
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -111,7 +111,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const description = String(formData.get("description") ?? "").trim();
 
     if (!name) {
-      return json({ error: "Collection name is required" }, { status: 400 });
+      return data({ error: "Collection name is required" }, { status: 400 });
     }
 
     await createCollection({ userId, name, description });

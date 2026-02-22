@@ -1,6 +1,5 @@
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react";
+import type { LinksFunction, LoaderFunctionArgs } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 import stylesheet from "~/styles/app.css?url";
 import { getUserId } from "~/utils/session.server";
 import { getUserById } from "~/utils/user.server";
@@ -11,9 +10,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserId(request);
   const user = userId ? await getUserById(userId) : null;
 
-  return json({
-    user: user ? { id: user.id, displayName: user.displayName } : null,
-  });
+  return {
+    user: user ? { id: user.id, displayName: user.displayName } : null
+  };
 }
 
 export default function App() {
@@ -35,7 +34,6 @@ export default function App() {
         </main>
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );
