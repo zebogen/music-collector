@@ -38,6 +38,6 @@ export type Collection = {
   id: number;
   name: string;
   description: string | null;
-  artists: Pick<Artist, "id" | "name">[];
-  albums: Pick<Album, "id" | "name">[];
+  artists: Pick<Artist, "id" | "name" | "genres">[];
+  albums: Pick<Album, "id" | "name" | "artistNames" | "imageUrl" | "releaseDate">[];
 };

@@ -318,12 +318,20 @@ export async function getCollections(userId: number): Promise<Collection[]> {
         c.name,
         c.description,
         COALESCE(
-          json_agg(DISTINCT jsonb_build_object('id', a.id, 'name', a.name))
+          json_agg(DISTINCT jsonb_build_object('id', a.id, 'name', a.name, 'genres', a.genres))
           FILTER (WHERE a.id IS NOT NULL),
           '[]'::json
         ) AS artists,
         COALESCE(
-          json_agg(DISTINCT jsonb_build_object('id', al.id, 'name', al.name))
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'id', al.id,
+              'name', al.name,
+              'artistNames', al.artist_names,
+              'imageUrl', al.image_url,
+              'releaseDate', al.release_date
+            )
+          )
           FILTER (WHERE al.id IS NOT NULL),
           '[]'::json
         ) AS albums

@@ -65,6 +65,9 @@ CREATE TABLE IF NOT EXISTS collections (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS collections_user_name_unique_idx
+  ON collections (user_id, lower(name));
+
 CREATE TABLE IF NOT EXISTS collection_artists (
   collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
   artist_id INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,

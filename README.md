@@ -100,10 +100,18 @@ Notes:
 
 - Database migrations run automatically when the `app` container starts.
 - Postgres is available on host `127.0.0.1:5433` with user/password `postgres/postgres`.
-- If dependencies change, recreate containers and volumes:
+- To rebuild containers without deleting DB data:
 
 ```bash
-docker compose down -v
+docker compose down
+docker compose up --build
+```
+
+- If app dependencies are stale, remove only the app dependencies volume (keeps DB data):
+
+```bash
+docker compose down
+docker volume rm music-collector_app_node_modules
 docker compose up --build
 ```
 
