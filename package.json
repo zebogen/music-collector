@@ -1,0 +1,36 @@
+{
+  "name": "music-collector",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remix vite:dev",
+    "build": "remix vite:build",
+    "start": "remix-serve ./build/server/index.js",
+    "typecheck": "tsc --noEmit",
+    "migrate": "tsx scripts/migrate.ts"
+  },
+  "dependencies": {
+    "@remix-run/node": "2.16.7",
+    "@remix-run/react": "2.16.7",
+    "@remix-run/serve": "2.16.7",
+    "@vercel/remix": "2.16.7",
+    "isbot": "^5.1.22",
+    "pg": "^8.14.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "2.16.7",
+    "@types/node": "^22.10.1",
+    "@types/pg": "^8.11.11",
+    "@types/react": "^18.3.14",
+    "@types/react-dom": "^18.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vite-tsconfig-paths": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

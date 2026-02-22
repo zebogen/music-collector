@@ -1,0 +1,158 @@
+:root {
+  color-scheme: light;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  background: #f4f5f7;
+  color: #151515;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top left, #d9f5d4, transparent 50%), #f4f5f7;
+}
+
+.topbar {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #d5d9de;
+  background: #ffffffd9;
+  backdrop-filter: blur(6px);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.topbar p {
+  margin: 0.4rem 0 0;
+  color: #3e4a56;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid #d8dce2;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.card.wide {
+  grid-column: 1 / -1;
+}
+
+.button {
+  appearance: none;
+  border: none;
+  background: #1d7f3f;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.button.secondary {
+  margin-top: 0.5rem;
+  background: #3d4d5f;
+}
+
+.filter-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+input,
+select {
+  border: 1px solid #b9c3ce;
+  border-radius: 8px;
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.grid-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.list-item {
+  border: 1px solid #e0e5ec;
+  border-radius: 10px;
+  padding: 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.list-item p {
+  margin: 0.2rem 0;
+  color: #4f5f6e;
+}
+
+.inline-form {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pagination {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.pagination .button[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.page-links {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.page-link {
+  min-width: 2.2rem;
+  text-align: center;
+  padding: 0.45rem 0.6rem;
+}
+
+.page-link.active {
+  background: #1d7f3f;
+}
+
+.page-ellipsis {
+  color: #4f5f6e;
+  padding: 0 0.2rem;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
