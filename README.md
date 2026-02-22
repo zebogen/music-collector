@@ -100,6 +100,12 @@ Notes:
 
 - Database migrations run automatically when the `app` container starts.
 - Postgres is available on host `127.0.0.1:5433` with user/password `postgres/postgres`.
+- If dependencies change, recreate containers and volumes:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
 
 ## Deploy to Vercel
 
@@ -112,7 +118,7 @@ Notes:
 
 ## Scripts
 
-- `npm run dev` - start Remix dev server
+- `npm run dev` - start React Router dev server
 - `npm run build` - production build
 - `npm run start` - run built server locally
 - `npm run typecheck` - TypeScript checks
