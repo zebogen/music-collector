@@ -2,7 +2,14 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
 import { Form, useActionData, useLoaderData, useLocation, useNavigate } from "react-router";
 import { useEffect } from "react";
-import { addAlbumToCollection, createCollection, getCollections, getLibraryData, syncSpotifyData } from "~/utils/library.server";
+import {
+  addAlbumToCollection,
+  addArtistToCollection,
+  createCollection,
+  getCollections,
+  getLibraryData,
+  syncSpotifyData
+} from "~/utils/library.server";
 import { getUserId, requireUserId } from "~/utils/session.server";
 import {
   ensureValidAccessToken,
@@ -148,6 +155,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (collectionId > 0 && albumId > 0) {
       await addAlbumToCollection({ collectionId, albumId, userId });
+    }
+
+    return redirect("/");
+  }
+
+  if (intent === "add_artist_to_collection") {
+    const collectionId = Number(formData.get("collectionId"));
+    const artistId = Number(formData.get("artistId"));
+
+    if (collectionId > 0 && artistId > 0) {
+      await addArtistToCollection({ collectionId, artistId, userId });
     }
 
     return redirect("/");
@@ -454,8 +472,26 @@ export default function Index() {
             <ul className="entity-list">
               {libraryData.artists.map((artist) => (
                 <li key={artist.id} className="entity-item">
-                  <strong>{artist.name}</strong>
-                  <p>{artist.genres.join(", ") || "No genres"}</p>
+                  <div>
+                    <strong>{artist.name}</strong>
+                    <p>{artist.genres.join(", ") || "No genres"}</p>
+                  </div>
+                  {safeCollections.length > 0 ? (
+                    <Form method="post" className="album-collection-form">
+                      <input type="hidden" name="intent" value="add_artist_to_collection" />
+                      <input type="hidden" name="artistId" value={artist.id} />
+                      <select name="collectionId" required>
+                        {safeCollections.map((collection) => (
+                          <option key={collection.id} value={collection.id}>
+                            {collection.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" className="button secondary compact">
+                        Add
+                      </button>
+                    </Form>
+                  ) : null}
                 </li>
               ))}
             </ul>
