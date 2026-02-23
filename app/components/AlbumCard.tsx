@@ -1,4 +1,4 @@
-import { Box, Heading, Text, Image, HStack, Select, Button, Link as ChakraLink } from "@chakra-ui/react";
+import { Box, Heading, Text, Image, HStack, chakra, Button, Link as ChakraLink } from "@chakra-ui/react";
 import { Form } from "react-router";
 
 export default function AlbumCard({ album, safeCollections, buildHref }: any) {
@@ -15,21 +15,21 @@ export default function AlbumCard({ album, safeCollections, buildHref }: any) {
       </ChakraLink>
 
       <Box p={3}>
-  <ChakraLink href={buildHref({ selectedAlbumId: album.id })} _hover={{ textDecoration: 'none' }}>
+              <ChakraLink href={buildHref({ selectedAlbumId: album.id })} _hover={{ textDecoration: 'none' }}>
           <Heading as="h3" size="sm" mb={1}>{album.name}</Heading>
         </ChakraLink>
         <Text fontSize="sm" color="gray.600" mb={3}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
 
         {safeCollections.length > 0 ? (
-          <Form method="post">
+              <Form method="post">
             <input type="hidden" name="intent" value="add_album_to_collection" />
             <input type="hidden" name="albumId" value={album.id} />
-            <HStack spacing={2}>
-              <Select name="collectionId" placeholder="Select collection" size="sm">
+            <HStack gap={2}>
+              <chakra.select name="collectionId">
                 {safeCollections.map((collection: any) => (
                   <option key={collection.id} value={collection.id}>{collection.name}</option>
                 ))}
-              </Select>
+              </chakra.select>
               <Button type="submit" size="sm" colorScheme="teal">Add</Button>
             </HStack>
           </Form>

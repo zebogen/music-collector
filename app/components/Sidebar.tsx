@@ -1,5 +1,5 @@
 import { Form } from "react-router";
-import { Box, Heading, Text, Stack, Select, Input, Button } from "@chakra-ui/react";
+import { Box, Heading, Text, Stack, chakra, Input, Button } from "@chakra-ui/react";
 
 export default function Sidebar({
   filters,
@@ -13,7 +13,7 @@ export default function Sidebar({
   actionError?: string | null;
 }) {
   return (
-    <Stack spacing={6}>
+  <Stack gap={6}>
       <Box p={4} borderRadius="md" bg="white" boxShadow="sm">
         <Heading as="h3" size="md" mb={3}>Filters</Heading>
         <Form method="get">
@@ -23,15 +23,15 @@ export default function Sidebar({
           <input type="hidden" name="playlistsPage" value="1" />
           {selectedCollectionId ? <input type="hidden" name="collection" value={String(selectedCollectionId)} /> : null}
 
-          <Stack spacing={3}>
+          <Stack gap={3}>
             <Box>
               <Text fontSize="sm" mb={1}>Genre</Text>
-              <Select name="genre" defaultValue={filters.genre}>
+              <chakra.select name="genre" defaultValue={filters.genre}>
                 <option value="">All genres</option>
                 {genres.map((genre) => (
                   <option key={genre} value={genre}>{genre}</option>
                 ))}
-              </Select>
+              </chakra.select>
             </Box>
 
             <Box>
@@ -48,7 +48,7 @@ export default function Sidebar({
         <Heading as="h3" size="md" mb={3}>Create Collection</Heading>
         <Form method="post">
           <input type="hidden" name="intent" value="create_collection" />
-          <Stack spacing={3}>
+          <Stack gap={3}>
             <Box>
               <Text fontSize="sm" mb={1}>Name</Text>
               <Input name="name" required />

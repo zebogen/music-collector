@@ -1,5 +1,5 @@
-import { extendTheme } from "@chakra-ui/react";
-
+// Chakra v3 uses a different system API. Export a plain theme object
+// that will be passed into createSystem() in the Chakra wrapper.
 const config = {
   initialColorMode: "system",
   useSystemColorMode: false
@@ -11,7 +11,7 @@ const styles = {
       colorScheme: "light"
     },
     body: {
-      bg: "linear-gradient(180deg, rgba(217,245,212,0.5) 0%, rgba(244,245,247,1) 100%)",
+      background: "linear-gradient(180deg, rgba(217,245,212,0.5) 0%, rgba(244,245,247,1) 100%)",
       color: "gray.800",
       fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'
     },
@@ -45,6 +45,10 @@ const components = {
   }
 };
 
-const theme = extendTheme({ config, styles, components });
+const theme = {
+  config,
+  styles,
+  components
+};
 
 export default theme;

@@ -15,7 +15,7 @@ export default function CollectionCard({ collection, selectedCollectionAlbums, s
 
       <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
       {selectedCollectionAlbums.length > 0 ? (
-        <SimpleGrid columns={[2,3,4]} spacing={3} mb={4}>
+  <SimpleGrid columns={[2,3,4]} gap={3} mb={4}>
           {selectedCollectionAlbums.map((album) => (
             <Box key={album.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
               {album.imageUrl ? (
@@ -34,7 +34,7 @@ export default function CollectionCard({ collection, selectedCollectionAlbums, s
 
       <Heading as="h4" size="sm" mt={4} mb={2}>Artists</Heading>
       {selectedCollectionArtists.length > 0 ? (
-        <Stack spacing={2}>
+        <Stack gap={2}>
           {selectedCollectionArtists.map((artist) => (
             <Box key={artist.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
               <Text fontWeight="semibold">{artist.name}</Text>

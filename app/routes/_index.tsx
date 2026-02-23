@@ -8,7 +8,7 @@ import {
   Heading,
   Text,
   Button,
-  Select,
+  
   Input,
   VStack,
   HStack,
@@ -18,6 +18,7 @@ import {
   Badge,
   Stack
 } from "@chakra-ui/react";
+import { chakra } from "@chakra-ui/react";
 import Sidebar from "~/components/Sidebar";
 import AlbumCard from "~/components/AlbumCard";
 import ArtistItem from "~/components/ArtistItem";
@@ -261,7 +262,7 @@ export default function Index() {
     const pageItems = getPageItems(currentPage, totalPages);
 
     return (
-      <HStack spacing={3} align="center">
+      <HStack gap={3} align="center">
         <ChakraLink href={
           list === "albums"
             ? buildHref({ albumsPage: Math.max(1, currentPage - 1), selectedAlbumId: null })
@@ -269,10 +270,10 @@ export default function Index() {
               ? buildHref({ artistsPage: Math.max(1, currentPage - 1) })
               : buildHref({ playlistsPage: Math.max(1, currentPage - 1) })
         }>
-          <Button variant="outline" size="sm" isDisabled={currentPage <= 1}>Previous</Button>
+          <Button variant="outline" size="sm" disabled={currentPage <= 1}>Previous</Button>
         </ChakraLink>
 
-        <HStack spacing={2}>
+  <HStack gap={2}>
           {pageItems.map((item, index) =>
             item === "ellipsis" ? (
               <Text key={`${list}-ellipsis-${index}`}>…</Text>
@@ -297,7 +298,7 @@ export default function Index() {
               ? buildHref({ artistsPage: Math.min(totalPages, currentPage + 1) })
               : buildHref({ playlistsPage: Math.min(totalPages, currentPage + 1) })
         }>
-          <Button variant="outline" size="sm" isDisabled={currentPage >= totalPages}>Next</Button>
+                <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>Next</Button>
         </ChakraLink>
       </HStack>
     );
@@ -360,7 +361,7 @@ export default function Index() {
 
       <Box as="main">
         <Box p={4} borderRadius="md" bg="white" boxShadow="sm">
-          <HStack as="nav" spacing={3} mb={4}>
+          <HStack as="nav" gap={3} mb={4}>
             <ChakraLink href={buildHref({ tab: "albums" })}>
               <Button variant={filters.tab === "albums" ? "solid" : "ghost"}>Albums</Button>
             </ChakraLink>
@@ -388,7 +389,7 @@ export default function Index() {
                 <Text color="gray.500">{libraryData.pagination.albums.totalItems} total</Text>
               </HStack>
 
-              <SimpleGrid columns={[2, 3, 4]} spacing={4} mb={4}>
+              <SimpleGrid columns={[2, 3, 4]} gap={4} mb={4}>
                 {libraryData.albums.map((album) => (
                   <AlbumCard key={album.id} album={album} safeCollections={safeCollections} buildHref={buildHref} />
                 ))}
@@ -405,7 +406,7 @@ export default function Index() {
                 <Text color="gray.500">{libraryData.pagination.artists.totalItems} total</Text>
               </HStack>
 
-              <Stack spacing={3} mb={4}>
+              <Stack gap={3} mb={4}>
                 {libraryData.artists.map((artist) => (
                   <HStack key={artist.id} justify="space-between" align="center" p={3} bg="white" borderWidth="1px" borderRadius="md">
                     <Box>
@@ -417,11 +418,12 @@ export default function Index() {
                         <input type="hidden" name="intent" value="add_artist_to_collection" />
                         <input type="hidden" name="artistId" value={artist.id} />
                         <HStack>
-                          <Select name="collectionId" placeholder="Collection" size="sm">
+                          <chakra.select name="collectionId">
+                            <option value="">Collection</option>
                             {safeCollections.map((collection) => (
                               <option key={collection.id} value={collection.id}>{collection.name}</option>
                             ))}
-                          </Select>
+                          </chakra.select>
                           <Button type="submit" size="sm" colorScheme="teal">Add</Button>
                         </HStack>
                       </Form>
@@ -441,7 +443,7 @@ export default function Index() {
                 <Text color="gray.500">{libraryData.pagination.playlists.totalItems} total</Text>
               </HStack>
 
-              <Stack spacing={3} mb={4}>
+              <Stack gap={3} mb={4}>
                 {libraryData.playlists.map((playlist) => (
                   <Box key={playlist.id} p={3} bg="white" borderWidth="1px" borderRadius="md">
                     <Heading as="h3" size="sm">{playlist.name}</Heading>
@@ -465,7 +467,7 @@ export default function Index() {
                 <Text color="gray.500">Create a collection from the sidebar to get started.</Text>
               ) : (
                 <>
-                  <HStack spacing={2} mb={4}>
+                  <HStack gap={2} mb={4}>
                     {safeCollections.map((collection) => (
                       <ChakraLink key={collection.id} href={buildHref({ tab: "collections", selectedCollectionId: collection.id })}>
                         <Button size="sm" variant={selectedCollection?.id === collection.id ? "solid" : "ghost"}>{collection.name}</Button>
@@ -480,7 +482,7 @@ export default function Index() {
 
                       <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
                       {selectedCollectionAlbums.length > 0 ? (
-                        <SimpleGrid columns={[2,3,4]} spacing={3} mb={4}>
+                        <SimpleGrid columns={[2,3,4]} gap={3} mb={4}>
                           {selectedCollectionAlbums.map((album) => (
                             <Box key={album.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
                               {album.imageUrl ? (
@@ -499,7 +501,7 @@ export default function Index() {
 
                       <Heading as="h4" size="sm" mt={4} mb={2}>Artists</Heading>
                       {selectedCollectionArtists.length > 0 ? (
-                        <Stack spacing={2}>
+                        <Stack gap={2}>
                           {selectedCollectionArtists.map((artist) => (
                             <Box key={artist.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
                               <Text fontWeight="semibold">{artist.name}</Text>
@@ -545,7 +547,7 @@ export default function Index() {
               <Text mb={2}>Release date: {selectedAlbum.releaseDate || "Unknown"}</Text>
               <Heading as="h4" size="sm" mt={3} mb={2}>In Collections</Heading>
               {selectedAlbumCollections.length > 0 ? (
-                <Stack spacing={1}>
+                <Stack gap={1}>
                   {selectedAlbumCollections.map((collection) => (
                     <Text key={collection.id}>{collection.name}</Text>
                   ))}

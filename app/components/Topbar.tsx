@@ -10,12 +10,12 @@ export default function Topbar({ user, isSyncing }: { user: { id: string | numbe
         <Text fontSize="sm">{user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}</Text>
       </Box>
 
-      <HStack spacing={3}>
+  <HStack gap={3}>
         {user ? (
           <HStack as="nav">
-            <Form method="post" action="/?index">
+              <Form method="post" action="/?index">
               <input type="hidden" name="intent" value="sync" />
-              <Button type="submit" colorScheme="teal" isLoading={isSyncing} loadingText="Syncing...">
+              <Button type="submit" colorScheme="teal" loading={isSyncing} loadingText="Syncing...">
                 Sync Library
               </Button>
             </Form>
