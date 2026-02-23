@@ -1,12 +1,11 @@
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import { Form, Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useNavigation } from "react-router";
 import Topbar from "~/components/Topbar";
-import stylesheet from "~/styles/app.css?url";
 import { getUserId } from "~/utils/session.server";
 import { getUserById } from "~/utils/user.server";
 import { Chakra } from "~/chakra";
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: stylesheet }];
+export const links: LinksFunction = () => [];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserId(request);
@@ -31,8 +30,10 @@ export default function App() {
       <body>
         <Chakra>
           <Topbar user={data.user} isSyncing={isSyncing} />
-          <main className="container">
-            <Outlet />
+          <main>
+            <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1rem' }}>
+              <Outlet />
+            </div>
           </main>
           <ScrollRestoration />
           <Scripts />
