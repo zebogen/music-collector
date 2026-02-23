@@ -10,9 +10,13 @@
     "migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
+    "@chakra-ui/react": "^3.33.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@react-router/node": "^7.13",
     "@react-router/serve": "^7.13",
     "@vercel/react-router": "^1.2.5",
+    "framer-motion": "^12.34.3",
     "pg": "^8.14.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

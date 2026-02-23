@@ -1,8 +1,10 @@
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 import { Form, Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useNavigation } from "react-router";
+import Topbar from "~/components/Topbar";
 import stylesheet from "~/styles/app.css?url";
 import { getUserId } from "~/utils/session.server";
 import { getUserById } from "~/utils/user.server";
+import { Chakra } from "~/chakra";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: stylesheet }];
 
@@ -27,38 +29,14 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <header className="topbar">
-          <div>
-            <h1>Spotify Library Organizer</h1>
-            {data.user ? <p>Signed in as {data.user.displayName ?? "Spotify User"}</p> : <p>Not connected</p>}
-          </div>
-          {data.user ? (
-            <nav className="topbar-actions">
-              <Form method="post" action="/?index">
-                <input type="hidden" name="intent" value="sync" />
-                <button className="button" type="submit" disabled={isSyncing}>
-                  {isSyncing ? "Syncing..." : "Sync Library"}
-                </button>
-              </Form>
-              <Form method="post" action="/logout">
-                <button type="submit" className="button secondary nav-button">
-                  Log out
-                </button>
-              </Form>
-            </nav>
-          ) : (
-            <nav className="topbar-actions">
-              <a className="button" href="/auth/spotify">
-                Connect Spotify
-              </a>
-            </nav>
-          )}
-        </header>
-        <main className="container">
-          <Outlet />
-        </main>
-        <ScrollRestoration />
-        <Scripts />
+        <Chakra>
+          <Topbar user={data.user} isSyncing={isSyncing} />
+          <main className="container">
+            <Outlet />
+          </main>
+          <ScrollRestoration />
+          <Scripts />
+        </Chakra>
       </body>
     </html>
   );

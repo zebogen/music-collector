@@ -1,6 +1,28 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
 import { Form, useActionData, useLoaderData, useLocation, useNavigate } from "react-router";
+import {
+  Box,
+  Flex,
+  Grid,
+  Heading,
+  Text,
+  Button,
+  Select,
+  Input,
+  VStack,
+  HStack,
+  SimpleGrid,
+  Image,
+  Link as ChakraLink,
+  Badge,
+  Stack
+} from "@chakra-ui/react";
+import Sidebar from "~/components/Sidebar";
+import AlbumCard from "~/components/AlbumCard";
+import ArtistItem from "~/components/ArtistItem";
+import PlaylistItem from "~/components/PlaylistItem";
+import CollectionCard from "~/components/CollectionCard";
 import { useEffect } from "react";
 import {
   addAlbumToCollection,
@@ -182,13 +204,13 @@ export default function Index() {
 
   if (!connected || !libraryData) {
     return (
-      <section className="card">
-        <h2>Connect your Spotify account</h2>
-        <p>Sign in with Spotify to import your library, playlists, and organize custom collections.</p>
-        <a className="button" href="/auth/spotify">
-          Connect Spotify
-        </a>
-      </section>
+      <Box p={6} borderRadius="md" bg="white" boxShadow="sm" textAlign="center">
+        <Heading as="h2" size="lg" mb={2}>Connect your Spotify account</Heading>
+        <Text mb={4}>Sign in with Spotify to import your library, playlists, and organize custom collections.</Text>
+        <ChakraLink href="/auth/spotify">
+          <Button colorScheme="green">Connect Spotify</Button>
+        </ChakraLink>
+      </Box>
     );
   }
 
@@ -239,58 +261,45 @@ export default function Index() {
     const pageItems = getPageItems(currentPage, totalPages);
 
     return (
-      <div className="pagination">
-        <a
-          className="button secondary"
-          aria-disabled={currentPage <= 1}
-          href={
-            list === "albums"
-              ? buildHref({ albumsPage: Math.max(1, currentPage - 1), selectedAlbumId: null })
-              : list === "artists"
-                ? buildHref({ artistsPage: Math.max(1, currentPage - 1) })
-                : buildHref({ playlistsPage: Math.max(1, currentPage - 1) })
-          }
-        >
-          Previous
-        </a>
-        <div className="page-links">
+      <HStack spacing={3} align="center">
+        <ChakraLink href={
+          list === "albums"
+            ? buildHref({ albumsPage: Math.max(1, currentPage - 1), selectedAlbumId: null })
+            : list === "artists"
+              ? buildHref({ artistsPage: Math.max(1, currentPage - 1) })
+              : buildHref({ playlistsPage: Math.max(1, currentPage - 1) })
+        }>
+          <Button variant="outline" size="sm" isDisabled={currentPage <= 1}>Previous</Button>
+        </ChakraLink>
+
+        <HStack spacing={2}>
           {pageItems.map((item, index) =>
             item === "ellipsis" ? (
-              <span key={`${list}-ellipsis-${index}`} className="page-ellipsis">
-                ...
-              </span>
+              <Text key={`${list}-ellipsis-${index}`}>…</Text>
             ) : (
-              <a
-                key={`${list}-${item}`}
-                className={`button secondary page-link${item === currentPage ? " active" : ""}`}
-                aria-current={item === currentPage ? "page" : undefined}
-                href={
-                  list === "albums"
-                    ? buildHref({ albumsPage: item, selectedAlbumId: null })
-                    : list === "artists"
-                      ? buildHref({ artistsPage: item })
-                      : buildHref({ playlistsPage: item })
-                }
-              >
-                {item}
-              </a>
+              <ChakraLink key={`${list}-${item}`} href={
+                list === "albums"
+                  ? buildHref({ albumsPage: item, selectedAlbumId: null })
+                  : list === "artists"
+                    ? buildHref({ artistsPage: item })
+                    : buildHref({ playlistsPage: item })
+              }>
+                <Button size="sm" variant={item === currentPage ? "solid" : "ghost"} aria-current={item === currentPage ? "page" : undefined}>{item}</Button>
+              </ChakraLink>
             )
           )}
-        </div>
-        <a
-          className="button secondary"
-          aria-disabled={currentPage >= totalPages}
-          href={
-            list === "albums"
-              ? buildHref({ albumsPage: Math.min(totalPages, currentPage + 1), selectedAlbumId: null })
-              : list === "artists"
-                ? buildHref({ artistsPage: Math.min(totalPages, currentPage + 1) })
-                : buildHref({ playlistsPage: Math.min(totalPages, currentPage + 1) })
-          }
-        >
-          Next
-        </a>
-      </div>
+        </HStack>
+
+        <ChakraLink href={
+          list === "albums"
+            ? buildHref({ albumsPage: Math.min(totalPages, currentPage + 1), selectedAlbumId: null })
+            : list === "artists"
+              ? buildHref({ artistsPage: Math.min(totalPages, currentPage + 1) })
+              : buildHref({ playlistsPage: Math.min(totalPages, currentPage + 1) })
+        }>
+          <Button variant="outline" size="sm" isDisabled={currentPage >= totalPages}>Next</Button>
+        </ChakraLink>
+      </HStack>
     );
   }
 
@@ -344,279 +353,210 @@ export default function Index() {
   }, [navigate, selectedAlbum, location.search]);
 
   return (
-    <div className="dashboard-layout">
-      <aside className="sidebar">
-        <section className="card sidebar-card">
-          <h2>Filters</h2>
-          <Form method="get" className="filter-form">
-            <input type="hidden" name="tab" value={filters.tab} />
-            <input type="hidden" name="artistsPage" value="1" />
-            <input type="hidden" name="albumsPage" value="1" />
-            <input type="hidden" name="playlistsPage" value="1" />
-            {filters.selectedCollectionId ? (
-              <input type="hidden" name="collection" value={String(filters.selectedCollectionId)} />
-            ) : null}
-            <label>
-              Genre
-              <select name="genre" defaultValue={filters.genre}>
-                <option value="">All genres</option>
-                {libraryData.genres.map((genre) => (
-                  <option key={genre} value={genre}>
-                    {genre}
-                  </option>
+    <Grid templateColumns={["1fr", "300px 1fr"]} gap={6}>
+      <Box as="aside">
+        <Sidebar filters={filters} genres={libraryData.genres} selectedCollectionId={filters.selectedCollectionId} actionError={actionData && "error" in actionData ? actionData.error : null} />
+      </Box>
+
+      <Box as="main">
+        <Box p={4} borderRadius="md" bg="white" boxShadow="sm">
+          <HStack as="nav" spacing={3} mb={4}>
+            <ChakraLink href={buildHref({ tab: "albums" })}>
+              <Button variant={filters.tab === "albums" ? "solid" : "ghost"}>Albums</Button>
+            </ChakraLink>
+            <ChakraLink href={buildHref({ tab: "artists" })}>
+              <Button variant={filters.tab === "artists" ? "solid" : "ghost"}>Artists</Button>
+            </ChakraLink>
+            <ChakraLink href={buildHref({ tab: "playlists" })}>
+              <Button variant={filters.tab === "playlists" ? "solid" : "ghost"}>Playlists</Button>
+            </ChakraLink>
+            <ChakraLink href={buildHref({ tab: "collections", selectedCollectionId: selectedCollection?.id ?? null })}>
+              <Button variant={filters.tab === "collections" ? "solid" : "ghost"}>Collections</Button>
+            </ChakraLink>
+          </HStack>
+
+          </Box>
+
+        <Box mt={4}>
+          {/* keep the existing tab content markup for now, wrapped in a Box */}
+          {/* legacy tab-nav removed; top tab HStack already provides tabs */}
+
+          {filters.tab === "albums" ? (
+            <>
+              <HStack justify="space-between" align="center" mb={4}>
+                <Heading as="h2" size="lg">Saved Albums</Heading>
+                <Text color="gray.500">{libraryData.pagination.albums.totalItems} total</Text>
+              </HStack>
+
+              <SimpleGrid columns={[2, 3, 4]} spacing={4} mb={4}>
+                {libraryData.albums.map((album) => (
+                  <AlbumCard key={album.id} album={album} safeCollections={safeCollections} buildHref={buildHref} />
                 ))}
-              </select>
-            </label>
-            <label>
-              Artist name
-              <input type="text" name="artist" defaultValue={filters.artist} placeholder="Filter library by artist" />
-            </label>
-            <button className="button" type="submit">
-              Apply
-            </button>
-          </Form>
-        </section>
+              </SimpleGrid>
 
-        <section className="card sidebar-card">
-          <h2>Create Collection</h2>
-          <Form method="post" className="filter-form">
-            <input type="hidden" name="intent" value="create_collection" />
-            <label>
-              Name
-              <input type="text" name="name" required />
-            </label>
-            <label>
-              Description
-              <input type="text" name="description" />
-            </label>
-            <button className="button" type="submit">
-              Create
-            </button>
-            {actionData && "error" in actionData ? <p className="form-error">{actionData.error}</p> : null}
-          </Form>
-        </section>
-      </aside>
+              {renderPagination("albums", libraryData.pagination.albums.page, libraryData.pagination.albums.totalPages)}
+            </>
+          ) : null}
 
-      <section className="card album-panel">
-        <nav className="tab-nav" aria-label="Library sections">
-          <a className={`tab-link${filters.tab === "albums" ? " active" : ""}`} href={buildHref({ tab: "albums" })}>
-            Albums
-          </a>
-          <a className={`tab-link${filters.tab === "artists" ? " active" : ""}`} href={buildHref({ tab: "artists" })}>
-            Artists
-          </a>
-          <a className={`tab-link${filters.tab === "playlists" ? " active" : ""}`} href={buildHref({ tab: "playlists" })}>
-            Playlists
-          </a>
-          <a
-            className={`tab-link${filters.tab === "collections" ? " active" : ""}`}
-            href={buildHref({ tab: "collections", selectedCollectionId: selectedCollection?.id ?? null })}
-          >
-            Collections
-          </a>
-        </nav>
+          {filters.tab === "artists" ? (
+            <>
+              <HStack justify="space-between" align="center" mb={4}>
+                <Heading as="h2" size="lg">Artists</Heading>
+                <Text color="gray.500">{libraryData.pagination.artists.totalItems} total</Text>
+              </HStack>
 
-        {filters.tab === "albums" ? (
-          <>
-            <div className="album-panel-header">
-              <h2>Saved Albums</h2>
-              <p className="muted">{libraryData.pagination.albums.totalItems} total</p>
-            </div>
+              <Stack spacing={3} mb={4}>
+                {libraryData.artists.map((artist) => (
+                  <HStack key={artist.id} justify="space-between" align="center" p={3} bg="white" borderWidth="1px" borderRadius="md">
+                    <Box>
+                      <Heading as="h3" size="sm">{artist.name}</Heading>
+                      <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
+                    </Box>
+                    {safeCollections.length > 0 ? (
+                      <Form method="post">
+                        <input type="hidden" name="intent" value="add_artist_to_collection" />
+                        <input type="hidden" name="artistId" value={artist.id} />
+                        <HStack>
+                          <Select name="collectionId" placeholder="Collection" size="sm">
+                            {safeCollections.map((collection) => (
+                              <option key={collection.id} value={collection.id}>{collection.name}</option>
+                            ))}
+                          </Select>
+                          <Button type="submit" size="sm" colorScheme="teal">Add</Button>
+                        </HStack>
+                      </Form>
+                    ) : null}
+                  </HStack>
+                ))}
+              </Stack>
 
-            <ul className="album-grid">
-              {libraryData.albums.map((album) => (
-                <li key={album.id} className="album-tile">
-                  <a className="album-art-wrap" href={buildHref({ selectedAlbumId: album.id })}>
-                    {album.imageUrl ? (
-                      <img className="album-art" src={album.imageUrl} alt={`${album.name} cover`} loading="lazy" />
-                    ) : (
-                      <div className="album-art-placeholder">No Art</div>
-                    )}
-                  </a>
-                  <div className="album-meta">
-                    <a className="album-title-link" href={buildHref({ selectedAlbumId: album.id })}>
-                      <strong>{album.name}</strong>
-                    </a>
-                    <p>{album.artistNames.join(", ") || "Unknown artist"}</p>
-                  </div>
-                  {safeCollections.length > 0 ? (
-                    <Form method="post" className="album-collection-form">
-                      <input type="hidden" name="intent" value="add_album_to_collection" />
-                      <input type="hidden" name="albumId" value={album.id} />
-                      <select name="collectionId" required>
-                        {safeCollections.map((collection) => (
-                          <option key={collection.id} value={collection.id}>
-                            {collection.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit" className="button secondary compact">
-                        Add
-                      </button>
-                    </Form>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+              {renderPagination("artists", libraryData.pagination.artists.page, libraryData.pagination.artists.totalPages)}
+            </>
+          ) : null}
 
-            {renderPagination("albums", libraryData.pagination.albums.page, libraryData.pagination.albums.totalPages)}
-          </>
-        ) : null}
+          {filters.tab === "playlists" ? (
+            <>
+              <HStack justify="space-between" align="center" mb={4}>
+                <Heading as="h2" size="lg">Playlists</Heading>
+                <Text color="gray.500">{libraryData.pagination.playlists.totalItems} total</Text>
+              </HStack>
 
-        {filters.tab === "artists" ? (
-          <>
-            <div className="album-panel-header">
-              <h2>Artists</h2>
-              <p className="muted">{libraryData.pagination.artists.totalItems} total</p>
-            </div>
-            <ul className="entity-list">
-              {libraryData.artists.map((artist) => (
-                <li key={artist.id} className="entity-item">
-                  <div>
-                    <strong>{artist.name}</strong>
-                    <p>{artist.genres.join(", ") || "No genres"}</p>
-                  </div>
-                  {safeCollections.length > 0 ? (
-                    <Form method="post" className="album-collection-form">
-                      <input type="hidden" name="intent" value="add_artist_to_collection" />
-                      <input type="hidden" name="artistId" value={artist.id} />
-                      <select name="collectionId" required>
-                        {safeCollections.map((collection) => (
-                          <option key={collection.id} value={collection.id}>
-                            {collection.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit" className="button secondary compact">
-                        Add
-                      </button>
-                    </Form>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-            {renderPagination("artists", libraryData.pagination.artists.page, libraryData.pagination.artists.totalPages)}
-          </>
-        ) : null}
+              <Stack spacing={3} mb={4}>
+                {libraryData.playlists.map((playlist) => (
+                  <Box key={playlist.id} p={3} bg="white" borderWidth="1px" borderRadius="md">
+                    <Heading as="h3" size="sm">{playlist.name}</Heading>
+                    <Text fontSize="sm" color="gray.600">{playlist.tracksTotal} tracks</Text>
+                  </Box>
+                ))}
+              </Stack>
 
-        {filters.tab === "playlists" ? (
-          <>
-            <div className="album-panel-header">
-              <h2>Playlists</h2>
-              <p className="muted">{libraryData.pagination.playlists.totalItems} total</p>
-            </div>
-            <ul className="entity-list">
-              {libraryData.playlists.map((playlist) => (
-                <li key={playlist.id} className="entity-item">
-                  <strong>{playlist.name}</strong>
-                  <p>{playlist.tracksTotal} tracks</p>
-                </li>
-              ))}
-            </ul>
-            {renderPagination("playlists", libraryData.pagination.playlists.page, libraryData.pagination.playlists.totalPages)}
-          </>
-        ) : null}
+              {renderPagination("playlists", libraryData.pagination.playlists.page, libraryData.pagination.playlists.totalPages)}
+            </>
+          ) : null}
 
-        {filters.tab === "collections" ? (
-          <>
-            <div className="album-panel-header">
-              <h2>Collections</h2>
-              <p className="muted">{safeCollections.length} total</p>
-            </div>
-            {safeCollections.length === 0 ? (
-              <p className="muted">Create a collection from the sidebar to get started.</p>
-            ) : (
-              <>
-                <div className="collection-picker">
-                  {safeCollections.map((collection) => (
-                    <a
-                      key={collection.id}
-                      className={`collection-pill${selectedCollection?.id === collection.id ? " active" : ""}`}
-                      href={buildHref({ tab: "collections", selectedCollectionId: collection.id })}
-                    >
-                      {collection.name}
-                    </a>
-                  ))}
-                </div>
+          {filters.tab === "collections" ? (
+            <>
+              <HStack justify="space-between" align="center" mb={4}>
+                <Heading as="h2" size="lg">Collections</Heading>
+                <Text color="gray.500">{safeCollections.length} total</Text>
+              </HStack>
 
-                {selectedCollection ? (
-                  <div className="collection-content">
-                    <h3>{selectedCollection.name}</h3>
-                    <p className="muted">{selectedCollection.description || "No description"}</p>
+              {safeCollections.length === 0 ? (
+                <Text color="gray.500">Create a collection from the sidebar to get started.</Text>
+              ) : (
+                <>
+                  <HStack spacing={2} mb={4}>
+                    {safeCollections.map((collection) => (
+                      <ChakraLink key={collection.id} href={buildHref({ tab: "collections", selectedCollectionId: collection.id })}>
+                        <Button size="sm" variant={selectedCollection?.id === collection.id ? "solid" : "ghost"}>{collection.name}</Button>
+                      </ChakraLink>
+                    ))}
+                  </HStack>
 
-                    <h4>Albums</h4>
-                    {selectedCollectionAlbums.length > 0 ? (
-                      <ul className="collection-grid">
-                        {selectedCollectionAlbums.map((album) => (
-                          <li key={album.id} className="collection-grid-item">
-                            <div className="album-art-wrap">
+                  {selectedCollection ? (
+                    <Box>
+                      <Heading as="h3" size="md">{selectedCollection.name}</Heading>
+                      <Text color="gray.500" mb={3}>{selectedCollection.description || "No description"}</Text>
+
+                      <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
+                      {selectedCollectionAlbums.length > 0 ? (
+                        <SimpleGrid columns={[2,3,4]} spacing={3} mb={4}>
+                          {selectedCollectionAlbums.map((album) => (
+                            <Box key={album.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
                               {album.imageUrl ? (
-                                <img className="album-art" src={album.imageUrl} alt={`${album.name} cover`} loading="lazy" />
+                                <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" maxH="140px" mb={2} />
                               ) : (
-                                <div className="album-art-placeholder">Album</div>
+                                <Box height="100px" bg="gray.100" mb={2} display="flex" alignItems="center" justifyContent="center">Album</Box>
                               )}
-                            </div>
-                            <strong>{album.name}</strong>
-                            <p className="muted">{album.artistNames.join(", ") || "Unknown artist"}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="muted">No albums in this collection match the active filters.</p>
-                    )}
+                              <Text fontWeight="semibold">{album.name}</Text>
+                              <Text fontSize="sm" color="gray.600">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                            </Box>
+                          ))}
+                        </SimpleGrid>
+                      ) : (
+                        <Text color="gray.500">No albums in this collection match the active filters.</Text>
+                      )}
 
-                    <h4>Artists</h4>
-                    {selectedCollectionArtists.length > 0 ? (
-                      <ul className="entity-list">
-                        {selectedCollectionArtists.map((artist) => (
-                          <li key={artist.id} className="entity-item">
-                            <strong>{artist.name}</strong>
-                            <p>{artist.genres.join(", ") || "No genres"}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="muted">No artists in this collection match the active filters.</p>
-                    )}
-                  </div>
-                ) : null}
-              </>
-            )}
-          </>
+                      <Heading as="h4" size="sm" mt={4} mb={2}>Artists</Heading>
+                      {selectedCollectionArtists.length > 0 ? (
+                        <Stack spacing={2}>
+                          {selectedCollectionArtists.map((artist) => (
+                            <Box key={artist.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
+                              <Text fontWeight="semibold">{artist.name}</Text>
+                              <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
+                            </Box>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Text color="gray.500">No artists in this collection match the active filters.</Text>
+                      )}
+                    </Box>
+                  ) : null}
+                </>
+              )}
+            </>
+          ) : null}
+        </Box>
+
+        {selectedAlbum ? (
+          <Box
+            position="fixed"
+            inset={0}
+            bg="blackAlpha.600"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            onClick={(event: any) => {
+              if (event.target === event.currentTarget) {
+                navigate(buildHref({ selectedAlbumId: null }));
+              }
+            }}
+            zIndex={50}
+          >
+            <Box bg="white" borderRadius="md" maxW="xl" width="full" p={6} boxShadow="lg">
+              <HStack justify="space-between" mb={3}>
+                <Heading as="h3" size="md">{selectedAlbum.name}</Heading>
+                <ChakraLink href={buildHref({ selectedAlbumId: null })}>
+                  <Button size="sm" variant="outline">Close</Button>
+                </ChakraLink>
+              </HStack>
+
+              <Text mb={2}>Artists: {selectedAlbum.artistNames.join(", ") || "Unknown artist"}</Text>
+              <Text mb={2}>Release date: {selectedAlbum.releaseDate || "Unknown"}</Text>
+              <Heading as="h4" size="sm" mt={3} mb={2}>In Collections</Heading>
+              {selectedAlbumCollections.length > 0 ? (
+                <Stack spacing={1}>
+                  {selectedAlbumCollections.map((collection) => (
+                    <Text key={collection.id}>{collection.name}</Text>
+                  ))}
+                </Stack>
+              ) : (
+                <Text color="gray.500">Not in any collection yet.</Text>
+              )}
+            </Box>
+          </Box>
         ) : null}
-      </section>
-
-      {selectedAlbum ? (
-        <div
-          className="modal-backdrop"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              navigate(buildHref({ selectedAlbumId: null }));
-            }
-          }}
-        >
-          <div className="modal-card" role="dialog" aria-modal="true" aria-label="Album details">
-            <div className="modal-header">
-              <h3>{selectedAlbum.name}</h3>
-              <a className="button secondary compact" href={buildHref({ selectedAlbumId: null })}>
-                Close
-              </a>
-            </div>
-            <p className="muted">Artists: {selectedAlbum.artistNames.join(", ") || "Unknown artist"}</p>
-            <p className="muted">Release date: {selectedAlbum.releaseDate || "Unknown"}</p>
-            <h4>In Collections</h4>
-            {selectedAlbumCollections.length > 0 ? (
-              <ul className="detail-list">
-                {selectedAlbumCollections.map((collection) => (
-                  <li key={collection.id}>{collection.name}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="muted">Not in any collection yet.</p>
-            )}
-          </div>
-        </div>
-      ) : null}
-    </div>
+      </Box>
+    </Grid>
   );
 }
