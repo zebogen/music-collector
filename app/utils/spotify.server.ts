@@ -1,5 +1,5 @@
 import { env } from "~/utils/env.server";
-import type { DbUser } from "~/types";
+import type { DbUser, SpotifySearchAlbum } from "~/types";
 import { updateUserTokens } from "~/utils/user.server";
 
 const SCOPES = [
@@ -185,4 +185,30 @@ export async function fetchSpotifyPlaylists(accessToken: string) {
   }
 
   return playlists;
+}
+
+export async function searchSpotifyAlbums(accessToken: string, query: string): Promise<SpotifySearchAlbum[]> {
+  const params = new URLSearchParams({
+    q: query,
+    type: "album",
+    limit: "12"
+  });
+
+  const response = await fetch(`https://api.spotify.com/v1/search?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to search Spotify albums");
+  }
+
+  const json = await response.json();
+  return (json.albums?.items ?? []).map((album: any) => ({
+    spotifyId: album.id,
+    name: album.name,
+    albumType: album.album_type ?? null,
+    releaseDate: album.release_date ?? null,
+    artistNames: (album.artists ?? []).map((artist: any) => artist.name),
+    imageUrl: album.images?.[0]?.url ?? null
+  }));
 }

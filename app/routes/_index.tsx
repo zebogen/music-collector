@@ -28,6 +28,7 @@ import { useEffect } from "react";
 import {
   addAlbumToCollection,
   addArtistToCollection,
+  addSpotifySearchAlbumToCollection,
   createCollection,
   getCollections,
   getLibraryData,
@@ -38,7 +39,8 @@ import {
   ensureValidAccessToken,
   fetchSpotifyFollowedArtists,
   fetchSpotifyPlaylists,
-  fetchSpotifySavedAlbums
+  fetchSpotifySavedAlbums,
+  searchSpotifyAlbums
 } from "~/utils/spotify.server";
 import { getUserById } from "~/utils/user.server";
 
@@ -99,7 +101,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         albumsPage: 1,
         playlistsPage: 1,
         selectedAlbumId: null as number | null,
-        selectedCollectionId: null as number | null
+        selectedCollectionId: null as number | null,
+        search: ""
       }
     };
   }
@@ -113,21 +116,27 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const playlistsPage = parsePage(url.searchParams.get("playlistsPage"));
   const selectedAlbumId = parseId(url.searchParams.get("album"));
   const selectedCollectionId = parseId(url.searchParams.get("collection"));
+  const search = (url.searchParams.get("search") ?? "").trim();
 
-  const [libraryData, collections] = await Promise.all([
+  const user = await getUserById(userId);
+  const accessToken = user ? await ensureValidAccessToken(user) : null;
+
+  const [libraryData, collections, searchResults] = await Promise.all([
     getLibraryData(
       userId,
       { genre: genre || undefined, artist: artist || undefined },
       { artistsPage, albumsPage, playlistsPage, pageSize: PAGE_SIZE }
     ),
-    getCollections(userId)
+    getCollections(userId),
+    accessToken && search ? searchSpotifyAlbums(accessToken, search) : Promise.resolve([])
   ]);
 
   return {
     connected: true,
     libraryData,
     collections,
-    filters: { genre, artist, tab, artistsPage, albumsPage, playlistsPage, selectedAlbumId, selectedCollectionId }
+    searchResults,
+    filters: { genre, artist, tab, artistsPage, albumsPage, playlistsPage, selectedAlbumId, selectedCollectionId, search }
   };
 }
 
@@ -194,11 +203,34 @@ export async function action({ request }: ActionFunctionArgs) {
     return redirect("/");
   }
 
+  if (intent === "add_search_album_to_collection") {
+    const collectionId = Number(formData.get("collectionId"));
+    const redirectTo = String(formData.get("redirectTo") ?? "/");
+    const rawArtistNames = String(formData.get("artistNames") ?? "[]");
+
+    if (collectionId > 0) {
+      await addSpotifySearchAlbumToCollection({
+        userId,
+        collectionId,
+        album: {
+          spotifyId: String(formData.get("spotifyId") ?? ""),
+          name: String(formData.get("name") ?? ""),
+          albumType: String(formData.get("albumType") ?? "") || null,
+          releaseDate: String(formData.get("releaseDate") ?? "") || null,
+          artistNames: JSON.parse(rawArtistNames) as string[],
+          imageUrl: String(formData.get("imageUrl") ?? "") || null
+        }
+      });
+    }
+
+    return redirect(redirectTo);
+  }
+
   return redirect("/");
 }
 
 export default function Index() {
-  const { connected, libraryData, collections, filters } = useLoaderData<typeof loader>();
+  const { connected, libraryData, collections, filters, searchResults } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -225,6 +257,7 @@ export default function Index() {
     playlistsPage?: number;
     selectedAlbumId?: number | null;
     selectedCollectionId?: number | null;
+    search?: string;
   }) {
     const params = new URLSearchParams();
 
@@ -243,6 +276,7 @@ export default function Index() {
       overrides && "selectedAlbumId" in overrides ? overrides.selectedAlbumId : filters.selectedAlbumId;
     const selectedCollectionId =
       overrides && "selectedCollectionId" in overrides ? overrides.selectedCollectionId : filters.selectedCollectionId;
+    const search = overrides && "search" in overrides ? overrides.search : filters.search;
 
     params.set("tab", tab);
     params.set("artistsPage", String(artistsPage));
@@ -253,6 +287,9 @@ export default function Index() {
     }
     if (selectedCollectionId) {
       params.set("collection", String(selectedCollectionId));
+    }
+    if (search) {
+      params.set("search", search);
     }
 
     return `/?${params.toString()}`;
@@ -480,6 +517,80 @@ export default function Index() {
                       <Heading as="h3" size="md">{selectedCollection.name}</Heading>
                       <Text color="gray.500" mb={3}>{selectedCollection.description || "No description"}</Text>
 
+                      <Box mb={6}>
+                        <Heading as="h4" size="sm" mt={4} mb={2}>Search Spotify Albums</Heading>
+                        <Form method="get">
+                          <input type="hidden" name="tab" value="collections" />
+                          <input type="hidden" name="artistsPage" value={String(filters.artistsPage)} />
+                          <input type="hidden" name="albumsPage" value={String(filters.albumsPage)} />
+                          <input type="hidden" name="playlistsPage" value={String(filters.playlistsPage)} />
+                          {filters.genre ? <input type="hidden" name="genre" value={filters.genre} /> : null}
+                          {filters.artist ? <input type="hidden" name="artist" value={filters.artist} /> : null}
+                          <input type="hidden" name="collection" value={String(selectedCollection.id)} />
+                          <HStack align="stretch">
+                            <Input name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
+                            <Button type="submit" colorScheme="teal">Search</Button>
+                          </HStack>
+                        </Form>
+
+                        {filters.search ? (
+                          <Box mt={4}>
+                            <Text fontSize="sm" color="gray.600" mb={3}>
+                              Results for "{filters.search}"
+                            </Text>
+                            {searchResults.length > 0 ? (
+                              <SimpleGrid columns={[1, 2, 3]} gap={3}>
+                              {searchResults.map((album) => (
+                                <Box key={album.spotifyId} p={3} bg="white" borderWidth="1px" borderRadius="md">
+                                    {album.imageUrl ? (
+                                      <Image
+                                        src={album.imageUrl}
+                                        alt={`${album.name} cover`}
+                                        objectFit="cover"
+                                        width="100%"
+                                        maxH="160px"
+                                        mb={3}
+                                      />
+                                    ) : (
+                                      <Box height="120px" bg="gray.100" mb={3} display="flex" alignItems="center" justifyContent="center">
+                                        Album
+                                      </Box>
+                                    )}
+                                    <Text fontWeight="semibold">{album.name}</Text>
+                                    <Text fontSize="sm" color="gray.600" mb={3}>
+                                      {album.artistNames.join(", ") || "Unknown artist"}
+                                    </Text>
+                                    <ChakraLink href={`https://open.spotify.com/album/${album.spotifyId}`} target="_blank" rel="noreferrer">
+                                      <Button size="sm" variant="outline" mb={3}>Play on Spotify</Button>
+                                    </ChakraLink>
+                                    <Form method="post">
+                                      <input type="hidden" name="intent" value="add_search_album_to_collection" />
+                                      <input type="hidden" name="redirectTo" value={buildHref()} />
+                                      <input type="hidden" name="spotifyId" value={album.spotifyId} />
+                                      <input type="hidden" name="name" value={album.name} />
+                                      <input type="hidden" name="albumType" value={album.albumType ?? ""} />
+                                      <input type="hidden" name="releaseDate" value={album.releaseDate ?? ""} />
+                                      <input type="hidden" name="imageUrl" value={album.imageUrl ?? ""} />
+                                      <input type="hidden" name="artistNames" value={JSON.stringify(album.artistNames)} />
+                                      <HStack align="stretch">
+                                        <chakra.select name="collectionId" defaultValue={selectedCollection.id}>
+                                          {safeCollections.map((collection) => (
+                                            <option key={collection.id} value={collection.id}>{collection.name}</option>
+                                          ))}
+                                        </chakra.select>
+                                        <Button type="submit" size="sm" colorScheme="teal">Add</Button>
+                                      </HStack>
+                                    </Form>
+                                  </Box>
+                                ))}
+                              </SimpleGrid>
+                            ) : (
+                              <Text color="gray.500">No Spotify albums found.</Text>
+                            )}
+                          </Box>
+                        ) : null}
+                      </Box>
+
                       <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
                       {selectedCollectionAlbums.length > 0 ? (
                         <SimpleGrid columns={[2,3,4]} gap={3} mb={4}>
@@ -491,7 +602,10 @@ export default function Index() {
                                 <Box height="100px" bg="gray.100" mb={2} display="flex" alignItems="center" justifyContent="center">Album</Box>
                               )}
                               <Text fontWeight="semibold">{album.name}</Text>
-                              <Text fontSize="sm" color="gray.600">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                              <Text fontSize="sm" color="gray.600" mb={2}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                              <ChakraLink href={`https://open.spotify.com/album/${album.spotifyId}`} target="_blank" rel="noreferrer">
+                                <Button size="xs" variant="outline">Play on Spotify</Button>
+                              </ChakraLink>
                             </Box>
                           ))}
                         </SimpleGrid>
@@ -545,6 +659,9 @@ export default function Index() {
 
               <Text mb={2}>Artists: {selectedAlbum.artistNames.join(", ") || "Unknown artist"}</Text>
               <Text mb={2}>Release date: {selectedAlbum.releaseDate || "Unknown"}</Text>
+              <ChakraLink href={`https://open.spotify.com/album/${selectedAlbum.spotifyId}`} target="_blank" rel="noreferrer">
+                <Button size="sm" variant="outline" mb={3}>Play on Spotify</Button>
+              </ChakraLink>
               <Heading as="h4" size="sm" mt={3} mb={2}>In Collections</Heading>
               {selectedAlbumCollections.length > 0 ? (
                 <Stack gap={1}>

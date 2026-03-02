@@ -25,6 +25,15 @@ export type Album = {
   imageUrl: string | null;
 };
 
+export type SpotifySearchAlbum = {
+  spotifyId: string;
+  name: string;
+  albumType: string | null;
+  releaseDate: string | null;
+  artistNames: string[];
+  imageUrl: string | null;
+};
+
 export type Playlist = {
   id: number;
   spotifyId: string;
@@ -39,5 +48,5 @@ export type Collection = {
   name: string;
   description: string | null;
   artists: Pick<Artist, "id" | "name" | "genres">[];
-  albums: Pick<Album, "id" | "name" | "artistNames" | "imageUrl" | "releaseDate">[];
+  albums: Pick<Album, "id" | "spotifyId" | "name" | "artistNames" | "imageUrl" | "releaseDate">[];
 };

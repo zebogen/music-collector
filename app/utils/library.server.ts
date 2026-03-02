@@ -1,5 +1,5 @@
 import { db } from "~/utils/db.server";
-import type { Album, Artist, Collection, Playlist } from "~/types";
+import type { Album, Artist, Collection, Playlist, SpotifySearchAlbum } from "~/types";
 
 function mapArtist(row: any): Artist {
   return {
@@ -32,6 +32,27 @@ function mapPlaylist(row: any): Playlist {
     tracksTotal: row.tracks_total,
     imageUrl: row.image_url
   };
+}
+
+async function upsertAlbum(client: any, album: SpotifySearchAlbum) {
+  const result = await client.query(
+    `
+      INSERT INTO albums (spotify_id, name, album_type, release_date, artist_names, image_url)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (spotify_id)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        album_type = EXCLUDED.album_type,
+        release_date = EXCLUDED.release_date,
+        artist_names = EXCLUDED.artist_names,
+        image_url = EXCLUDED.image_url,
+        updated_at = NOW()
+      RETURNING id
+    `,
+    [album.spotifyId, album.name, album.albumType, album.releaseDate, album.artistNames, album.imageUrl]
+  );
+
+  return result.rows[0].id as number;
 }
 
 export async function syncSpotifyData(input: {
@@ -76,29 +97,14 @@ export async function syncSpotifyData(input: {
 
     for (const item of input.albums) {
       const album = item.album;
-      const albumResult = await client.query(
-        `
-          INSERT INTO albums (spotify_id, name, album_type, release_date, artist_names, image_url)
-          VALUES ($1, $2, $3, $4, $5, $6)
-          ON CONFLICT (spotify_id)
-          DO UPDATE SET
-            name = EXCLUDED.name,
-            album_type = EXCLUDED.album_type,
-            release_date = EXCLUDED.release_date,
-            artist_names = EXCLUDED.artist_names,
-            image_url = EXCLUDED.image_url,
-            updated_at = NOW()
-          RETURNING id
-        `,
-        [
-          album.id,
-          album.name,
-          album.album_type ?? null,
-          album.release_date ?? null,
-          (album.artists ?? []).map((artist: any) => artist.name),
-          album.images?.[0]?.url ?? null
-        ]
-      );
+      const albumId = await upsertAlbum(client, {
+        spotifyId: album.id,
+        name: album.name,
+        albumType: album.album_type ?? null,
+        releaseDate: album.release_date ?? null,
+        artistNames: (album.artists ?? []).map((artist: any) => artist.name),
+        imageUrl: album.images?.[0]?.url ?? null
+      });
 
       await client.query(
         `
@@ -106,7 +112,7 @@ export async function syncSpotifyData(input: {
           VALUES ($1, $2)
           ON CONFLICT DO NOTHING
         `,
-        [input.userId, albumResult.rows[0].id]
+        [input.userId, albumId]
       );
     }
 
@@ -310,6 +316,35 @@ export async function addAlbumToCollection(input: { collectionId: number; albumI
   );
 }
 
+export async function addSpotifySearchAlbumToCollection(input: {
+  userId: number;
+  collectionId: number;
+  album: SpotifySearchAlbum;
+}) {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+    const albumId = await upsertAlbum(client, input.album);
+    await client.query(
+      `
+        INSERT INTO collection_albums (collection_id, album_id)
+        SELECT c.id, $2
+        FROM collections c
+        WHERE c.id = $1 AND c.user_id = $3
+        ON CONFLICT DO NOTHING
+      `,
+      [input.collectionId, albumId, input.userId]
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function getCollections(userId: number): Promise<Collection[]> {
   const result = await db.query(
     `
@@ -326,6 +361,7 @@ export async function getCollections(userId: number): Promise<Collection[]> {
           json_agg(
             DISTINCT jsonb_build_object(
               'id', al.id,
+              'spotifyId', al.spotify_id,
               'name', al.name,
               'artistNames', al.artist_names,
               'imageUrl', al.image_url,

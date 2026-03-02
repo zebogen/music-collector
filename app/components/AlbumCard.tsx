@@ -2,6 +2,8 @@ import { Box, Heading, Text, Image, HStack, chakra, Button, Link as ChakraLink }
 import { Form } from "react-router";
 
 export default function AlbumCard({ album, safeCollections, buildHref }: any) {
+  const spotifyAlbumUrl = `https://open.spotify.com/album/${album.spotifyId}`;
+
   return (
     <Box borderWidth="1px" borderRadius="md" overflow="hidden" bg="white">
   <ChakraLink href={buildHref({ selectedAlbumId: album.id })} display="block">
@@ -15,13 +17,17 @@ export default function AlbumCard({ album, safeCollections, buildHref }: any) {
       </ChakraLink>
 
       <Box p={3}>
-              <ChakraLink href={buildHref({ selectedAlbumId: album.id })} _hover={{ textDecoration: 'none' }}>
+        <ChakraLink href={buildHref({ selectedAlbumId: album.id })} _hover={{ textDecoration: "none" }}>
           <Heading as="h3" size="sm" mb={1}>{album.name}</Heading>
         </ChakraLink>
         <Text fontSize="sm" color="gray.600" mb={3}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
 
+        <ChakraLink href={spotifyAlbumUrl} target="_blank" rel="noreferrer" display="inline-block" mb={3}>
+          <Button size="sm" variant="outline">Play on Spotify</Button>
+        </ChakraLink>
+
         {safeCollections.length > 0 ? (
-              <Form method="post">
+          <Form method="post">
             <input type="hidden" name="intent" value="add_album_to_collection" />
             <input type="hidden" name="albumId" value={album.id} />
             <HStack gap={2}>

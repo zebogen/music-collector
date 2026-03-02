@@ -22,6 +22,7 @@ export default function Sidebar({
           <input type="hidden" name="albumsPage" value="1" />
           <input type="hidden" name="playlistsPage" value="1" />
           {selectedCollectionId ? <input type="hidden" name="collection" value={String(selectedCollectionId)} /> : null}
+          {filters.search ? <input type="hidden" name="search" value={filters.search} /> : null}
 
           <Stack gap={3}>
             <Box>
