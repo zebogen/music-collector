@@ -2,7 +2,7 @@ import { Box, Heading, Text, Image, HStack, chakra, Button, Link as ChakraLink }
 import { Form } from "react-router";
 
 export default function AlbumCard({ album, safeCollections, buildHref }: any) {
-  const spotifyAlbumUrl = `https://open.spotify.com/album/${album.spotifyId}`;
+  const spotifyAppUrl = `spotify:album:${album.spotifyId}`;
 
   return (
     <Box borderWidth="1px" borderRadius="xl" overflow="hidden" bg="white">
@@ -22,9 +22,11 @@ export default function AlbumCard({ album, safeCollections, buildHref }: any) {
         </ChakraLink>
         <Text fontSize="sm" color="gray.600" mb={4} lineHeight="1.5">{album.artistNames.join(", ") || "Unknown artist"}</Text>
 
-        <ChakraLink href={spotifyAlbumUrl} target="_blank" rel="noreferrer" display="inline-block" mb={3}>
-          <Button size="sm" variant="outline" w={{ base: "full", sm: "auto" }}>Play on Spotify</Button>
-        </ChakraLink>
+        <HStack gap={2} align="stretch" direction={{ base: "column", sm: "row" }} mb={3}>
+          <ChakraLink href={spotifyAppUrl} display="inline-block">
+            <Button size="sm" variant="solid" w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
+          </ChakraLink>
+        </HStack>
 
         {safeCollections.length > 0 ? (
           <Form method="post">

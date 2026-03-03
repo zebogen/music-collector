@@ -569,9 +569,11 @@ export default function Index() {
                                     <Text fontSize="sm" color="gray.600" mb={3}>
                                       {album.artistNames.join(", ") || "Unknown artist"}
                                     </Text>
-                                    <ChakraLink href={`https://open.spotify.com/album/${album.spotifyId}`} target="_blank" rel="noreferrer">
-                                      <Button size="sm" variant="outline" mb={3}>Play on Spotify</Button>
-                                    </ChakraLink>
+                                    <Stack gap={2} mb={3} direction={{ base: "column", sm: "row" }}>
+                                      <ChakraLink href={`spotify:album:${album.spotifyId}`}>
+                                        <Button size="sm">Open in Spotify App</Button>
+                                      </ChakraLink>
+                                    </Stack>
                                     <Form method="post">
                                       <input type="hidden" name="intent" value="add_search_album_to_collection" />
                                       <input type="hidden" name="redirectTo" value={buildHref()} />
@@ -612,9 +614,11 @@ export default function Index() {
                               )}
                               <Text fontWeight="semibold">{album.name}</Text>
                               <Text fontSize="sm" color="gray.600" mb={2}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
-                              <ChakraLink href={`https://open.spotify.com/album/${album.spotifyId}`} target="_blank" rel="noreferrer">
-                                <Button size="xs" variant="outline">Play on Spotify</Button>
-                              </ChakraLink>
+                              <Stack gap={2} direction={{ base: "column", sm: "row" }}>
+                                <ChakraLink href={`spotify:album:${album.spotifyId}`}>
+                                  <Button size="xs">Open in App</Button>
+                                </ChakraLink>
+                              </Stack>
                             </Box>
                           ))}
                         </SimpleGrid>
@@ -668,9 +672,11 @@ export default function Index() {
 
               <Text mb={2}>Artists: {selectedAlbum.artistNames.join(", ") || "Unknown artist"}</Text>
               <Text mb={2}>Release date: {selectedAlbum.releaseDate || "Unknown"}</Text>
-              <ChakraLink href={`https://open.spotify.com/album/${selectedAlbum.spotifyId}`} target="_blank" rel="noreferrer">
-                <Button size="sm" variant="outline" mb={3}>Play on Spotify</Button>
-              </ChakraLink>
+              <Stack gap={2} mb={3} direction={{ base: "column", sm: "row" }}>
+                <ChakraLink href={`spotify:album:${selectedAlbum.spotifyId}`}>
+                  <Button size="sm">Open in Spotify App</Button>
+                </ChakraLink>
+              </Stack>
               <Heading as="h4" size="sm" mt={3} mb={2}>In Collections</Heading>
               {selectedAlbumCollections.length > 0 ? (
                 <Stack gap={1}>
