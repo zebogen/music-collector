@@ -300,7 +300,7 @@ export default function Index() {
     const pageItems = getPageItems(currentPage, totalPages);
 
     return (
-      <HStack gap={3} align="center">
+      <Stack gap={3} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
         <ChakraLink href={
           list === "albums"
             ? buildHref({ albumsPage: Math.max(1, currentPage - 1), selectedAlbumId: null })
@@ -311,7 +311,7 @@ export default function Index() {
           <Button variant="outline" size="sm" disabled={currentPage <= 1}>Previous</Button>
         </ChakraLink>
 
-  <HStack gap={2}>
+        <HStack gap={2} wrap="wrap" justify={{ base: "center", md: "flex-start" }}>
           {pageItems.map((item, index) =>
             item === "ellipsis" ? (
               <Text key={`${list}-ellipsis-${index}`}>…</Text>
@@ -338,7 +338,7 @@ export default function Index() {
         }>
                 <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>Next</Button>
         </ChakraLink>
-      </HStack>
+      </Stack>
     );
   }
 
@@ -392,42 +392,41 @@ export default function Index() {
   }, [navigate, selectedAlbum, location.search]);
 
   return (
-    <Grid templateColumns={["1fr", "300px 1fr"]} gap={6}>
-      <Box as="aside">
+    <Grid templateColumns={{ base: "1fr", lg: "300px minmax(0, 1fr)" }} gap={{ base: 4, md: 6 }}>
+      <Box as="aside" order={{ base: 2, lg: 1 }}>
         <Sidebar filters={filters} genres={libraryData.genres} selectedCollectionId={filters.selectedCollectionId} actionError={actionData && "error" in actionData ? actionData.error : null} />
       </Box>
 
-      <Box as="main">
-        <Box p={4} borderRadius="md" bg="white" boxShadow="sm">
-          <HStack as="nav" gap={3} mb={4}>
+      <Box as="main" order={{ base: 1, lg: 2 }} minW={0}>
+        <Box p={{ base: 4, md: 4 }} borderRadius="xl" bg="white" boxShadow="sm">
+          <SimpleGrid as="nav" columns={{ base: 2, md: 4 }} gap={3}>
             <ChakraLink href={buildHref({ tab: "albums" })}>
-              <Button variant={filters.tab === "albums" ? "solid" : "ghost"}>Albums</Button>
+              <Button variant={filters.tab === "albums" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Albums</Button>
             </ChakraLink>
             <ChakraLink href={buildHref({ tab: "artists" })}>
-              <Button variant={filters.tab === "artists" ? "solid" : "ghost"}>Artists</Button>
+              <Button variant={filters.tab === "artists" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Artists</Button>
             </ChakraLink>
             <ChakraLink href={buildHref({ tab: "playlists" })}>
-              <Button variant={filters.tab === "playlists" ? "solid" : "ghost"}>Playlists</Button>
+              <Button variant={filters.tab === "playlists" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Playlists</Button>
             </ChakraLink>
             <ChakraLink href={buildHref({ tab: "collections", selectedCollectionId: selectedCollection?.id ?? null })}>
-              <Button variant={filters.tab === "collections" ? "solid" : "ghost"}>Collections</Button>
+              <Button variant={filters.tab === "collections" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Collections</Button>
             </ChakraLink>
-          </HStack>
+          </SimpleGrid>
+        </Box>
 
-          </Box>
-
-        <Box mt={4}>
+        <Box mt={{ base: 5, md: 4 }}>
           {/* keep the existing tab content markup for now, wrapped in a Box */}
           {/* legacy tab-nav removed; top tab HStack already provides tabs */}
 
           {filters.tab === "albums" ? (
             <>
-              <HStack justify="space-between" align="center" mb={4}>
+              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
                 <Heading as="h2" size="lg">Saved Albums</Heading>
                 <Text color="gray.500">{libraryData.pagination.albums.totalItems} total</Text>
               </HStack>
 
-              <SimpleGrid columns={[2, 3, 4]} gap={4} mb={4}>
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 4 }} gap={{ base: 5, md: 4 }} mb={5}>
                 {libraryData.albums.map((album: Album) => (
                   <AlbumCard key={album.id} album={album} safeCollections={safeCollections} buildHref={buildHref} />
                 ))}
@@ -439,14 +438,23 @@ export default function Index() {
 
           {filters.tab === "artists" ? (
             <>
-              <HStack justify="space-between" align="center" mb={4}>
+              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
                 <Heading as="h2" size="lg">Artists</Heading>
                 <Text color="gray.500">{libraryData.pagination.artists.totalItems} total</Text>
               </HStack>
 
-              <Stack gap={3} mb={4}>
+              <Stack gap={4} mb={5}>
                 {libraryData.artists.map((artist: Artist) => (
-                  <HStack key={artist.id} justify="space-between" align="center" p={3} bg="white" borderWidth="1px" borderRadius="md">
+                  <HStack
+                    key={artist.id}
+                    justify="space-between"
+                    align={{ base: "stretch", md: "center" }}
+                    direction={{ base: "column", md: "row" }}
+                    p={{ base: 4, md: 3 }}
+                    bg="white"
+                    borderWidth="1px"
+                    borderRadius="md"
+                  >
                     <Box>
                       <Heading as="h3" size="sm">{artist.name}</Heading>
                       <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
@@ -455,14 +463,14 @@ export default function Index() {
                       <Form method="post">
                         <input type="hidden" name="intent" value="add_artist_to_collection" />
                         <input type="hidden" name="artistId" value={artist.id} />
-                        <HStack>
-                          <chakra.select name="collectionId">
+                        <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
+                          <chakra.select name="collectionId" style={{ width: "100%" }}>
                             <option value="">Collection</option>
                             {safeCollections.map((collection) => (
                               <option key={collection.id} value={collection.id}>{collection.name}</option>
                             ))}
                           </chakra.select>
-                          <Button type="submit" size="sm" colorScheme="teal">Add</Button>
+                          <Button type="submit" size="sm" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Add</Button>
                         </HStack>
                       </Form>
                     ) : null}
@@ -476,16 +484,16 @@ export default function Index() {
 
           {filters.tab === "playlists" ? (
             <>
-              <HStack justify="space-between" align="center" mb={4}>
+              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
                 <Heading as="h2" size="lg">Playlists</Heading>
                 <Text color="gray.500">{libraryData.pagination.playlists.totalItems} total</Text>
               </HStack>
 
-              <Stack gap={3} mb={4}>
+              <Stack gap={4} mb={5}>
                 {libraryData.playlists.map((playlist: Playlist) => (
-                  <Box key={playlist.id} p={3} bg="white" borderWidth="1px" borderRadius="md">
+                  <Box key={playlist.id} p={{ base: 4, md: 3 }} bg="white" borderWidth="1px" borderRadius="xl">
                     <Heading as="h3" size="sm">{playlist.name}</Heading>
-                    <Text fontSize="sm" color="gray.600">{playlist.tracksTotal} tracks</Text>
+                    <Text fontSize="sm" color="gray.600" mt={1}>{playlist.tracksTotal} tracks</Text>
                   </Box>
                 ))}
               </Stack>
@@ -496,7 +504,7 @@ export default function Index() {
 
           {filters.tab === "collections" ? (
             <>
-              <HStack justify="space-between" align="center" mb={4}>
+              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
                 <Heading as="h2" size="lg">Collections</Heading>
                 <Text color="gray.500">{safeCollections.length} total</Text>
               </HStack>
@@ -505,13 +513,13 @@ export default function Index() {
                 <Text color="gray.500">Create a collection from the sidebar to get started.</Text>
               ) : (
                 <>
-                  <HStack gap={2} mb={4}>
+                  <Stack gap={2} mb={5} direction={{ base: "column", md: "row" }} wrap="wrap">
                     {safeCollections.map((collection) => (
                       <ChakraLink key={collection.id} href={buildHref({ tab: "collections", selectedCollectionId: collection.id })}>
-                        <Button size="sm" variant={selectedCollection?.id === collection.id ? "solid" : "ghost"}>{collection.name}</Button>
+                        <Button size="sm" variant={selectedCollection?.id === collection.id ? "solid" : "ghost"} w={{ base: "full", md: "auto" }}>{collection.name}</Button>
                       </ChakraLink>
                     ))}
-                  </HStack>
+                  </Stack>
 
                   {selectedCollection ? (
                     <Box>
@@ -528,10 +536,10 @@ export default function Index() {
                           {filters.genre ? <input type="hidden" name="genre" value={filters.genre} /> : null}
                           {filters.artist ? <input type="hidden" name="artist" value={filters.artist} /> : null}
                           <input type="hidden" name="collection" value={String(selectedCollection.id)} />
-                          <HStack align="stretch">
-                            <Input name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
-                            <Button type="submit" colorScheme="teal">Search</Button>
-                          </HStack>
+                        <Stack align="stretch" direction={{ base: "column", sm: "row" }}>
+                          <Input name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
+                          <Button type="submit" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Search</Button>
+                        </Stack>
                         </Form>
 
                         {filters.search ? (
@@ -540,7 +548,7 @@ export default function Index() {
                               Results for "{filters.search}"
                             </Text>
                             {searchResults.length > 0 ? (
-                              <SimpleGrid columns={[1, 2, 3]} gap={3}>
+                            <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={{ base: 4, md: 3 }}>
                               {searchResults.map((album) => (
                                 <Box key={album.spotifyId} p={3} bg="white" borderWidth="1px" borderRadius="md">
                                     {album.imageUrl ? (
@@ -573,14 +581,14 @@ export default function Index() {
                                       <input type="hidden" name="releaseDate" value={album.releaseDate ?? ""} />
                                       <input type="hidden" name="imageUrl" value={album.imageUrl ?? ""} />
                                       <input type="hidden" name="artistNames" value={JSON.stringify(album.artistNames)} />
-                                      <HStack align="stretch">
-                                        <chakra.select name="collectionId" defaultValue={selectedCollection.id}>
+                                      <Stack align="stretch" direction={{ base: "column", sm: "row" }}>
+                                        <chakra.select name="collectionId" defaultValue={selectedCollection.id} style={{ width: "100%" }}>
                                           {safeCollections.map((collection) => (
                                             <option key={collection.id} value={collection.id}>{collection.name}</option>
                                           ))}
                                         </chakra.select>
-                                        <Button type="submit" size="sm" colorScheme="teal">Add</Button>
-                                      </HStack>
+                                        <Button type="submit" size="sm" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Add</Button>
+                                      </Stack>
                                     </Form>
                                   </Box>
                                 ))}
@@ -594,7 +602,7 @@ export default function Index() {
 
                       <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
                       {selectedCollectionAlbums.length > 0 ? (
-                        <SimpleGrid columns={[2,3,4]} gap={3} mb={4}>
+                        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 4 }} gap={{ base: 4, md: 3 }} mb={5}>
                           {selectedCollectionAlbums.map((album) => (
                             <Box key={album.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
                               {album.imageUrl ? (
@@ -650,8 +658,8 @@ export default function Index() {
             }}
             zIndex={50}
           >
-            <Box bg="white" borderRadius="md" maxW="xl" width="full" p={6} boxShadow="lg">
-              <HStack justify="space-between" mb={3}>
+            <Box bg="white" borderRadius="md" maxW="xl" width="full" p={{ base: 4, md: 6 }} boxShadow="lg" mx={4}>
+              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={3}>
                 <Heading as="h3" size="md">{selectedAlbum.name}</Heading>
                 <ChakraLink href={buildHref({ selectedAlbumId: null })}>
                   <Button size="sm" variant="outline">Close</Button>

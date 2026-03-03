@@ -31,7 +31,7 @@ export default function App() {
         <Chakra>
           <Topbar user={data.user} isSyncing={isSyncing} />
           <main>
-            <div style={{ maxWidth: 1280, margin: '0 auto', padding: '1rem' }}>
+            <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0.75rem" }}>
               <Outlet />
             </div>
           </main>

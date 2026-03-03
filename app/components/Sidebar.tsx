@@ -13,8 +13,8 @@ export default function Sidebar({
   actionError?: string | null;
 }) {
   return (
-  <Stack gap={6}>
-      <Box p={4} borderRadius="md" bg="white" boxShadow="sm">
+    <Stack gap={6}>
+      <Box p={{ base: 4, md: 4 }} borderRadius="md" bg="white" boxShadow="sm">
         <Heading as="h3" size="md" mb={3}>Filters</Heading>
         <Form method="get">
           <input type="hidden" name="tab" value={filters.tab} />
@@ -45,7 +45,7 @@ export default function Sidebar({
         </Form>
       </Box>
 
-      <Box p={4} borderRadius="md" bg="white" boxShadow="sm">
+      <Box p={{ base: 4, md: 4 }} borderRadius="md" bg="white" boxShadow="sm">
         <Heading as="h3" size="md" mb={3}>Create Collection</Heading>
         <Form method="post">
           <input type="hidden" name="intent" value="create_collection" />

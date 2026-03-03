@@ -1,36 +1,45 @@
 import type { ReactNode } from "react";
 import { Form } from "react-router";
-import { Flex, Box, Heading, Text, HStack, Button } from "@chakra-ui/react";
+import { Flex, Box, Heading, Text, HStack, VStack, Button } from "@chakra-ui/react";
 
 export default function Topbar({ user, isSyncing }: { user: { id: string | number; displayName?: string | null } | null; isSyncing: boolean }) {
   return (
-    <Flex as="header" align="center" justify="space-between" p={4} bg="white" boxShadow="sm">
-      <Box>
+    <Flex
+      as="header"
+      align={{ base: "flex-start", md: "center" }}
+      justify="space-between"
+      direction={{ base: "column", md: "row" }}
+      gap={{ base: 3, md: 4 }}
+      p={{ base: 4, md: 4 }}
+      bg="white"
+      boxShadow="sm"
+    >
+      <Box minW={0}>
         <Heading as="h1" size="md">Spotify Library Organizer</Heading>
         <Text fontSize="sm">{user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}</Text>
       </Box>
 
-  <HStack gap={3}>
+      <Box w={{ base: "full", md: "auto" }}>
         {user ? (
-          <HStack as="nav">
-              <Form method="post" action="/?index">
+          <VStack as="nav" align="stretch" gap={2} w={{ base: "full", md: "auto" }}>
+            <Form method="post" action="/?index">
               <input type="hidden" name="intent" value="sync" />
-              <Button type="submit" colorScheme="teal" loading={isSyncing} loadingText="Syncing...">
+              <Button type="submit" colorScheme="teal" loading={isSyncing} loadingText="Syncing..." w={{ base: "full", sm: "auto" }}>
                 Sync Library
               </Button>
             </Form>
             <Form method="post" action="/logout">
-              <Button type="submit" variant="outline">Log out</Button>
+              <Button type="submit" variant="outline" w={{ base: "full", sm: "auto" }}>Log out</Button>
             </Form>
-          </HStack>
+          </VStack>
         ) : (
-          <HStack as="nav">
+          <VStack as="nav" align="stretch" w={{ base: "full", md: "auto" }}>
             <a href="/auth/spotify">
-              <Button colorScheme="green">Connect Spotify</Button>
+              <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Connect Spotify</Button>
             </a>
-          </HStack>
+          </VStack>
         )}
-      </HStack>
+      </Box>
     </Flex>
   );
 }
