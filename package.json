@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router build",
+    "vercel-build": "npm run migrate && npm run build",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "tsc --noEmit",
     "migrate": "tsx scripts/migrate.ts"

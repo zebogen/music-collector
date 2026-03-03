@@ -140,6 +140,10 @@ Notes:
 - Runtime queries on Vercel use Neon serverless driver via `@neondatabase/serverless`.
 - Local Docker/local Postgres still use your normal `DATABASE_URL`.
 - `npm run migrate` prefers `DATABASE_URL_UNPOOLED` when set, which is the right choice for Neon schema changes.
+- Vercel build runs `npm run vercel-build`, which does:
+  - `npm run migrate`
+  - `npm run build`
+- That means each deploy applies schema changes automatically before the app build.
 
 ## Scripts
 
