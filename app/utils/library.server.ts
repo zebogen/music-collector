@@ -258,7 +258,7 @@ export async function getLibraryData(
     artists: artistsResult.rows.map(mapArtist),
     albums: albumsResult.rows.map(mapAlbum),
     playlists: playlistsResult.rows.map(mapPlaylist),
-    genres: genresResult.rows.map((row) => row.genre as string),
+    genres: genresResult.rows.map((row: any) => row.genre as string),
     pagination: {
       pageSize,
       artists: {
@@ -383,7 +383,7 @@ export async function getCollections(userId: number): Promise<Collection[]> {
     [userId]
   );
 
-  return result.rows.map((row) => ({
+  return result.rows.map((row: any) => ({
     id: row.id,
     name: row.name,
     description: row.description,

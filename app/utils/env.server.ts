@@ -8,6 +8,7 @@ function requiredEnv(name: string): string {
 
 export const env = {
   DATABASE_URL: requiredEnv("DATABASE_URL"),
+  DATABASE_URL_UNPOOLED: process.env.DATABASE_URL_UNPOOLED,
   SESSION_SECRET: requiredEnv("SESSION_SECRET"),
   SPOTIFY_CLIENT_ID: requiredEnv("SPOTIFY_CLIENT_ID"),
   SPOTIFY_CLIENT_SECRET: requiredEnv("SPOTIFY_CLIENT_SECRET"),

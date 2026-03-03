@@ -1,6 +1,6 @@
 # music-collector
 
-Remix + TypeScript web app for organizing your Spotify library.
+React Router + TypeScript web app for organizing your Spotify library.
 
 ## Features
 
@@ -17,10 +17,10 @@ Remix + TypeScript web app for organizing your Spotify library.
 
 ## Stack
 
-- Remix (Node runtime) + React + TypeScript
-- PostgreSQL (`pg`)
+- React Router framework + React + TypeScript
+- PostgreSQL (`pg`) locally, Neon on Vercel
 - Vite build
-- Vercel adapter (`@vercel/remix`)
+- Vercel adapter (`@vercel/react-router`)
 
 ## Environment Variables
 
@@ -33,6 +33,7 @@ cp .env.example .env
 Required:
 
 - `DATABASE_URL`
+- `DATABASE_URL_UNPOOLED` for Neon migrations on Vercel/local CLI
 - `SESSION_SECRET`
 - `SPOTIFY_CLIENT_ID`
 - `SPOTIFY_CLIENT_SECRET`
@@ -118,11 +119,27 @@ docker compose up --build
 ## Deploy to Vercel
 
 1. Push repo to GitHub/GitLab/Bitbucket.
-2. Import project in Vercel.
-3. Set all env vars from `.env.example` in Vercel Project Settings.
-4. Set `SPOTIFY_REDIRECT_URI` to your deployed callback URL:
+2. Create a Neon project.
+3. Copy two Neon connection strings:
+   - pooled connection string for app runtime
+   - direct/unpooled connection string for migrations
+4. Import project in Vercel.
+5. Set these Vercel env vars:
+   - `DATABASE_URL` = Neon pooled connection string
+   - `DATABASE_URL_UNPOOLED` = Neon direct/unpooled connection string
+   - `SESSION_SECRET`
+   - `SPOTIFY_CLIENT_ID`
+   - `SPOTIFY_CLIENT_SECRET`
+   - `SPOTIFY_REDIRECT_URI`
+   - optional: `BASIC_AUTH_USERNAME`, `BASIC_AUTH_PASSWORD`
+6. Set `SPOTIFY_REDIRECT_URI` to your deployed callback URL:
    - `https://<your-domain>/auth/spotify/callback`
-5. Deploy.
+7. Deploy.
+
+Notes:
+- Runtime queries on Vercel use Neon serverless driver via `@neondatabase/serverless`.
+- Local Docker/local Postgres still use your normal `DATABASE_URL`.
+- `npm run migrate` prefers `DATABASE_URL_UNPOOLED` when set, which is the right choice for Neon schema changes.
 
 ## Scripts
 

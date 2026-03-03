@@ -25,6 +25,7 @@ import ArtistItem from "~/components/ArtistItem";
 import PlaylistItem from "~/components/PlaylistItem";
 import CollectionCard from "~/components/CollectionCard";
 import { useEffect } from "react";
+import type { Album, Artist, Playlist } from "~/types";
 import {
   addAlbumToCollection,
   addArtistToCollection,
@@ -341,7 +342,7 @@ export default function Index() {
     );
   }
 
-  const selectedAlbum = libraryData.albums.find((album) => album.id === filters.selectedAlbumId) ?? null;
+  const selectedAlbum = libraryData.albums.find((album: Album) => album.id === filters.selectedAlbumId) ?? null;
   const selectedAlbumCollections = selectedAlbum
     ? safeCollections.filter((collection) => collection.albums.some((album) => album.id === selectedAlbum.id))
     : [];
@@ -427,7 +428,7 @@ export default function Index() {
               </HStack>
 
               <SimpleGrid columns={[2, 3, 4]} gap={4} mb={4}>
-                {libraryData.albums.map((album) => (
+                {libraryData.albums.map((album: Album) => (
                   <AlbumCard key={album.id} album={album} safeCollections={safeCollections} buildHref={buildHref} />
                 ))}
               </SimpleGrid>
@@ -444,7 +445,7 @@ export default function Index() {
               </HStack>
 
               <Stack gap={3} mb={4}>
-                {libraryData.artists.map((artist) => (
+                {libraryData.artists.map((artist: Artist) => (
                   <HStack key={artist.id} justify="space-between" align="center" p={3} bg="white" borderWidth="1px" borderRadius="md">
                     <Box>
                       <Heading as="h3" size="sm">{artist.name}</Heading>
@@ -481,7 +482,7 @@ export default function Index() {
               </HStack>
 
               <Stack gap={3} mb={4}>
-                {libraryData.playlists.map((playlist) => (
+                {libraryData.playlists.map((playlist: Playlist) => (
                   <Box key={playlist.id} p={3} bg="white" borderWidth="1px" borderRadius="md">
                     <Heading as="h3" size="sm">{playlist.name}</Heading>
                     <Text fontSize="sm" color="gray.600">{playlist.tracksTotal} tracks</Text>
