@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import { Pool as NeonPool } from "@neondatabase/serverless";
 import { Pool as PgPool } from "pg";
 import type { PoolClient, QueryResult } from "pg";
 import { env } from "~/utils/env.server";
@@ -15,8 +15,6 @@ type DbPool = {
   connect: () => Promise<DbClient>;
 };
 
-const require = createRequire(import.meta.url);
-
 function isNeonUrl(connectionString: string) {
   return connectionString.includes("neon.tech") || connectionString.includes("neon.database");
 }
@@ -26,9 +24,7 @@ function normalizeQueryArgs(args: QueryArgs) {
   return { text, values };
 }
 
-function createPgPool(): DbPool {
-  const pool = new PgPool({ connectionString: env.DATABASE_URL, ssl: false });
-
+function wrapPgPool(pool: PgPool): DbPool {
   return {
     query: (...args) => {
       const { text, values } = normalizeQueryArgs(args);
@@ -38,18 +34,14 @@ function createPgPool(): DbPool {
   };
 }
 
-function createNeonPool(): DbPool {
-  const neonModuleName = "@neondatabase/serverless";
-  const { Pool } = require(neonModuleName) as { Pool: new (config: { connectionString: string }) => any };
-  const pool = new Pool({ connectionString: env.DATABASE_URL });
-
+function wrapNeonPool(pool: InstanceType<typeof NeonPool>): DbPool {
   return {
     query: (...args) => {
       const { text, values } = normalizeQueryArgs(args);
       return values ? pool.query(text, values) : pool.query(text);
     },
     connect: async () => {
-      const client = await pool.connect();
+      const client = (await pool.connect()) as PoolClient;
       return {
         query: (...args: QueryArgs) => {
           const { text, values } = normalizeQueryArgs(args);
@@ -63,10 +55,10 @@ function createNeonPool(): DbPool {
 
 function createPool(): DbPool {
   if (isNeonUrl(env.DATABASE_URL) || env.NODE_ENV === "production") {
-    return createNeonPool();
+    return wrapNeonPool(new NeonPool({ connectionString: env.DATABASE_URL }));
   }
 
-  return createPgPool();
+  return wrapPgPool(new PgPool({ connectionString: env.DATABASE_URL, ssl: false }));
 }
 
 declare global {
