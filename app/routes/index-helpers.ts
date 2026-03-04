@@ -37,6 +37,8 @@ export function buildHomeHref(
     playlists: { page: number };
   },
   overrides?: {
+    genre?: string;
+    artist?: string;
     tab?: TabKey;
     artistsPage?: number;
     albumsPage?: number;
@@ -48,11 +50,14 @@ export function buildHomeHref(
 ) {
   const params = new URLSearchParams();
 
-  if (filters.genre) {
-    params.set("genre", filters.genre);
+  const genre = overrides && "genre" in overrides ? overrides.genre : filters.genre;
+  const artist = overrides && "artist" in overrides ? overrides.artist : filters.artist;
+
+  if (genre) {
+    params.set("genre", genre);
   }
-  if (filters.artist) {
-    params.set("artist", filters.artist);
+  if (artist) {
+    params.set("artist", artist);
   }
 
   const tab = overrides?.tab ?? filters.tab;

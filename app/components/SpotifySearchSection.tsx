@@ -1,18 +1,21 @@
 import { Form } from "react-router";
 import { Box, Button, Heading, Image, Input, SimpleGrid, Stack, Text, Link as ChakraLink } from "@chakra-ui/react";
 import type { SpotifySearchAlbum } from "~/types";
+import EmptyState from "~/components/EmptyState";
 
 export default function SpotifySearchSection({
   search,
   results,
   hiddenFields,
   isSearching,
+  clearHref,
   onAdd,
 }: {
   search: string;
   results: SpotifySearchAlbum[];
   hiddenFields: Record<string, string>;
   isSearching: boolean;
+  clearHref: string;
   onAdd: (album: SpotifySearchAlbum) => void;
 }) {
   return (
@@ -32,6 +35,13 @@ export default function SpotifySearchSection({
             <Button type="submit" colorScheme="teal" size="lg" w={{ base: "full", md: "auto" }} loading={isSearching} loadingText="Searching...">
               Search
             </Button>
+            {search ? (
+              <ChakraLink href={clearHref}>
+                <Button variant="outline" size="lg" w={{ base: "full", md: "auto" }}>
+                  Clear
+                </Button>
+              </ChakraLink>
+            ) : null}
           </Stack>
         </Form>
 
@@ -75,7 +85,12 @@ export default function SpotifySearchSection({
                 ))}
               </SimpleGrid>
             ) : (
-              <Text color="gray.500">No Spotify albums found.</Text>
+              <EmptyState
+                title="No Spotify albums found"
+                description="Try a broader title, remove punctuation, or search by artist and album together."
+                actionLabel="Clear Search"
+                actionHref={clearHref}
+              />
             )}
           </Box>
         ) : null}

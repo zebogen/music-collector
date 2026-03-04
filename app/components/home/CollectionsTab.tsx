@@ -21,6 +21,7 @@ import {
   Text
 } from "@chakra-ui/react";
 import type { Collection } from "~/types";
+import EmptyState from "~/components/EmptyState";
 
 export default function CollectionsTab({
   collections,
@@ -65,7 +66,10 @@ export default function CollectionsTab({
       </HStack>
 
       {collections.length === 0 ? (
-        <Text color="gray.500">Create a collection from the sidebar to get started.</Text>
+        <EmptyState
+          title="No collections yet"
+          description="Create a collection from the sidebar, then use album or artist actions to organize what you want to revisit."
+        />
       ) : (
         <>
           <Stack gap={2} mb={5} direction={{ base: "column", md: "row" }} wrap="wrap">

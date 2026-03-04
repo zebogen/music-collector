@@ -292,6 +292,8 @@ export default function Index() {
   const isLoadingData = navigation.state === "loading";
 
   function buildHref(overrides?: {
+    genre?: string;
+    artist?: string;
     tab?: TabKey;
     artistsPage?: number;
     albumsPage?: number;
@@ -311,6 +313,27 @@ export default function Index() {
   const selectedCollectionArtists = selectedCollection?.artists ?? [];
   const selectedCollectionAlbums = selectedCollection?.albums ?? [];
   const currentHref = useMemo(() => buildHref(), [location.search]);
+  const hasActiveFilters = Boolean(filters.genre || filters.artist);
+  const clearFiltersHref = useMemo(
+    () =>
+      buildHref({
+        genre: "",
+        artist: "",
+        artistsPage: 1,
+        albumsPage: 1,
+        playlistsPage: 1,
+        selectedAlbumId: null,
+      }),
+    [location.search]
+  );
+  const clearSearchHref = useMemo(
+    () =>
+      buildHref({
+        search: "",
+        selectedAlbumId: null,
+      }),
+    [location.search]
+  );
   const searchHiddenFields = useMemo(() => {
     const fields: Record<string, string> = {
       tab: filters.tab,
@@ -402,11 +425,19 @@ export default function Index() {
           {/* keep the existing tab content markup for now, wrapped in a Box */}
           {/* legacy tab-nav removed; top tab HStack already provides tabs */}
 
+          {actionData && "error" in actionData && actionData.error ? (
+            <Box mb={{ base: 5, md: 6 }} borderRadius="xl" bg="red.50" borderWidth="1px" borderColor="red.200" px={{ base: 4, md: 5 }} py={{ base: 4, md: 4 }}>
+              <Heading as="h2" size="sm" color="red.700" mb={1}>Action failed</Heading>
+              <Text color="red.700">{actionData.error}</Text>
+            </Box>
+          ) : null}
+
           <SpotifySearchSection
             search={filters.search}
             results={searchResults}
             hiddenFields={searchHiddenFields}
             isSearching={isFiltering}
+            clearHref={clearSearchHref}
             onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
           />
 
@@ -419,6 +450,8 @@ export default function Index() {
               buildHref={buildHref}
               collections={safeCollections}
               onAddToCollection={(targetAlbum) => setAddTarget({ kind: "album", album: targetAlbum })}
+              hasActiveFilters={hasActiveFilters}
+              clearFiltersHref={clearFiltersHref}
             />
           ) : null}
 
@@ -431,6 +464,8 @@ export default function Index() {
               buildHref={buildHref}
               collections={safeCollections}
               onAddToCollection={(artist) => setAddTarget({ kind: "artist", artistId: artist.id, artistName: artist.name })}
+              hasActiveFilters={hasActiveFilters}
+              clearFiltersHref={clearFiltersHref}
             />
           ) : null}
 
@@ -441,6 +476,7 @@ export default function Index() {
               page={libraryData.pagination.playlists.page}
               totalPages={libraryData.pagination.playlists.totalPages}
               buildHref={buildHref}
+              hasPlaylists={libraryData.playlists.length > 0}
             />
           ) : null}
 

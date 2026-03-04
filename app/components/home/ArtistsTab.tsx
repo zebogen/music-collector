@@ -1,6 +1,7 @@
 import { Box, Button, Heading, HStack, Stack, Text } from "@chakra-ui/react";
 import type { Artist, Collection } from "~/types";
 import PaginationControls from "~/components/PaginationControls";
+import EmptyState from "~/components/EmptyState";
 
 export default function ArtistsTab({
   artists,
@@ -10,6 +11,8 @@ export default function ArtistsTab({
   buildHref,
   collections,
   onAddToCollection,
+  hasActiveFilters,
+  clearFiltersHref,
 }: {
   artists: Artist[];
   totalItems: number;
@@ -26,6 +29,8 @@ export default function ArtistsTab({
   }) => string;
   collections: Collection[];
   onAddToCollection: (artist: Artist) => void;
+  hasActiveFilters: boolean;
+  clearFiltersHref: string;
 }) {
   return (
     <>
@@ -34,37 +39,52 @@ export default function ArtistsTab({
         <Text color="gray.500">{totalItems} total</Text>
       </HStack>
 
-      <Stack gap={4} mb={5}>
-        {artists.map((artist) => (
-          <HStack
-            key={artist.id}
-            justify="space-between"
-            align={{ base: "stretch", md: "center" }}
-            direction={{ base: "column", md: "row" }}
-            p={{ base: 4, md: 3 }}
-            bg="white"
-            borderWidth="1px"
-            borderRadius="md"
-          >
-            <Box>
-              <Heading as="h3" size="sm">{artist.name}</Heading>
-              <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
-            </Box>
-            {collections.length > 0 ? (
-              <Button size="sm" colorScheme="teal" onClick={() => onAddToCollection(artist)}>
-                Add to Collection
-              </Button>
-            ) : null}
-          </HStack>
-        ))}
-      </Stack>
+      {artists.length > 0 ? (
+        <>
+          <Stack gap={4} mb={5}>
+            {artists.map((artist) => (
+              <HStack
+                key={artist.id}
+                justify="space-between"
+                align={{ base: "stretch", md: "center" }}
+                direction={{ base: "column", md: "row" }}
+                p={{ base: 4, md: 3 }}
+                bg="white"
+                borderWidth="1px"
+                borderRadius="md"
+              >
+                <Box>
+                  <Heading as="h3" size="sm">{artist.name}</Heading>
+                  <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
+                </Box>
+                {collections.length > 0 ? (
+                  <Button size="sm" colorScheme="teal" onClick={() => onAddToCollection(artist)}>
+                    Add to Collection
+                  </Button>
+                ) : null}
+              </HStack>
+            ))}
+          </Stack>
 
-      <PaginationControls
-        list="artists"
-        currentPage={page}
-        totalPages={totalPages}
-        buildHref={buildHref}
-      />
+          <PaginationControls
+            list="artists"
+            currentPage={page}
+            totalPages={totalPages}
+            buildHref={buildHref}
+          />
+        </>
+      ) : (
+        <EmptyState
+          title={hasActiveFilters ? "No artists match these filters" : "No artists yet"}
+          description={
+            hasActiveFilters
+              ? "Try clearing the current filters to see more artists from your Spotify library."
+              : "Follow artists on Spotify or sync your account again to populate this view."
+          }
+          actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
+          actionHref={hasActiveFilters ? clearFiltersHref : undefined}
+        />
+      )}
     </>
   );
 }

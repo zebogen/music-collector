@@ -54,6 +54,35 @@ test("buildHomeHref preserves filters and applies overrides", () => {
   );
 });
 
+test("buildHomeHref can clear filters and search", () => {
+  const href = buildHomeHref(
+    {
+      genre: "rock",
+      artist: "phoebe",
+      tab: "albums",
+      artistsPage: 2,
+      albumsPage: 3,
+      playlistsPage: 4,
+      selectedAlbumId: null,
+      selectedCollectionId: null,
+      search: "punisher",
+    },
+    {
+      artists: { page: 2 },
+      albums: { page: 3 },
+      playlists: { page: 4 },
+    },
+    {
+      genre: "",
+      artist: "",
+      search: "",
+      albumsPage: 1,
+    }
+  );
+
+  assert.equal(href, "/?tab=albums&artistsPage=2&albumsPage=1&playlistsPage=4");
+});
+
 test("getSelectedCollection returns selected item or first fallback", () => {
   const collections = [
     { id: 1, name: "One", description: null, artists: [], albums: [] },
