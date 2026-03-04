@@ -7,31 +7,29 @@ import {
   Heading,
   Text,
   Button,
-  Input,
   HStack,
   SimpleGrid,
-  Image,
   Link as ChakraLink,
   Stack,
   Spinner
 } from "@chakra-ui/react";
-import { chakra } from "@chakra-ui/react";
 import Sidebar from "~/components/Sidebar";
-import AlbumCard from "~/components/AlbumCard";
 import { useEffect, useMemo, useState } from "react";
-import type { Album, Artist, Playlist, SpotifySearchAlbum } from "~/types";
+import type { Album, SpotifySearchAlbum } from "~/types";
 import {
   addAlbumToCollection,
   addArtistToCollection,
   addSpotifySearchAlbumToCollection,
   createCollection,
+  deleteCollection,
   getCollections,
   getLibraryData,
   removeAlbumFromCollection,
   removeArtistFromCollection,
-  syncSpotifyData
+  syncSpotifyData,
+  updateCollection
 } from "~/utils/library.server";
-import { getUserId, requireUserId } from "~/utils/session.server";
+import { getUserId, redirectWithToast, requireUserId } from "~/utils/session.server";
 import {
   ensureValidAccessToken,
   fetchSpotifyFollowedArtists,
@@ -40,27 +38,16 @@ import {
   searchSpotifyAlbums
 } from "~/utils/spotify.server";
 import { getUserById } from "~/utils/user.server";
-import PaginationControls from "~/components/PaginationControls";
 import SpotifySearchSection from "~/components/SpotifySearchSection";
 import AddToCollectionDialog from "~/components/AddToCollectionDialog";
+import AlbumsTab from "~/components/home/AlbumsTab";
+import ArtistsTab from "~/components/home/ArtistsTab";
+import PlaylistsTab from "~/components/home/PlaylistsTab";
+import CollectionsTab from "~/components/home/CollectionsTab";
+import { buildHomeHref, getSelectedCollection, parseId, parsePage, parseTab, type TabKey } from "./index-helpers";
+import { getOptionalDescription, getPositiveNumber, getRedirectTo, getRequiredName } from "./index-action-helpers";
 
 const PAGE_SIZE = 20;
-const TABS = ["albums", "artists", "playlists", "collections"] as const;
-type TabKey = (typeof TABS)[number];
-
-function parsePage(value: string | null) {
-  const page = Number(value);
-  return Number.isInteger(page) && page > 0 ? page : 1;
-}
-
-function parseTab(value: string | null): TabKey {
-  return TABS.includes(value as TabKey) ? (value as TabKey) : "albums";
-}
-
-function parseId(value: string | null) {
-  const id = Number(value);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserId(request);
@@ -136,12 +123,12 @@ export async function action({ request }: ActionFunctionArgs) {
     ]);
 
     await syncSpotifyData({ userId, artists, albums, playlists });
-    return redirect("/");
+    return redirectWithToast(request, "/", { type: "success", title: "Library synced" });
   }
 
   if (intent === "create_collection") {
-    const name = String(formData.get("name") ?? "").trim();
-    const description = String(formData.get("description") ?? "").trim();
+    const name = getRequiredName(formData);
+    const description = getOptionalDescription(formData);
 
     if (!name) {
       return data({ error: "Collection name is required" }, { status: 400 });
@@ -155,39 +142,74 @@ export async function action({ request }: ActionFunctionArgs) {
       }
       throw error;
     }
-    return redirect("/");
+    return redirectWithToast(request, "/", { type: "success", title: "Collection created" });
+  }
+
+  if (intent === "update_collection") {
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const name = getRequiredName(formData);
+    const description = getOptionalDescription(formData);
+    const redirectTo = getRedirectTo(formData);
+
+    if (!name) {
+      return data({ error: "Collection name is required" }, { status: 400 });
+    }
+
+    try {
+      if (collectionId) {
+        await updateCollection({ userId, collectionId, name, description });
+      }
+    } catch (error: any) {
+      if (error?.code === "23505") {
+        return data({ error: "Collection title already exists." }, { status: 409 });
+      }
+      throw error;
+    }
+
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Collection updated" });
+  }
+
+  if (intent === "delete_collection") {
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const redirectTo = getRedirectTo(formData);
+
+    if (collectionId) {
+      await deleteCollection({ userId, collectionId });
+    }
+
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Collection deleted" });
   }
 
   if (intent === "add_album_to_collection") {
-    const collectionId = Number(formData.get("collectionId"));
-    const albumId = Number(formData.get("albumId"));
-    const redirectTo = String(formData.get("redirectTo") ?? "/");
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const albumId = getPositiveNumber(formData, "albumId");
+    const redirectTo = getRedirectTo(formData);
 
-    if (collectionId > 0 && albumId > 0) {
+    if (collectionId && albumId) {
       await addAlbumToCollection({ collectionId, albumId, userId });
     }
 
-    return redirect(redirectTo);
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Album added to collection" });
   }
 
   if (intent === "add_artist_to_collection") {
-    const collectionId = Number(formData.get("collectionId"));
-    const artistId = Number(formData.get("artistId"));
-    const redirectTo = String(formData.get("redirectTo") ?? "/");
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const artistId = getPositiveNumber(formData, "artistId");
+    const redirectTo = getRedirectTo(formData);
 
-    if (collectionId > 0 && artistId > 0) {
+    if (collectionId && artistId) {
       await addArtistToCollection({ collectionId, artistId, userId });
     }
 
-    return redirect(redirectTo);
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Artist added to collection" });
   }
 
   if (intent === "add_search_album_to_collection") {
-    const collectionId = Number(formData.get("collectionId"));
-    const redirectTo = String(formData.get("redirectTo") ?? "/");
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const redirectTo = getRedirectTo(formData);
     const rawArtistNames = String(formData.get("artistNames") ?? "[]");
 
-    if (collectionId > 0) {
+    if (collectionId) {
       await addSpotifySearchAlbumToCollection({
         userId,
         collectionId,
@@ -202,31 +224,31 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    return redirect(redirectTo);
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Album added to collection" });
   }
 
   if (intent === "remove_album_from_collection") {
-    const collectionId = Number(formData.get("collectionId"));
-    const albumId = Number(formData.get("albumId"));
-    const redirectTo = String(formData.get("redirectTo") ?? "/");
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const albumId = getPositiveNumber(formData, "albumId");
+    const redirectTo = getRedirectTo(formData);
 
-    if (collectionId > 0 && albumId > 0) {
+    if (collectionId && albumId) {
       await removeAlbumFromCollection({ collectionId, albumId, userId });
     }
 
-    return redirect(redirectTo);
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Album removed from collection" });
   }
 
   if (intent === "remove_artist_from_collection") {
-    const collectionId = Number(formData.get("collectionId"));
-    const artistId = Number(formData.get("artistId"));
-    const redirectTo = String(formData.get("redirectTo") ?? "/");
+    const collectionId = getPositiveNumber(formData, "collectionId");
+    const artistId = getPositiveNumber(formData, "artistId");
+    const redirectTo = getRedirectTo(formData);
 
-    if (collectionId > 0 && artistId > 0) {
+    if (collectionId && artistId) {
       await removeArtistFromCollection({ collectionId, artistId, userId });
     }
 
-    return redirect(redirectTo);
+    return redirectWithToast(request, redirectTo, { type: "success", title: "Artist removed from collection" });
   }
 
   return redirect("/");
@@ -265,6 +287,8 @@ export default function Index() {
   const pendingSpotifyId = String(navigation.formData?.get("spotifyId") ?? "");
   const isFiltering = navigation.state !== "idle" && navigation.formMethod?.toUpperCase() === "GET";
   const isCreatingCollection = navigation.state === "submitting" && pendingIntent === "create_collection";
+  const isSavingCollection = navigation.state === "submitting" && pendingIntent === "update_collection";
+  const isDeletingCollection = navigation.state === "submitting" && pendingIntent === "delete_collection";
   const isLoadingData = navigation.state === "loading";
 
   function buildHref(overrides?: {
@@ -276,48 +300,14 @@ export default function Index() {
     selectedCollectionId?: number | null;
     search?: string;
   }) {
-    const params = new URLSearchParams();
-
-    if (filters.genre) {
-      params.set("genre", filters.genre);
-    }
-    if (filters.artist) {
-      params.set("artist", filters.artist);
-    }
-
-    const tab = overrides?.tab ?? filters.tab;
-    const artistsPage = overrides?.artistsPage ?? pageData.pagination.artists.page;
-    const albumsPage = overrides?.albumsPage ?? pageData.pagination.albums.page;
-    const playlistsPage = overrides?.playlistsPage ?? pageData.pagination.playlists.page;
-    const selectedAlbumId =
-      overrides && "selectedAlbumId" in overrides ? overrides.selectedAlbumId : filters.selectedAlbumId;
-    const selectedCollectionId =
-      overrides && "selectedCollectionId" in overrides ? overrides.selectedCollectionId : filters.selectedCollectionId;
-    const search = overrides && "search" in overrides ? overrides.search : filters.search;
-
-    params.set("tab", tab);
-    params.set("artistsPage", String(artistsPage));
-    params.set("albumsPage", String(albumsPage));
-    params.set("playlistsPage", String(playlistsPage));
-    if (selectedAlbumId) {
-      params.set("album", String(selectedAlbumId));
-    }
-    if (selectedCollectionId) {
-      params.set("collection", String(selectedCollectionId));
-    }
-    if (search) {
-      params.set("search", search);
-    }
-
-    return `/?${params.toString()}`;
+    return buildHomeHref(filters, pageData.pagination, overrides);
   }
 
   const selectedAlbum = libraryData.albums.find((album: Album) => album.id === filters.selectedAlbumId) ?? null;
   const selectedAlbumCollections = selectedAlbum
     ? safeCollections.filter((collection) => collection.albums.some((album) => album.id === selectedAlbum.id))
     : [];
-  const selectedCollection =
-    safeCollections.find((collection) => collection.id === filters.selectedCollectionId) ?? safeCollections[0] ?? null;
+  const selectedCollection = getSelectedCollection(safeCollections, filters.selectedCollectionId);
   const selectedCollectionArtists = selectedCollection?.artists ?? [];
   const selectedCollectionAlbums = selectedCollection?.albums ?? [];
   const currentHref = useMemo(() => buildHref(), [location.search]);
@@ -421,198 +411,53 @@ export default function Index() {
           />
 
           {filters.tab === "albums" ? (
-            <>
-              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
-                <Heading as="h2" size="lg">Saved Albums</Heading>
-                <Text color="gray.500">{libraryData.pagination.albums.totalItems} total</Text>
-              </HStack>
-
-              <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 4 }} gap={{ base: 5, md: 4 }} mb={5}>
-                {libraryData.albums.map((album: Album) => (
-                  <AlbumCard
-                    key={album.id}
-                    album={album}
-                    buildHref={buildHref}
-                    canAddToCollection={safeCollections.length > 0}
-                    onAddToCollection={(targetAlbum) => setAddTarget({ kind: "album", album: targetAlbum })}
-                  />
-                ))}
-              </SimpleGrid>
-
-              <PaginationControls
-                list="albums"
-                currentPage={libraryData.pagination.albums.page}
-                totalPages={libraryData.pagination.albums.totalPages}
-                buildHref={buildHref}
-              />
-            </>
+            <AlbumsTab
+              albums={libraryData.albums}
+              totalItems={libraryData.pagination.albums.totalItems}
+              page={libraryData.pagination.albums.page}
+              totalPages={libraryData.pagination.albums.totalPages}
+              buildHref={buildHref}
+              collections={safeCollections}
+              onAddToCollection={(targetAlbum) => setAddTarget({ kind: "album", album: targetAlbum })}
+            />
           ) : null}
 
           {filters.tab === "artists" ? (
-            <>
-              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
-                <Heading as="h2" size="lg">Artists</Heading>
-                <Text color="gray.500">{libraryData.pagination.artists.totalItems} total</Text>
-              </HStack>
-
-              <Stack gap={4} mb={5}>
-                {libraryData.artists.map((artist: Artist) => (
-                  <HStack
-                    key={artist.id}
-                    justify="space-between"
-                    align={{ base: "stretch", md: "center" }}
-                    direction={{ base: "column", md: "row" }}
-                    p={{ base: 4, md: 3 }}
-                    bg="white"
-                    borderWidth="1px"
-                    borderRadius="md"
-                  >
-                    <Box>
-                      <Heading as="h3" size="sm">{artist.name}</Heading>
-                      <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
-                    </Box>
-                    {safeCollections.length > 0 ? (
-                      <Button size="sm" colorScheme="teal" onClick={() => setAddTarget({ kind: "artist", artistId: artist.id, artistName: artist.name })}>
-                        Add to Collection
-                      </Button>
-                    ) : null}
-                  </HStack>
-                ))}
-              </Stack>
-
-              <PaginationControls
-                list="artists"
-                currentPage={libraryData.pagination.artists.page}
-                totalPages={libraryData.pagination.artists.totalPages}
-                buildHref={buildHref}
-              />
-            </>
+            <ArtistsTab
+              artists={libraryData.artists}
+              totalItems={libraryData.pagination.artists.totalItems}
+              page={libraryData.pagination.artists.page}
+              totalPages={libraryData.pagination.artists.totalPages}
+              buildHref={buildHref}
+              collections={safeCollections}
+              onAddToCollection={(artist) => setAddTarget({ kind: "artist", artistId: artist.id, artistName: artist.name })}
+            />
           ) : null}
 
           {filters.tab === "playlists" ? (
-            <>
-              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
-                <Heading as="h2" size="lg">Playlists</Heading>
-                <Text color="gray.500">{libraryData.pagination.playlists.totalItems} total</Text>
-              </HStack>
-
-              <Stack gap={4} mb={5}>
-                {libraryData.playlists.map((playlist: Playlist) => (
-                  <Box key={playlist.id} p={{ base: 4, md: 3 }} bg="white" borderWidth="1px" borderRadius="xl">
-                    <Heading as="h3" size="sm">{playlist.name}</Heading>
-                    <Text fontSize="sm" color="gray.600" mt={1}>{playlist.tracksTotal} tracks</Text>
-                  </Box>
-                ))}
-              </Stack>
-
-              <PaginationControls
-                list="playlists"
-                currentPage={libraryData.pagination.playlists.page}
-                totalPages={libraryData.pagination.playlists.totalPages}
-                buildHref={buildHref}
-              />
-            </>
+            <PlaylistsTab
+              playlists={libraryData.playlists}
+              totalItems={libraryData.pagination.playlists.totalItems}
+              page={libraryData.pagination.playlists.page}
+              totalPages={libraryData.pagination.playlists.totalPages}
+              buildHref={buildHref}
+            />
           ) : null}
 
           {filters.tab === "collections" ? (
-            <>
-              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
-                <Heading as="h2" size="lg">Collections</Heading>
-                <Text color="gray.500">{safeCollections.length} total</Text>
-              </HStack>
-
-              {safeCollections.length === 0 ? (
-                <Text color="gray.500">Create a collection from the sidebar to get started.</Text>
-              ) : (
-                <>
-                  <Stack gap={2} mb={5} direction={{ base: "column", md: "row" }} wrap="wrap">
-                    {safeCollections.map((collection) => (
-                      <ChakraLink key={collection.id} href={buildHref({ tab: "collections", selectedCollectionId: collection.id })}>
-                        <Button size="sm" variant={selectedCollection?.id === collection.id ? "solid" : "ghost"} w={{ base: "full", md: "auto" }}>{collection.name}</Button>
-                      </ChakraLink>
-                    ))}
-                  </Stack>
-
-                  {selectedCollection ? (
-                    <Box>
-                      <Heading as="h3" size="md">{selectedCollection.name}</Heading>
-                      <Text color="gray.500" mb={3}>{selectedCollection.description || "No description"}</Text>
-
-                      <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
-                      {selectedCollectionAlbums.length > 0 ? (
-                        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 4 }} gap={{ base: 4, md: 3 }} mb={5}>
-                          {selectedCollectionAlbums.map((album) => (
-                            <Box key={album.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
-                              {album.imageUrl ? (
-                                <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" maxH="140px" mb={2} />
-                              ) : (
-                                <Box height="100px" bg="gray.100" mb={2} display="flex" alignItems="center" justifyContent="center">Album</Box>
-                              )}
-                              <Text fontWeight="semibold">{album.name}</Text>
-                              <Text fontSize="sm" color="gray.600" mb={2}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
-                              <Stack gap={2} direction={{ base: "column", sm: "row" }}>
-                                <ChakraLink href={`spotify:album:${album.spotifyId}`}>
-                                  <Button size="xs">Open in App</Button>
-                                </ChakraLink>
-                                <Form method="post">
-                                  <input type="hidden" name="intent" value="remove_album_from_collection" />
-                                  <input type="hidden" name="collectionId" value={selectedCollection.id} />
-                                  <input type="hidden" name="albumId" value={album.id} />
-                                  <input type="hidden" name="redirectTo" value={buildHref()} />
-                                  <Button
-                                    type="submit"
-                                    size="xs"
-                                    variant="outline"
-                                    colorScheme="red"
-                                    loading={navigation.state === "submitting" && pendingIntent === "remove_album_from_collection" && pendingAlbumId === album.id}
-                                    loadingText="Removing..."
-                                  >
-                                    Remove
-                                  </Button>
-                                </Form>
-                              </Stack>
-                            </Box>
-                          ))}
-                        </SimpleGrid>
-                      ) : (
-                        <Text color="gray.500">No albums in this collection yet.</Text>
-                      )}
-
-                      <Heading as="h4" size="sm" mt={4} mb={2}>Artists</Heading>
-                      {selectedCollectionArtists.length > 0 ? (
-                        <Stack gap={2}>
-                          {selectedCollectionArtists.map((artist) => (
-                            <Box key={artist.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
-                              <Text fontWeight="semibold">{artist.name}</Text>
-                              <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
-                              <Form method="post">
-                                <input type="hidden" name="intent" value="remove_artist_from_collection" />
-                                <input type="hidden" name="collectionId" value={selectedCollection.id} />
-                                <input type="hidden" name="artistId" value={artist.id} />
-                                <input type="hidden" name="redirectTo" value={buildHref()} />
-                                <Button
-                                  type="submit"
-                                  size="xs"
-                                  variant="outline"
-                                  colorScheme="red"
-                                  mt={2}
-                                  loading={navigation.state === "submitting" && pendingIntent === "remove_artist_from_collection" && pendingArtistId === artist.id}
-                                  loadingText="Removing..."
-                                >
-                                  Remove
-                                </Button>
-                              </Form>
-                            </Box>
-                          ))}
-                        </Stack>
-                      ) : (
-                        <Text color="gray.500">No artists in this collection yet.</Text>
-                      )}
-                    </Box>
-                  ) : null}
-                </>
-              )}
-            </>
+            <CollectionsTab
+              collections={safeCollections}
+              selectedCollection={selectedCollection}
+              selectedCollectionAlbums={selectedCollectionAlbums}
+              selectedCollectionArtists={selectedCollectionArtists}
+              buildHref={buildHref}
+              pendingAlbumId={pendingAlbumId}
+              pendingArtistId={pendingArtistId}
+              pendingIntent={pendingIntent}
+              isSavingCollection={isSavingCollection}
+              isDeletingCollection={isDeletingCollection}
+              actionError={actionData && "error" in actionData ? actionData.error : null}
+            />
           ) : null}
         </Box>
 

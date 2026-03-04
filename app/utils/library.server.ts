@@ -290,6 +290,29 @@ export async function createCollection(input: { userId: number; name: string; de
   );
 }
 
+export async function updateCollection(input: { userId: number; collectionId: number; name: string; description?: string }) {
+  await db.query(
+    `
+      UPDATE collections
+      SET name = $3,
+          description = $4,
+          updated_at = NOW()
+      WHERE id = $1 AND user_id = $2
+    `,
+    [input.collectionId, input.userId, input.name, input.description ?? null]
+  );
+}
+
+export async function deleteCollection(input: { userId: number; collectionId: number }) {
+  await db.query(
+    `
+      DELETE FROM collections
+      WHERE id = $1 AND user_id = $2
+    `,
+    [input.collectionId, input.userId]
+  );
+}
+
 export async function addArtistToCollection(input: { collectionId: number; artistId: number; userId: number }) {
   await db.query(
     `

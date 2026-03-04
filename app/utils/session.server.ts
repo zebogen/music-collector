@@ -14,9 +14,39 @@ const storage = createCookieSessionStorage({
 });
 
 const USER_SESSION_KEY = "userId";
+const TOAST_SESSION_KEY = "toast";
+
+export type AppToast = {
+  type: "success" | "error";
+  title: string;
+  description?: string;
+};
 
 export async function getSession(request: Request) {
   return storage.getSession(request.headers.get("Cookie"));
+}
+
+export async function getToast(request: Request) {
+  const session = await getSession(request);
+  const toast = session.get(TOAST_SESSION_KEY) as AppToast | undefined;
+
+  return {
+    toast: toast ?? null,
+    headers: {
+      "Set-Cookie": await storage.commitSession(session)
+    }
+  };
+}
+
+export async function redirectWithToast(request: Request, redirectTo: string, toast: AppToast) {
+  const session = await getSession(request);
+  session.flash(TOAST_SESSION_KEY, toast);
+
+  return redirect(redirectTo, {
+    headers: {
+      "Set-Cookie": await storage.commitSession(session)
+    }
+  });
 }
 
 export async function getUserId(request: Request) {
