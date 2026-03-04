@@ -54,6 +54,23 @@ export async function getUserBySpotifyUserId(spotifyUserId: string) {
   return result.rowCount ? mapUser(result.rows[0]) : null;
 }
 
+export async function getUserIdByAuth0Sub(auth0Sub: string) {
+  const result = await db.query("SELECT user_id FROM auth_identities WHERE auth0_sub = $1", [auth0Sub]);
+  return result.rowCount ? (result.rows[0].user_id as number) : null;
+}
+
+export async function linkAuth0Identity(auth0Sub: string, userId: number) {
+  await db.query(
+    `
+      INSERT INTO auth_identities (auth0_sub, user_id)
+      VALUES ($1, $2)
+      ON CONFLICT (auth0_sub)
+      DO UPDATE SET user_id = EXCLUDED.user_id
+    `,
+    [auth0Sub, userId]
+  );
+}
+
 export async function updateUserTokens(userId: number, input: { accessToken: string; refreshToken: string; tokenExpiresAt: Date }) {
   await db.query(
     `

@@ -30,7 +30,7 @@ import {
   syncSpotifyData,
   updateCollection
 } from "~/utils/library.server";
-import { getUserId, requireUserId } from "~/utils/session.server";
+import { getAuthSession, getUserId, requireUserId } from "~/utils/session.server";
 import {
   ensureValidAccessToken,
   fetchSpotifyFollowedArtists,
@@ -51,10 +51,32 @@ import { getOptionalDescription, getPositiveNumber, getRedirectTo, getRequiredNa
 const PAGE_SIZE = 20;
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const userId = await getUserId(request);
+  const auth = await getAuthSession(request);
+  const userId = auth.userId;
+
+  if (!auth.auth0Sub) {
+    return {
+      authenticated: false,
+      connected: false,
+      libraryData: null,
+      collections: [],
+      filters: {
+        genre: "",
+        artist: "",
+        tab: "albums" as TabKey,
+        artistsPage: 1,
+        albumsPage: 1,
+        playlistsPage: 1,
+        selectedAlbumId: null as number | null,
+        selectedCollectionId: null as number | null,
+        search: ""
+      }
+    };
+  }
 
   if (!userId) {
     return {
+      authenticated: true,
       connected: false,
       libraryData: null,
       collections: [],
@@ -96,6 +118,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   ]);
 
   return {
+    authenticated: true,
     connected: true,
     libraryData,
     collections,
@@ -254,7 +277,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Index() {
-  const { connected, libraryData, collections, filters } = useLoaderData<typeof loader>();
+  const { authenticated, connected, libraryData, collections, filters } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const fetchers = useFetchers();
   const navigate = useNavigate();
@@ -269,14 +292,28 @@ export default function Index() {
   const [clientToast, setClientToast] = useState<{ type: "success" | "error"; title: string; description?: string } | null>(null);
   const [lastToastKey, setLastToastKey] = useState("");
 
+  if (!authenticated) {
+    return (
+      <Box p={6} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" textAlign="center">
+        <Heading as="h2" size="lg" mb={2}>Log in to continue</Heading>
+        <Text mb={4} color="app.muted">Use Auth0 to sign in to the app, then connect Spotify to sync and organize your library.</Text>
+        <ChakraLink asChild>
+          <Link to="/auth/login" prefetch="intent" viewTransition>
+            <Button colorScheme="green">Log In</Button>
+          </Link>
+        </ChakraLink>
+      </Box>
+    );
+  }
+
   if (!connected || !libraryData) {
     return (
       <Box p={6} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" textAlign="center">
         <Heading as="h2" size="lg" mb={2}>Connect your Spotify account</Heading>
-        <Text mb={4} color="app.muted">Sign in with Spotify to import your library, playlists, and organize custom collections.</Text>
+        <Text mb={4} color="app.muted">Your Auth0 login is active. Connect Spotify to import your library, playlists, and organize custom collections.</Text>
         <ChakraLink asChild>
           <Link to="/auth/spotify" prefetch="intent" viewTransition>
-          <Button colorScheme="green">Connect Spotify</Button>
+            <Button colorScheme="green">Connect Spotify</Button>
           </Link>
         </ChakraLink>
       </Box>

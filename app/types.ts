@@ -7,6 +7,13 @@ export type DbUser = {
   tokenExpiresAt: Date;
 };
 
+export type AuthSessionUser = {
+  auth0Sub: string;
+  displayName: string | null;
+  email: string | null;
+  userId: number | null;
+};
+
 export type Artist = {
   id: number;
   spotifyId: string;

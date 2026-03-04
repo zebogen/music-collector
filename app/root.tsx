@@ -3,7 +3,7 @@ import { data, Links, Meta, Outlet, Scripts, ScrollRestoration, useFetchers, use
 import { Box, CloseButton, Spinner, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import Topbar from "~/components/Topbar";
-import { getToast, getUserId } from "~/utils/session.server";
+import { getAuthSession, getToast } from "~/utils/session.server";
 import { getUserById } from "~/utils/user.server";
 import { Chakra } from "~/chakra";
 
@@ -14,13 +14,19 @@ export const meta = () => [
 ];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const userId = await getUserId(request);
-  const user = userId ? await getUserById(userId) : null;
+  const auth = await getAuthSession(request);
+  const user = auth.userId ? await getUserById(auth.userId) : null;
   const { toast, headers } = await getToast(request);
 
   return data(
     {
-      user: user ? { id: user.id, displayName: user.displayName } : null,
+      user: auth.auth0Sub
+        ? {
+            id: auth.userId ?? auth.auth0Sub,
+            displayName: auth.auth0Name ?? user?.displayName ?? "User",
+            spotifyConnected: Boolean(user),
+          }
+        : null,
       toast
     },
     { headers }

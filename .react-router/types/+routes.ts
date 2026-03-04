@@ -23,6 +23,9 @@ type Pages = {
   "/api/spotify-search": {
     params: {};
   };
+  "/auth/callback": {
+    params: {};
+  };
   "/index-helpers": {
     params: {};
   };
@@ -35,6 +38,9 @@ type Pages = {
   "/auth/spotify/callback": {
     params: {};
   };
+  "/auth/login": {
+    params: {};
+  };
   "/logout": {
     params: {};
   };
@@ -43,7 +49,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/logout";
+    page: "/" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/auth/login" | "/logout";
   };
   "routes/index-action-helpers.ts": {
     id: "routes/index-action-helpers";
@@ -56,6 +62,10 @@ type RouteFiles = {
   "routes/api.spotify-search.ts": {
     id: "routes/api.spotify-search";
     page: "/api/spotify-search";
+  };
+  "routes/auth.callback.tsx": {
+    id: "routes/auth.callback";
+    page: "/auth/callback";
   };
   "routes/index-helpers.ts": {
     id: "routes/index-helpers";
@@ -73,6 +83,10 @@ type RouteFiles = {
     id: "routes/auth.spotify.callback";
     page: "/auth/spotify/callback";
   };
+  "routes/auth.login.tsx": {
+    id: "routes/auth.login";
+    page: "/auth/login";
+  };
   "routes/_index.tsx": {
     id: "routes/_index";
     page: "/";
@@ -88,10 +102,12 @@ type RouteModules = {
   "routes/index-action-helpers": typeof import("./app/routes/index-action-helpers.ts");
   "routes/index-action-helpers.test": typeof import("./app/routes/index-action-helpers.test.ts");
   "routes/api.spotify-search": typeof import("./app/routes/api.spotify-search.ts");
+  "routes/auth.callback": typeof import("./app/routes/auth.callback.tsx");
   "routes/index-helpers": typeof import("./app/routes/index-helpers.ts");
   "routes/index-helpers.test": typeof import("./app/routes/index-helpers.test.ts");
   "routes/auth.spotify": typeof import("./app/routes/auth.spotify.tsx");
   "routes/auth.spotify.callback": typeof import("./app/routes/auth.spotify.callback.tsx");
+  "routes/auth.login": typeof import("./app/routes/auth.login.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");
   "routes/logout": typeof import("./app/routes/logout.tsx");
 };

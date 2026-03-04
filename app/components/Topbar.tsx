@@ -17,7 +17,7 @@ export default function Topbar({
   user,
   isLoggingOut
 }: {
-  user: { id: string | number; displayName?: string | null } | null;
+  user: { id: string | number; displayName?: string | null; spotifyConnected?: boolean } | null;
   isLoggingOut: boolean;
 }) {
   const syncFetcher = useFetcher<{ ok?: boolean; toast?: { type: "success" | "error"; title: string } }>();
@@ -54,21 +54,23 @@ export default function Topbar({
               </MenuTrigger>
               <MenuPositioner>
                 <MenuContent minW="180px">
-                  <syncFetcher.Form method="post" action="/?index">
-                    <input type="hidden" name="intent" value="sync" />
-                    <MenuItem asChild value="sync">
-                      <Button
-                        type="submit"
-                        justifyContent="flex-start"
-                        variant="ghost"
-                        w="full"
-                        loading={isSyncing}
-                        loadingText="Syncing..."
-                      >
-                        Sync Library
-                      </Button>
-                    </MenuItem>
-                  </syncFetcher.Form>
+                  {user.spotifyConnected ? (
+                    <syncFetcher.Form method="post" action="/?index">
+                      <input type="hidden" name="intent" value="sync" />
+                      <MenuItem asChild value="sync">
+                        <Button
+                          type="submit"
+                          justifyContent="flex-start"
+                          variant="ghost"
+                          w="full"
+                          loading={isSyncing}
+                          loadingText="Syncing..."
+                        >
+                          Sync Library
+                        </Button>
+                      </MenuItem>
+                    </syncFetcher.Form>
+                  ) : null}
                   <Form method="post" action="/logout">
                     <MenuItem asChild value="logout">
                       <Button
@@ -89,8 +91,8 @@ export default function Topbar({
           </Flex>
         ) : (
           <Box as="nav" w={{ base: "full", md: "auto" }}>
-            <Link to="/auth/spotify" prefetch="intent" viewTransition>
-              <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Connect Spotify</Button>
+            <Link to="/auth/login" prefetch="intent" viewTransition>
+              <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Log In</Button>
             </Link>
           </Box>
         )}

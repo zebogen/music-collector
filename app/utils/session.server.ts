@@ -15,6 +15,11 @@ const storage = createCookieSessionStorage({
 
 const USER_SESSION_KEY = "userId";
 const TOAST_SESSION_KEY = "toast";
+const AUTH0_SUB_SESSION_KEY = "auth0Sub";
+const AUTH0_NAME_SESSION_KEY = "auth0Name";
+const AUTH0_EMAIL_SESSION_KEY = "auth0Email";
+const AUTH0_STATE_SESSION_KEY = "auth0State";
+const AUTH0_RETURN_TO_SESSION_KEY = "auth0ReturnTo";
 
 export type AppToast = {
   type: "success" | "error";
@@ -55,12 +60,98 @@ export async function getUserId(request: Request) {
   return typeof userId === "number" ? userId : null;
 }
 
+export async function getAuthSession(request: Request) {
+  const session = await getSession(request);
+
+  return {
+    auth0Sub: (session.get(AUTH0_SUB_SESSION_KEY) as string | undefined) ?? null,
+    auth0Name: (session.get(AUTH0_NAME_SESSION_KEY) as string | undefined) ?? null,
+    auth0Email: (session.get(AUTH0_EMAIL_SESSION_KEY) as string | undefined) ?? null,
+    userId: (session.get(USER_SESSION_KEY) as number | undefined) ?? null,
+  };
+}
+
 export async function requireUserId(request: Request) {
   const userId = await getUserId(request);
   if (!userId) {
     throw redirect("/");
   }
   return userId;
+}
+
+export async function requireAuth0Sub(request: Request) {
+  const auth = await getAuthSession(request);
+  if (!auth.auth0Sub) {
+    throw redirect("/auth/login");
+  }
+  return auth.auth0Sub;
+}
+
+export async function createAuthSession(input: {
+  auth0Sub: string;
+  auth0Name?: string | null;
+  auth0Email?: string | null;
+  userId?: number | null;
+  redirectTo: string;
+}) {
+  const session = await storage.getSession();
+  session.set(AUTH0_SUB_SESSION_KEY, input.auth0Sub);
+  session.set(AUTH0_NAME_SESSION_KEY, input.auth0Name ?? null);
+  session.set(AUTH0_EMAIL_SESSION_KEY, input.auth0Email ?? null);
+  if (input.userId) {
+    session.set(USER_SESSION_KEY, input.userId);
+  } else {
+    session.unset(USER_SESSION_KEY);
+  }
+
+  return redirect(input.redirectTo, {
+    headers: {
+      "Set-Cookie": await storage.commitSession(session)
+    }
+  });
+}
+
+export async function attachUserToSession(request: Request, userId: number, redirectTo: string) {
+  const session = await getSession(request);
+  session.set(USER_SESSION_KEY, userId);
+
+  return redirect(redirectTo, {
+    headers: {
+      "Set-Cookie": await storage.commitSession(session)
+    }
+  });
+}
+
+export async function beginAuth0Login(request: Request, input: { state: string; returnTo: string }) {
+  const session = await getSession(request);
+  session.set(AUTH0_STATE_SESSION_KEY, input.state);
+  session.set(AUTH0_RETURN_TO_SESSION_KEY, input.returnTo);
+
+  return {
+    headers: {
+      "Set-Cookie": await storage.commitSession(session)
+    }
+  };
+}
+
+export async function consumeAuth0Login(request: Request, state: string) {
+  const session = await getSession(request);
+  const expectedState = session.get(AUTH0_STATE_SESSION_KEY);
+  const returnTo = (session.get(AUTH0_RETURN_TO_SESSION_KEY) as string | undefined) ?? "/";
+
+  if (!expectedState || expectedState !== state) {
+    throw new Error("Invalid Auth0 state");
+  }
+
+  session.unset(AUTH0_STATE_SESSION_KEY);
+  session.unset(AUTH0_RETURN_TO_SESSION_KEY);
+
+  return {
+    returnTo,
+    headers: {
+      "Set-Cookie": await storage.commitSession(session)
+    }
+  };
 }
 
 export async function createUserSession(userId: number, redirectTo: string) {

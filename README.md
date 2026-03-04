@@ -4,7 +4,8 @@ React Router + TypeScript web app for organizing your Spotify library.
 
 ## Features
 
-- Connect to Spotify OAuth
+- Log in with Auth0
+- Link a Spotify account
 - Sync and display:
   - Followed artists
   - Saved albums
@@ -35,6 +36,11 @@ Required:
 - `DATABASE_URL`
 - `DATABASE_URL_UNPOOLED` for Neon migrations on Vercel/local CLI
 - `SESSION_SECRET`
+- `AUTH0_DOMAIN`
+- `AUTH0_CLIENT_ID`
+- `AUTH0_CLIENT_SECRET`
+- `AUTH0_REDIRECT_URI`
+- `AUTH0_LOGOUT_RETURN_TO`
 - `SPOTIFY_CLIENT_ID`
 - `SPOTIFY_CLIENT_SECRET`
 - `SPOTIFY_REDIRECT_URI`
@@ -43,6 +49,22 @@ Optional (used in production basic auth):
 
 - `BASIC_AUTH_USERNAME`
 - `BASIC_AUTH_PASSWORD`
+
+## Auth0 Setup
+
+1. Create an application in Auth0.
+2. Add allowed callback URL:
+   - `http://127.0.0.1:5173/auth/callback` for local dev
+   - your production URL + `/auth/callback` in production
+3. Add allowed logout URL:
+   - `http://127.0.0.1:5173` for local dev
+   - your production app URL in production
+4. Add Auth0 values to `.env`:
+   - `AUTH0_DOMAIN`
+   - `AUTH0_CLIENT_ID`
+   - `AUTH0_CLIENT_SECRET`
+   - `AUTH0_REDIRECT_URI`
+   - `AUTH0_LOGOUT_RETURN_TO`
 
 ## Spotify App Setup
 
@@ -84,6 +106,11 @@ cp .env.docker.example .env.docker
 
 2. Set Spotify values in `.env.docker`:
 
+   - `AUTH0_DOMAIN`
+   - `AUTH0_CLIENT_ID`
+   - `AUTH0_CLIENT_SECRET`
+   - `AUTH0_REDIRECT_URI=http://127.0.0.1:5173/auth/callback`
+   - `AUTH0_LOGOUT_RETURN_TO=http://127.0.0.1:5173`
    - `SPOTIFY_CLIENT_ID`
    - `SPOTIFY_CLIENT_SECRET`
    - `SPOTIFY_REDIRECT_URI=http://127.0.0.1:5173/auth/spotify/callback`
@@ -128,18 +155,26 @@ docker compose up --build
    - `DATABASE_URL` = Neon pooled connection string
    - `DATABASE_URL_UNPOOLED` = Neon direct/unpooled connection string
    - `SESSION_SECRET`
+   - `AUTH0_DOMAIN`
+   - `AUTH0_CLIENT_ID`
+   - `AUTH0_CLIENT_SECRET`
+   - `AUTH0_REDIRECT_URI`
+   - `AUTH0_LOGOUT_RETURN_TO`
    - `SPOTIFY_CLIENT_ID`
    - `SPOTIFY_CLIENT_SECRET`
    - `SPOTIFY_REDIRECT_URI`
    - optional: `BASIC_AUTH_USERNAME`, `BASIC_AUTH_PASSWORD`
-6. Set `SPOTIFY_REDIRECT_URI` to your deployed callback URL:
+6. Set `AUTH0_REDIRECT_URI` to your deployed Auth0 callback URL:
+   - `https://<your-domain>/auth/callback`
+7. Set `SPOTIFY_REDIRECT_URI` to your deployed Spotify callback URL:
    - `https://<your-domain>/auth/spotify/callback`
-7. Deploy.
+8. Deploy.
 
 Notes:
 - Runtime queries on Vercel use Neon serverless driver via `@neondatabase/serverless`.
 - Local Docker/local Postgres still use your normal `DATABASE_URL`.
 - `npm run migrate` prefers `DATABASE_URL_UNPOOLED` when set, which is the right choice for Neon schema changes.
+- Run `npm run migrate` after pulling the Auth0 changes so the `auth_identities` table exists.
 - Vercel build runs `npm run vercel-build`, which does:
   - `npm run migrate`
   - `npm run build`
