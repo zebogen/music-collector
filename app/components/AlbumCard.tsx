@@ -1,7 +1,17 @@
-import { Box, Heading, Text, Image, HStack, chakra, Button, Link as ChakraLink } from "@chakra-ui/react";
-import { Form } from "react-router";
+import { Box, Heading, Text, Image, Stack, Button, Link as ChakraLink } from "@chakra-ui/react";
+import type { Album } from "~/types";
 
-export default function AlbumCard({ album, safeCollections, buildHref }: any) {
+export default function AlbumCard({
+  album,
+  buildHref,
+  canAddToCollection,
+  onAddToCollection,
+}: {
+  album: Album;
+  buildHref: (overrides?: { selectedAlbumId?: number | null }) => string;
+  canAddToCollection: boolean;
+  onAddToCollection: (album: Album) => void;
+}) {
   const spotifyAppUrl = `spotify:album:${album.spotifyId}`;
 
   return (
@@ -22,25 +32,16 @@ export default function AlbumCard({ album, safeCollections, buildHref }: any) {
         </ChakraLink>
         <Text fontSize="sm" color="gray.600" mb={4} lineHeight="1.5">{album.artistNames.join(", ") || "Unknown artist"}</Text>
 
-        <HStack gap={2} align="stretch" direction={{ base: "column", sm: "row" }} mb={3}>
+        <Stack gap={2} align="stretch" direction={{ base: "column", sm: "row" }} mb={3}>
           <ChakraLink href={spotifyAppUrl} display="inline-block">
             <Button size="sm" variant="solid" w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
           </ChakraLink>
-        </HStack>
+        </Stack>
 
-        {safeCollections.length > 0 ? (
-          <Form method="post">
-            <input type="hidden" name="intent" value="add_album_to_collection" />
-            <input type="hidden" name="albumId" value={album.id} />
-            <HStack gap={3} align="stretch" direction={{ base: "column", sm: "row" }}>
-              <chakra.select name="collectionId" style={{ width: "100%" }}>
-                {safeCollections.map((collection: any) => (
-                  <option key={collection.id} value={collection.id}>{collection.name}</option>
-                ))}
-              </chakra.select>
-              <Button type="submit" size="sm" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Add</Button>
-            </HStack>
-          </Form>
+        {canAddToCollection ? (
+          <Button size="sm" colorScheme="teal" w="full" onClick={() => onAddToCollection(album)}>
+            Add to Collection
+          </Button>
         ) : null}
       </Box>
     </Box>

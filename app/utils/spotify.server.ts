@@ -2,12 +2,7 @@ import { env } from "~/utils/env.server";
 import type { DbUser, SpotifySearchAlbum } from "~/types";
 import { updateUserTokens } from "~/utils/user.server";
 
-const SCOPES = [
-  "user-library-read",
-  "playlist-read-private",
-  "playlist-read-collaborative",
-  "user-follow-read"
-];
+const SCOPES = ["user-library-read", "playlist-read-private", "playlist-read-collaborative", "user-follow-read"];
 
 type SpotifyTokenResponse = {
   access_token: string;
@@ -27,8 +22,9 @@ export function getSpotifyAuthUrl() {
     response_type: "code",
     client_id: env.SPOTIFY_CLIENT_ID,
     scope: SCOPES.join(" "),
-    redirect_uri: env.SPOTIFY_REDIRECT_URI
+    redirect_uri: env.SPOTIFY_REDIRECT_URI,
   });
+  console.log({ params });
 
   return `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
@@ -37,16 +33,16 @@ export async function exchangeCodeForToken(code: string) {
   const body = new URLSearchParams({
     code,
     redirect_uri: env.SPOTIFY_REDIRECT_URI,
-    grant_type: "authorization_code"
+    grant_type: "authorization_code",
   });
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: getBasicAuthHeader()
+      Authorization: getBasicAuthHeader(),
     },
-    body
+    body,
   });
 
   if (!response.ok) {
@@ -59,16 +55,16 @@ export async function exchangeCodeForToken(code: string) {
 async function refreshAccessToken(refreshToken: string) {
   const body = new URLSearchParams({
     grant_type: "refresh_token",
-    refresh_token: refreshToken
+    refresh_token: refreshToken,
   });
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: getBasicAuthHeader()
+      Authorization: getBasicAuthHeader(),
     },
-    body
+    body,
   });
 
   if (!response.ok) {
@@ -91,7 +87,7 @@ export async function ensureValidAccessToken(user: DbUser) {
   await updateUserTokens(user.id, {
     accessToken: tokenResponse.access_token,
     refreshToken: updatedRefreshToken,
-    tokenExpiresAt
+    tokenExpiresAt,
   });
 
   return tokenResponse.access_token;
@@ -100,8 +96,8 @@ export async function ensureValidAccessToken(user: DbUser) {
 export async function fetchSpotifyProfile(accessToken: string) {
   const response = await fetch("https://api.spotify.com/v1/me", {
     headers: {
-      Authorization: `Bearer ${accessToken}`
-    }
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 
   if (!response.ok) {
@@ -118,7 +114,7 @@ export async function fetchSpotifySavedAlbums(accessToken: string) {
 
   while (hasNext) {
     const response = await fetch(`https://api.spotify.com/v1/me/albums?limit=50&offset=${offset}`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!response.ok) {
@@ -146,7 +142,7 @@ export async function fetchSpotifyFollowedArtists(accessToken: string) {
     }
 
     const response = await fetch(`https://api.spotify.com/v1/me/following?${query.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!response.ok) {
@@ -171,7 +167,7 @@ export async function fetchSpotifyPlaylists(accessToken: string) {
 
   while (hasNext) {
     const response = await fetch(`https://api.spotify.com/v1/me/playlists?limit=50&offset=${offset}`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     if (!response.ok) {
@@ -191,11 +187,11 @@ export async function searchSpotifyAlbums(accessToken: string, query: string): P
   const params = new URLSearchParams({
     q: query,
     type: "album",
-    limit: "12"
+    limit: "12",
   });
 
   const response = await fetch(`https://api.spotify.com/v1/search?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (!response.ok) {
@@ -209,6 +205,6 @@ export async function searchSpotifyAlbums(accessToken: string, query: string): P
     albumType: album.album_type ?? null,
     releaseDate: album.release_date ?? null,
     artistNames: (album.artists ?? []).map((artist: any) => artist.name),
-    imageUrl: album.images?.[0]?.url ?? null
+    imageUrl: album.images?.[0]?.url ?? null,
   }));
 }

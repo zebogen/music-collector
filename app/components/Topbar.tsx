@@ -1,8 +1,27 @@
-import type { ReactNode } from "react";
 import { Form } from "react-router";
-import { Flex, Box, Heading, Text, HStack, VStack, Button } from "@chakra-ui/react";
+import {
+  Flex,
+  Box,
+  Heading,
+  Text,
+  Button,
+  IconButton,
+  MenuContent,
+  MenuItem,
+  MenuPositioner,
+  MenuRoot,
+  MenuTrigger
+} from "@chakra-ui/react";
 
-export default function Topbar({ user, isSyncing }: { user: { id: string | number; displayName?: string | null } | null; isSyncing: boolean }) {
+export default function Topbar({
+  user,
+  isSyncing,
+  isLoggingOut
+}: {
+  user: { id: string | number; displayName?: string | null } | null;
+  isSyncing: boolean;
+  isLoggingOut: boolean;
+}) {
   return (
     <Flex
       as="header"
@@ -21,23 +40,54 @@ export default function Topbar({ user, isSyncing }: { user: { id: string | numbe
 
       <Box w={{ base: "full", md: "auto" }}>
         {user ? (
-          <VStack as="nav" align="stretch" gap={2} w={{ base: "full", md: "auto" }}>
-            <Form method="post" action="/?index">
-              <input type="hidden" name="intent" value="sync" />
-              <Button type="submit" colorScheme="teal" loading={isSyncing} loadingText="Syncing..." w={{ base: "full", sm: "auto" }}>
-                Sync Library
-              </Button>
-            </Form>
-            <Form method="post" action="/logout">
-              <Button type="submit" variant="outline" w={{ base: "full", sm: "auto" }}>Log out</Button>
-            </Form>
-          </VStack>
+          <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }}>
+            <MenuRoot positioning={{ placement: "bottom-end" }}>
+              <MenuTrigger asChild>
+                <IconButton aria-label="Open account menu" variant="outline" size="sm">
+                  &#8942;
+                </IconButton>
+              </MenuTrigger>
+              <MenuPositioner>
+                <MenuContent minW="180px">
+                  <Form method="post" action="/?index">
+                    <input type="hidden" name="intent" value="sync" />
+                    <MenuItem asChild value="sync">
+                      <Button
+                        type="submit"
+                        justifyContent="flex-start"
+                        variant="ghost"
+                        w="full"
+                        loading={isSyncing}
+                        loadingText="Syncing..."
+                      >
+                        Sync Library
+                      </Button>
+                    </MenuItem>
+                  </Form>
+                  <Form method="post" action="/logout">
+                    <MenuItem asChild value="logout">
+                      <Button
+                        type="submit"
+                        justifyContent="flex-start"
+                        variant="ghost"
+                        w="full"
+                        loading={isLoggingOut}
+                        loadingText="Logging out..."
+                      >
+                        Log out
+                      </Button>
+                    </MenuItem>
+                  </Form>
+                </MenuContent>
+              </MenuPositioner>
+            </MenuRoot>
+          </Flex>
         ) : (
-          <VStack as="nav" align="stretch" w={{ base: "full", md: "auto" }}>
+          <Box as="nav" w={{ base: "full", md: "auto" }}>
             <a href="/auth/spotify">
               <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Connect Spotify</Button>
             </a>
-          </VStack>
+          </Box>
         )}
       </Box>
     </Flex>

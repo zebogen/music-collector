@@ -1,31 +1,25 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
-import { Form, useActionData, useLoaderData, useLocation, useNavigate } from "react-router";
+import { Form, useActionData, useLoaderData, useLocation, useNavigate, useNavigation } from "react-router";
 import {
   Box,
-  Flex,
   Grid,
   Heading,
   Text,
   Button,
-  
   Input,
-  VStack,
   HStack,
   SimpleGrid,
   Image,
   Link as ChakraLink,
-  Badge,
-  Stack
+  Stack,
+  Spinner
 } from "@chakra-ui/react";
 import { chakra } from "@chakra-ui/react";
 import Sidebar from "~/components/Sidebar";
 import AlbumCard from "~/components/AlbumCard";
-import ArtistItem from "~/components/ArtistItem";
-import PlaylistItem from "~/components/PlaylistItem";
-import CollectionCard from "~/components/CollectionCard";
-import { useEffect } from "react";
-import type { Album, Artist, Playlist } from "~/types";
+import { useEffect, useMemo, useState } from "react";
+import type { Album, Artist, Playlist, SpotifySearchAlbum } from "~/types";
 import {
   addAlbumToCollection,
   addArtistToCollection,
@@ -33,6 +27,8 @@ import {
   createCollection,
   getCollections,
   getLibraryData,
+  removeAlbumFromCollection,
+  removeArtistFromCollection,
   syncSpotifyData
 } from "~/utils/library.server";
 import { getUserId, requireUserId } from "~/utils/session.server";
@@ -44,6 +40,9 @@ import {
   searchSpotifyAlbums
 } from "~/utils/spotify.server";
 import { getUserById } from "~/utils/user.server";
+import PaginationControls from "~/components/PaginationControls";
+import SpotifySearchSection from "~/components/SpotifySearchSection";
+import AddToCollectionDialog from "~/components/AddToCollectionDialog";
 
 const PAGE_SIZE = 20;
 const TABS = ["albums", "artists", "playlists", "collections"] as const;
@@ -61,29 +60,6 @@ function parseTab(value: string | null): TabKey {
 function parseId(value: string | null) {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : null;
-}
-
-function getPageItems(currentPage: number, totalPages: number): Array<number | "ellipsis"> {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
-  }
-
-  const pages = new Set<number>([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
-  const validPages = Array.from(pages)
-    .filter((page) => page >= 1 && page <= totalPages)
-    .sort((a, b) => a - b);
-
-  const items: Array<number | "ellipsis"> = [];
-  for (let index = 0; index < validPages.length; index += 1) {
-    const page = validPages[index];
-    const previous = validPages[index - 1];
-    if (index > 0 && previous && page - previous > 1) {
-      items.push("ellipsis");
-    }
-    items.push(page);
-  }
-
-  return items;
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -185,23 +161,25 @@ export async function action({ request }: ActionFunctionArgs) {
   if (intent === "add_album_to_collection") {
     const collectionId = Number(formData.get("collectionId"));
     const albumId = Number(formData.get("albumId"));
+    const redirectTo = String(formData.get("redirectTo") ?? "/");
 
     if (collectionId > 0 && albumId > 0) {
       await addAlbumToCollection({ collectionId, albumId, userId });
     }
 
-    return redirect("/");
+    return redirect(redirectTo);
   }
 
   if (intent === "add_artist_to_collection") {
     const collectionId = Number(formData.get("collectionId"));
     const artistId = Number(formData.get("artistId"));
+    const redirectTo = String(formData.get("redirectTo") ?? "/");
 
     if (collectionId > 0 && artistId > 0) {
       await addArtistToCollection({ collectionId, artistId, userId });
     }
 
-    return redirect("/");
+    return redirect(redirectTo);
   }
 
   if (intent === "add_search_album_to_collection") {
@@ -227,6 +205,30 @@ export async function action({ request }: ActionFunctionArgs) {
     return redirect(redirectTo);
   }
 
+  if (intent === "remove_album_from_collection") {
+    const collectionId = Number(formData.get("collectionId"));
+    const albumId = Number(formData.get("albumId"));
+    const redirectTo = String(formData.get("redirectTo") ?? "/");
+
+    if (collectionId > 0 && albumId > 0) {
+      await removeAlbumFromCollection({ collectionId, albumId, userId });
+    }
+
+    return redirect(redirectTo);
+  }
+
+  if (intent === "remove_artist_from_collection") {
+    const collectionId = Number(formData.get("collectionId"));
+    const artistId = Number(formData.get("artistId"));
+    const redirectTo = String(formData.get("redirectTo") ?? "/");
+
+    if (collectionId > 0 && artistId > 0) {
+      await removeArtistFromCollection({ collectionId, artistId, userId });
+    }
+
+    return redirect(redirectTo);
+  }
+
   return redirect("/");
 }
 
@@ -235,6 +237,13 @@ export default function Index() {
   const actionData = useActionData<typeof action>();
   const navigate = useNavigate();
   const location = useLocation();
+  const navigation = useNavigation();
+  const [addTarget, setAddTarget] = useState<
+    | { kind: "album"; album: Album }
+    | { kind: "artist"; artistId: number; artistName: string }
+    | { kind: "spotifySearchAlbum"; album: SpotifySearchAlbum }
+    | null
+  >(null);
 
   if (!connected || !libraryData) {
     return (
@@ -250,6 +259,13 @@ export default function Index() {
 
   const pageData = libraryData;
   const safeCollections = collections.filter((collection): collection is NonNullable<typeof collection> => Boolean(collection));
+  const pendingIntent = navigation.formData?.get("intent");
+  const pendingAlbumId = Number(navigation.formData?.get("albumId"));
+  const pendingArtistId = Number(navigation.formData?.get("artistId"));
+  const pendingSpotifyId = String(navigation.formData?.get("spotifyId") ?? "");
+  const isFiltering = navigation.state !== "idle" && navigation.formMethod?.toUpperCase() === "GET";
+  const isCreatingCollection = navigation.state === "submitting" && pendingIntent === "create_collection";
+  const isLoadingData = navigation.state === "loading";
 
   function buildHref(overrides?: {
     tab?: TabKey;
@@ -296,85 +312,35 @@ export default function Index() {
     return `/?${params.toString()}`;
   }
 
-  function renderPagination(list: "albums" | "artists" | "playlists", currentPage: number, totalPages: number) {
-    const pageItems = getPageItems(currentPage, totalPages);
-
-    return (
-      <Stack gap={3} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
-        <ChakraLink href={
-          list === "albums"
-            ? buildHref({ albumsPage: Math.max(1, currentPage - 1), selectedAlbumId: null })
-            : list === "artists"
-              ? buildHref({ artistsPage: Math.max(1, currentPage - 1) })
-              : buildHref({ playlistsPage: Math.max(1, currentPage - 1) })
-        }>
-          <Button variant="outline" size="sm" disabled={currentPage <= 1}>Previous</Button>
-        </ChakraLink>
-
-        <HStack gap={2} wrap="wrap" justify={{ base: "center", md: "flex-start" }}>
-          {pageItems.map((item, index) =>
-            item === "ellipsis" ? (
-              <Text key={`${list}-ellipsis-${index}`}>…</Text>
-            ) : (
-              <ChakraLink key={`${list}-${item}`} href={
-                list === "albums"
-                  ? buildHref({ albumsPage: item, selectedAlbumId: null })
-                  : list === "artists"
-                    ? buildHref({ artistsPage: item })
-                    : buildHref({ playlistsPage: item })
-              }>
-                <Button size="sm" variant={item === currentPage ? "solid" : "ghost"} aria-current={item === currentPage ? "page" : undefined}>{item}</Button>
-              </ChakraLink>
-            )
-          )}
-        </HStack>
-
-        <ChakraLink href={
-          list === "albums"
-            ? buildHref({ albumsPage: Math.min(totalPages, currentPage + 1), selectedAlbumId: null })
-            : list === "artists"
-              ? buildHref({ artistsPage: Math.min(totalPages, currentPage + 1) })
-              : buildHref({ playlistsPage: Math.min(totalPages, currentPage + 1) })
-        }>
-                <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>Next</Button>
-        </ChakraLink>
-      </Stack>
-    );
-  }
-
   const selectedAlbum = libraryData.albums.find((album: Album) => album.id === filters.selectedAlbumId) ?? null;
   const selectedAlbumCollections = selectedAlbum
     ? safeCollections.filter((collection) => collection.albums.some((album) => album.id === selectedAlbum.id))
     : [];
   const selectedCollection =
     safeCollections.find((collection) => collection.id === filters.selectedCollectionId) ?? safeCollections[0] ?? null;
-  const artistFilter = filters.artist.toLowerCase();
-  const genreFilter = filters.genre.toLowerCase();
+  const selectedCollectionArtists = selectedCollection?.artists ?? [];
+  const selectedCollectionAlbums = selectedCollection?.albums ?? [];
+  const currentHref = useMemo(() => buildHref(), [location.search]);
+  const searchHiddenFields = useMemo(() => {
+    const fields: Record<string, string> = {
+      tab: filters.tab,
+      artistsPage: String(filters.artistsPage),
+      albumsPage: String(filters.albumsPage),
+      playlistsPage: String(filters.playlistsPage),
+    };
 
-  const selectedCollectionArtists = selectedCollection
-    ? selectedCollection.artists.filter((artist) => {
-        const artistMatches = !artistFilter || artist.name.toLowerCase().includes(artistFilter);
-        const genreMatches = !genreFilter || artist.genres.some((genre) => genre.toLowerCase() === genreFilter);
-        return artistMatches && genreMatches;
-      })
-    : [];
+    if (filters.genre) {
+      fields.genre = filters.genre;
+    }
+    if (filters.artist) {
+      fields.artist = filters.artist;
+    }
+    if (filters.selectedCollectionId) {
+      fields.collection = String(filters.selectedCollectionId);
+    }
 
-  const selectedCollectionAlbums = selectedCollection
-    ? selectedCollection.albums.filter((album) => {
-        const artistMatches =
-          !artistFilter || album.artistNames.some((artistName) => artistName.toLowerCase().includes(artistFilter));
-        const genreMatches =
-          !genreFilter ||
-          album.artistNames.some((albumArtistName) =>
-            selectedCollection.artists.some(
-              (collectionArtist) =>
-                collectionArtist.name.toLowerCase() === albumArtistName.toLowerCase() &&
-                collectionArtist.genres.some((genre) => genre.toLowerCase() === genreFilter)
-            )
-          );
-        return artistMatches && genreMatches;
-      })
-    : [];
+    return fields;
+  }, [filters]);
 
   useEffect(() => {
     if (!selectedAlbum) {
@@ -391,13 +357,40 @@ export default function Index() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [navigate, selectedAlbum, location.search]);
 
+  useEffect(() => {
+    if (navigation.state === "idle") {
+      setAddTarget(null);
+    }
+  }, [navigation.state]);
+
   return (
     <Grid templateColumns={{ base: "1fr", lg: "300px minmax(0, 1fr)" }} gap={{ base: 4, md: 6 }}>
       <Box as="aside" order={{ base: 2, lg: 1 }}>
-        <Sidebar filters={filters} genres={libraryData.genres} selectedCollectionId={filters.selectedCollectionId} actionError={actionData && "error" in actionData ? actionData.error : null} />
+        <Sidebar
+          filters={filters}
+          genres={libraryData.genres}
+          selectedCollectionId={filters.selectedCollectionId}
+          actionError={actionData && "error" in actionData ? actionData.error : null}
+          isFiltering={isFiltering}
+          isCreatingCollection={isCreatingCollection}
+        />
       </Box>
 
       <Box as="main" order={{ base: 1, lg: 2 }} minW={0}>
+        {isLoadingData ? (
+          <Box
+            position="fixed"
+            inset={0}
+            bg="blackAlpha.200"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            zIndex={40}
+            pointerEvents="none"
+          >
+            <Spinner size="xl" color="teal.500" />
+          </Box>
+        ) : null}
         <Box p={{ base: 4, md: 4 }} borderRadius="xl" bg="white" boxShadow="sm">
           <SimpleGrid as="nav" columns={{ base: 2, md: 4 }} gap={3}>
             <ChakraLink href={buildHref({ tab: "albums" })}>
@@ -419,6 +412,14 @@ export default function Index() {
           {/* keep the existing tab content markup for now, wrapped in a Box */}
           {/* legacy tab-nav removed; top tab HStack already provides tabs */}
 
+          <SpotifySearchSection
+            search={filters.search}
+            results={searchResults}
+            hiddenFields={searchHiddenFields}
+            isSearching={isFiltering}
+            onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
+          />
+
           {filters.tab === "albums" ? (
             <>
               <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
@@ -428,11 +429,22 @@ export default function Index() {
 
               <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 4 }} gap={{ base: 5, md: 4 }} mb={5}>
                 {libraryData.albums.map((album: Album) => (
-                  <AlbumCard key={album.id} album={album} safeCollections={safeCollections} buildHref={buildHref} />
+                  <AlbumCard
+                    key={album.id}
+                    album={album}
+                    buildHref={buildHref}
+                    canAddToCollection={safeCollections.length > 0}
+                    onAddToCollection={(targetAlbum) => setAddTarget({ kind: "album", album: targetAlbum })}
+                  />
                 ))}
               </SimpleGrid>
 
-              {renderPagination("albums", libraryData.pagination.albums.page, libraryData.pagination.albums.totalPages)}
+              <PaginationControls
+                list="albums"
+                currentPage={libraryData.pagination.albums.page}
+                totalPages={libraryData.pagination.albums.totalPages}
+                buildHref={buildHref}
+              />
             </>
           ) : null}
 
@@ -460,25 +472,20 @@ export default function Index() {
                       <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
                     </Box>
                     {safeCollections.length > 0 ? (
-                      <Form method="post">
-                        <input type="hidden" name="intent" value="add_artist_to_collection" />
-                        <input type="hidden" name="artistId" value={artist.id} />
-                        <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
-                          <chakra.select name="collectionId" style={{ width: "100%" }}>
-                            <option value="">Collection</option>
-                            {safeCollections.map((collection) => (
-                              <option key={collection.id} value={collection.id}>{collection.name}</option>
-                            ))}
-                          </chakra.select>
-                          <Button type="submit" size="sm" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Add</Button>
-                        </HStack>
-                      </Form>
+                      <Button size="sm" colorScheme="teal" onClick={() => setAddTarget({ kind: "artist", artistId: artist.id, artistName: artist.name })}>
+                        Add to Collection
+                      </Button>
                     ) : null}
                   </HStack>
                 ))}
               </Stack>
 
-              {renderPagination("artists", libraryData.pagination.artists.page, libraryData.pagination.artists.totalPages)}
+              <PaginationControls
+                list="artists"
+                currentPage={libraryData.pagination.artists.page}
+                totalPages={libraryData.pagination.artists.totalPages}
+                buildHref={buildHref}
+              />
             </>
           ) : null}
 
@@ -498,7 +505,12 @@ export default function Index() {
                 ))}
               </Stack>
 
-              {renderPagination("playlists", libraryData.pagination.playlists.page, libraryData.pagination.playlists.totalPages)}
+              <PaginationControls
+                list="playlists"
+                currentPage={libraryData.pagination.playlists.page}
+                totalPages={libraryData.pagination.playlists.totalPages}
+                buildHref={buildHref}
+              />
             </>
           ) : null}
 
@@ -526,82 +538,6 @@ export default function Index() {
                       <Heading as="h3" size="md">{selectedCollection.name}</Heading>
                       <Text color="gray.500" mb={3}>{selectedCollection.description || "No description"}</Text>
 
-                      <Box mb={6}>
-                        <Heading as="h4" size="sm" mt={4} mb={2}>Search Spotify Albums</Heading>
-                        <Form method="get">
-                          <input type="hidden" name="tab" value="collections" />
-                          <input type="hidden" name="artistsPage" value={String(filters.artistsPage)} />
-                          <input type="hidden" name="albumsPage" value={String(filters.albumsPage)} />
-                          <input type="hidden" name="playlistsPage" value={String(filters.playlistsPage)} />
-                          {filters.genre ? <input type="hidden" name="genre" value={filters.genre} /> : null}
-                          {filters.artist ? <input type="hidden" name="artist" value={filters.artist} /> : null}
-                          <input type="hidden" name="collection" value={String(selectedCollection.id)} />
-                        <Stack align="stretch" direction={{ base: "column", sm: "row" }}>
-                          <Input name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
-                          <Button type="submit" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Search</Button>
-                        </Stack>
-                        </Form>
-
-                        {filters.search ? (
-                          <Box mt={4}>
-                            <Text fontSize="sm" color="gray.600" mb={3}>
-                              Results for "{filters.search}"
-                            </Text>
-                            {searchResults.length > 0 ? (
-                            <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={{ base: 4, md: 3 }}>
-                              {searchResults.map((album) => (
-                                <Box key={album.spotifyId} p={3} bg="white" borderWidth="1px" borderRadius="md">
-                                    {album.imageUrl ? (
-                                      <Image
-                                        src={album.imageUrl}
-                                        alt={`${album.name} cover`}
-                                        objectFit="cover"
-                                        width="100%"
-                                        maxH="160px"
-                                        mb={3}
-                                      />
-                                    ) : (
-                                      <Box height="120px" bg="gray.100" mb={3} display="flex" alignItems="center" justifyContent="center">
-                                        Album
-                                      </Box>
-                                    )}
-                                    <Text fontWeight="semibold">{album.name}</Text>
-                                    <Text fontSize="sm" color="gray.600" mb={3}>
-                                      {album.artistNames.join(", ") || "Unknown artist"}
-                                    </Text>
-                                    <Stack gap={2} mb={3} direction={{ base: "column", sm: "row" }}>
-                                      <ChakraLink href={`spotify:album:${album.spotifyId}`}>
-                                        <Button size="sm">Open in Spotify App</Button>
-                                      </ChakraLink>
-                                    </Stack>
-                                    <Form method="post">
-                                      <input type="hidden" name="intent" value="add_search_album_to_collection" />
-                                      <input type="hidden" name="redirectTo" value={buildHref()} />
-                                      <input type="hidden" name="spotifyId" value={album.spotifyId} />
-                                      <input type="hidden" name="name" value={album.name} />
-                                      <input type="hidden" name="albumType" value={album.albumType ?? ""} />
-                                      <input type="hidden" name="releaseDate" value={album.releaseDate ?? ""} />
-                                      <input type="hidden" name="imageUrl" value={album.imageUrl ?? ""} />
-                                      <input type="hidden" name="artistNames" value={JSON.stringify(album.artistNames)} />
-                                      <Stack align="stretch" direction={{ base: "column", sm: "row" }}>
-                                        <chakra.select name="collectionId" defaultValue={selectedCollection.id} style={{ width: "100%" }}>
-                                          {safeCollections.map((collection) => (
-                                            <option key={collection.id} value={collection.id}>{collection.name}</option>
-                                          ))}
-                                        </chakra.select>
-                                        <Button type="submit" size="sm" colorScheme="teal" w={{ base: "full", sm: "auto" }}>Add</Button>
-                                      </Stack>
-                                    </Form>
-                                  </Box>
-                                ))}
-                              </SimpleGrid>
-                            ) : (
-                              <Text color="gray.500">No Spotify albums found.</Text>
-                            )}
-                          </Box>
-                        ) : null}
-                      </Box>
-
                       <Heading as="h4" size="sm" mt={4} mb={2}>Albums</Heading>
                       {selectedCollectionAlbums.length > 0 ? (
                         <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 4 }} gap={{ base: 4, md: 3 }} mb={5}>
@@ -618,12 +554,28 @@ export default function Index() {
                                 <ChakraLink href={`spotify:album:${album.spotifyId}`}>
                                   <Button size="xs">Open in App</Button>
                                 </ChakraLink>
+                                <Form method="post">
+                                  <input type="hidden" name="intent" value="remove_album_from_collection" />
+                                  <input type="hidden" name="collectionId" value={selectedCollection.id} />
+                                  <input type="hidden" name="albumId" value={album.id} />
+                                  <input type="hidden" name="redirectTo" value={buildHref()} />
+                                  <Button
+                                    type="submit"
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="red"
+                                    loading={navigation.state === "submitting" && pendingIntent === "remove_album_from_collection" && pendingAlbumId === album.id}
+                                    loadingText="Removing..."
+                                  >
+                                    Remove
+                                  </Button>
+                                </Form>
                               </Stack>
                             </Box>
                           ))}
                         </SimpleGrid>
                       ) : (
-                        <Text color="gray.500">No albums in this collection match the active filters.</Text>
+                        <Text color="gray.500">No albums in this collection yet.</Text>
                       )}
 
                       <Heading as="h4" size="sm" mt={4} mb={2}>Artists</Heading>
@@ -633,11 +585,28 @@ export default function Index() {
                             <Box key={artist.id} p={2} bg="white" borderWidth="1px" borderRadius="md">
                               <Text fontWeight="semibold">{artist.name}</Text>
                               <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
+                              <Form method="post">
+                                <input type="hidden" name="intent" value="remove_artist_from_collection" />
+                                <input type="hidden" name="collectionId" value={selectedCollection.id} />
+                                <input type="hidden" name="artistId" value={artist.id} />
+                                <input type="hidden" name="redirectTo" value={buildHref()} />
+                                <Button
+                                  type="submit"
+                                  size="xs"
+                                  variant="outline"
+                                  colorScheme="red"
+                                  mt={2}
+                                  loading={navigation.state === "submitting" && pendingIntent === "remove_artist_from_collection" && pendingArtistId === artist.id}
+                                  loadingText="Removing..."
+                                >
+                                  Remove
+                                </Button>
+                              </Form>
                             </Box>
                           ))}
                         </Stack>
                       ) : (
-                        <Text color="gray.500">No artists in this collection match the active filters.</Text>
+                        <Text color="gray.500">No artists in this collection yet.</Text>
                       )}
                     </Box>
                   ) : null}
@@ -690,6 +659,15 @@ export default function Index() {
             </Box>
           </Box>
         ) : null}
+
+        <AddToCollectionDialog
+          open={Boolean(addTarget)}
+          onClose={() => setAddTarget(null)}
+          collections={safeCollections}
+          target={addTarget}
+          redirectTo={currentHref}
+          defaultCollectionId={selectedCollection?.id ?? null}
+        />
       </Box>
     </Grid>
   );

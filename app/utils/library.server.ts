@@ -316,6 +316,34 @@ export async function addAlbumToCollection(input: { collectionId: number; albumI
   );
 }
 
+export async function removeArtistFromCollection(input: { collectionId: number; artistId: number; userId: number }) {
+  await db.query(
+    `
+      DELETE FROM collection_artists ca
+      USING collections c
+      WHERE ca.collection_id = c.id
+        AND ca.collection_id = $1
+        AND ca.artist_id = $2
+        AND c.user_id = $3
+    `,
+    [input.collectionId, input.artistId, input.userId]
+  );
+}
+
+export async function removeAlbumFromCollection(input: { collectionId: number; albumId: number; userId: number }) {
+  await db.query(
+    `
+      DELETE FROM collection_albums ca
+      USING collections c
+      WHERE ca.collection_id = c.id
+        AND ca.collection_id = $1
+        AND ca.album_id = $2
+        AND c.user_id = $3
+    `,
+    [input.collectionId, input.albumId, input.userId]
+  );
+}
+
 export async function addSpotifySearchAlbumToCollection(input: {
   userId: number;
   collectionId: number;
