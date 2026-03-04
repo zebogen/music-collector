@@ -1,4 +1,4 @@
-import { Form } from "react-router";
+import { Form, Link, useFetcher } from "react-router";
 import {
   Flex,
   Box,
@@ -15,13 +15,14 @@ import {
 
 export default function Topbar({
   user,
-  isSyncing,
   isLoggingOut
 }: {
   user: { id: string | number; displayName?: string | null } | null;
-  isSyncing: boolean;
   isLoggingOut: boolean;
 }) {
+  const syncFetcher = useFetcher<{ ok?: boolean; toast?: { type: "success" | "error"; title: string } }>();
+  const isSyncing = syncFetcher.state !== "idle";
+
   return (
     <Flex
       as="header"
@@ -30,12 +31,16 @@ export default function Topbar({
       direction={{ base: "column", md: "row" }}
       gap={{ base: 3, md: 4 }}
       p={{ base: 4, md: 4 }}
-      bg="white"
-      boxShadow="sm"
+      bg="app.panel"
+      borderWidth="1px"
+      borderColor="app.border"
+      borderRadius="2xl"
+      boxShadow="md"
+      backdropFilter="blur(18px)"
     >
       <Box minW={0}>
         <Heading as="h1" size="md">Spotify Library Organizer</Heading>
-        <Text fontSize="sm">{user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}</Text>
+        <Text fontSize="sm" color="app.muted">{user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}</Text>
       </Box>
 
       <Box w={{ base: "full", md: "auto" }}>
@@ -49,7 +54,7 @@ export default function Topbar({
               </MenuTrigger>
               <MenuPositioner>
                 <MenuContent minW="180px">
-                  <Form method="post" action="/?index">
+                  <syncFetcher.Form method="post" action="/?index">
                     <input type="hidden" name="intent" value="sync" />
                     <MenuItem asChild value="sync">
                       <Button
@@ -63,7 +68,7 @@ export default function Topbar({
                         Sync Library
                       </Button>
                     </MenuItem>
-                  </Form>
+                  </syncFetcher.Form>
                   <Form method="post" action="/logout">
                     <MenuItem asChild value="logout">
                       <Button
@@ -84,9 +89,9 @@ export default function Topbar({
           </Flex>
         ) : (
           <Box as="nav" w={{ base: "full", md: "auto" }}>
-            <a href="/auth/spotify">
+            <Link to="/auth/spotify" prefetch="intent" viewTransition>
               <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Connect Spotify</Button>
-            </a>
+            </Link>
           </Box>
         )}
       </Box>

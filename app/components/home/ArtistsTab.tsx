@@ -2,6 +2,7 @@ import { Box, Button, Heading, HStack, Stack, Text } from "@chakra-ui/react";
 import type { Artist, Collection } from "~/types";
 import PaginationControls from "~/components/PaginationControls";
 import EmptyState from "~/components/EmptyState";
+import { AnimatedItem } from "~/components/Animated";
 
 export default function ArtistsTab({
   artists,
@@ -36,33 +37,35 @@ export default function ArtistsTab({
     <>
       <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
         <Heading as="h2" size="lg">Artists</Heading>
-        <Text color="gray.500">{totalItems} total</Text>
+        <Text color="app.muted">{totalItems} total</Text>
       </HStack>
 
       {artists.length > 0 ? (
         <>
           <Stack gap={4} mb={5}>
-            {artists.map((artist) => (
-              <HStack
-                key={artist.id}
-                justify="space-between"
-                align={{ base: "stretch", md: "center" }}
-                direction={{ base: "column", md: "row" }}
-                p={{ base: 4, md: 3 }}
-                bg="white"
-                borderWidth="1px"
-                borderRadius="md"
-              >
-                <Box>
-                  <Heading as="h3" size="sm">{artist.name}</Heading>
-                  <Text fontSize="sm" color="gray.600">{artist.genres.join(", ") || "No genres"}</Text>
-                </Box>
-                {collections.length > 0 ? (
-                  <Button size="sm" colorScheme="teal" onClick={() => onAddToCollection(artist)}>
-                    Add to Collection
-                  </Button>
-                ) : null}
-              </HStack>
+            {artists.map((artist, index) => (
+              <AnimatedItem key={artist.id} index={index}>
+                <HStack
+                  justify="space-between"
+                  align={{ base: "stretch", md: "center" }}
+                  direction={{ base: "column", md: "row" }}
+                  p={{ base: 4, md: 3 }}
+                  bg="app.card"
+                  borderWidth="1px"
+                  borderColor="app.border"
+                  borderRadius="xl"
+                >
+                  <Box>
+                    <Heading as="h3" size="sm">{artist.name}</Heading>
+                    <Text fontSize="sm" color="app.muted">{artist.genres.join(", ") || "No genres"}</Text>
+                  </Box>
+                  {collections.length > 0 ? (
+                    <Button size="sm" colorScheme="teal" onClick={() => onAddToCollection(artist)}>
+                      Add to Collection
+                    </Button>
+                  ) : null}
+                </HStack>
+              </AnimatedItem>
             ))}
           </Stack>
 

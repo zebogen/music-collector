@@ -1,4 +1,5 @@
-import { Form, useNavigation } from "react-router";
+import { useEffect } from "react";
+import { useFetcher } from "react-router";
 import {
   Button,
   DialogBackdrop,
@@ -36,19 +37,25 @@ export default function AddToCollectionDialog({
   redirectTo: string;
   defaultCollectionId?: number | null;
 }) {
-  const navigation = useNavigation();
-  const pendingIntent = navigation.formData?.get("intent");
-  const pendingAlbumId = Number(navigation.formData?.get("albumId"));
-  const pendingArtistId = Number(navigation.formData?.get("artistId"));
-  const pendingSpotifyId = String(navigation.formData?.get("spotifyId") ?? "");
+  const fetcher = useFetcher<{ error?: string; ok?: boolean }>();
+  const pendingIntent = fetcher.formData?.get("intent");
+  const pendingAlbumId = Number(fetcher.formData?.get("albumId"));
+  const pendingArtistId = Number(fetcher.formData?.get("artistId"));
+  const pendingSpotifyId = String(fetcher.formData?.get("spotifyId") ?? "");
 
   const isSubmitting =
-    navigation.state === "submitting" &&
+    fetcher.state === "submitting" &&
     ((target?.kind === "album" && pendingIntent === "add_album_to_collection" && pendingAlbumId === target.album.id) ||
       (target?.kind === "artist" && pendingIntent === "add_artist_to_collection" && pendingArtistId === target.artistId) ||
       (target?.kind === "spotifySearchAlbum" &&
         pendingIntent === "add_search_album_to_collection" &&
         pendingSpotifyId === target.album.spotifyId));
+
+  useEffect(() => {
+    if (fetcher.data?.ok) {
+      onClose();
+    }
+  }, [fetcher.data, onClose]);
 
   return (
     <DialogRoot
@@ -62,7 +69,7 @@ export default function AddToCollectionDialog({
     >
       <DialogBackdrop />
       <DialogPositioner>
-        <DialogContent mx={4}>
+        <DialogContent mx={4} bg="app.panelSolid" borderWidth="1px" borderColor="app.border" borderRadius="2xl">
           <DialogHeader>
             <DialogTitle>Add to Collection</DialogTitle>
           </DialogHeader>
@@ -70,14 +77,14 @@ export default function AddToCollectionDialog({
           <DialogBody>
             {target ? (
               <Stack gap={4}>
-                <Text color="gray.600">
+                <Text color="app.muted">
                   {target.kind === "album"
                     ? target.album.name
                     : target.kind === "artist"
                       ? target.artistName
                       : target.album.name}
                 </Text>
-                <Form method="post">
+                <fetcher.Form method="post">
                   {target.kind === "album" ? (
                     <>
                       <input type="hidden" name="intent" value="add_album_to_collection" />
@@ -108,7 +115,7 @@ export default function AddToCollectionDialog({
                       name="collectionId"
                       defaultValue={defaultCollectionId ?? ""}
                       required
-                      style={{ width: "100%", minHeight: "44px", padding: "0 12px", borderRadius: "8px", border: "1px solid #CBD5E0", background: "white" }}
+                      style={{ width: "100%", minHeight: "44px", padding: "0 12px", borderRadius: "12px", border: "1px solid var(--chakra-colors-app-border)", background: "var(--chakra-colors-app-panel-solid)", color: "var(--chakra-colors-app-text)" }}
                     >
                       <option value="">Select a collection</option>
                       {collections.map((collection) => (
@@ -121,8 +128,9 @@ export default function AddToCollectionDialog({
                         Add
                       </Button>
                     </DialogFooter>
+                    {fetcher.data?.error ? <Text color="app.danger">{fetcher.data.error}</Text> : null}
                   </Stack>
-                </Form>
+                </fetcher.Form>
               </Stack>
             ) : null}
           </DialogBody>

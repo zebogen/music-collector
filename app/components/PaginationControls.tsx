@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Button, HStack, Stack, Text, Link as ChakraLink } from "@chakra-ui/react";
 
 export default function PaginationControls({
@@ -53,8 +54,10 @@ export default function PaginationControls({
 
   return (
     <Stack gap={3} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
-      <ChakraLink href={href(Math.max(1, currentPage - 1))}>
+      <ChakraLink asChild>
+        <Link prefetch="intent" to={href(Math.max(1, currentPage - 1))} viewTransition>
         <Button variant="outline" size="sm" disabled={currentPage <= 1}>Previous</Button>
+        </Link>
       </ChakraLink>
 
       <HStack gap={2} wrap="wrap" justify={{ base: "center", md: "flex-start" }}>
@@ -62,17 +65,21 @@ export default function PaginationControls({
           item === "ellipsis" ? (
             <Text key={`${list}-ellipsis-${index}`}>…</Text>
           ) : (
-            <ChakraLink key={`${list}-${item}`} href={href(item)}>
+            <ChakraLink key={`${list}-${item}`} asChild>
+              <Link prefetch="intent" to={href(item)} viewTransition>
               <Button size="sm" variant={item === currentPage ? "solid" : "ghost"} aria-current={item === currentPage ? "page" : undefined}>
                 {item}
               </Button>
+              </Link>
             </ChakraLink>
           )
         )}
       </HStack>
 
-      <ChakraLink href={href(Math.min(totalPages, currentPage + 1))}>
+      <ChakraLink asChild>
+        <Link prefetch="intent" to={href(Math.min(totalPages, currentPage + 1))} viewTransition>
         <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>Next</Button>
+        </Link>
       </ChakraLink>
     </Stack>
   );

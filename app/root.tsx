@@ -1,6 +1,6 @@
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
-import { data, Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, useNavigation } from "react-router";
-import { Box, Button, CloseButton, Spinner, Text } from "@chakra-ui/react";
+import { data, Links, Meta, Outlet, Scripts, ScrollRestoration, useFetchers, useLoaderData, useNavigation } from "react-router";
+import { Box, CloseButton, Spinner, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import Topbar from "~/components/Topbar";
 import { getToast, getUserId } from "~/utils/session.server";
@@ -29,15 +29,31 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function App() {
   const data = useLoaderData<typeof loader>();
+  const fetchers = useFetchers();
   const navigation = useNavigation();
   const [visibleToast, setVisibleToast] = useState(data.toast);
-  const isSyncing = navigation.state === "submitting" && navigation.formData?.get("intent") === "sync";
+  const [lastToastKey, setLastToastKey] = useState("");
   const isLoggingOut = navigation.state === "submitting" && navigation.formAction === "/logout";
   const isNavigating = navigation.state !== "idle";
 
   useEffect(() => {
     setVisibleToast(data.toast);
   }, [data.toast]);
+
+  useEffect(() => {
+    for (const fetcher of fetchers) {
+      const toast = fetcher.data?.toast as { type: "success" | "error"; title: string; description?: string } | undefined;
+      if (!toast) {
+        continue;
+      }
+
+      const key = `${toast.type}:${toast.title}:${toast.description ?? ""}`;
+      if (key !== lastToastKey) {
+        setVisibleToast(toast);
+        setLastToastKey(key);
+      }
+    }
+  }, [fetchers, lastToastKey]);
 
   useEffect(() => {
     if (!visibleToast) {
@@ -56,15 +72,17 @@ export default function App() {
       </head>
       <body>
         <Chakra>
-          <Topbar user={data.user} isSyncing={isSyncing} isLoggingOut={isLoggingOut} />
+          <Topbar user={data.user} isLoggingOut={isLoggingOut} />
           {visibleToast ? (
             <Box
               position="fixed"
               top={{ base: 16, md: 4 }}
               right={4}
               zIndex={1001}
-              bg={visibleToast.type === "success" ? "green.600" : "red.600"}
-              color="white"
+              bg="app.panelSolid"
+              color="app.text"
+              borderWidth="1px"
+              borderColor={visibleToast.type === "success" ? "app.success" : "app.danger"}
               borderRadius="xl"
               boxShadow="lg"
               px={4}
@@ -72,14 +90,14 @@ export default function App() {
               maxW={{ base: "calc(100vw - 2rem)", md: "360px" }}
             >
               <Box pr={8}>
-                <Text fontWeight="semibold">{visibleToast.title}</Text>
-                {visibleToast.description ? <Text fontSize="sm" mt={1}>{visibleToast.description}</Text> : null}
+                <Text fontWeight="semibold" color={visibleToast.type === "success" ? "app.success" : "app.danger"}>{visibleToast.title}</Text>
+                {visibleToast.description ? <Text fontSize="sm" mt={1} color="app.muted">{visibleToast.description}</Text> : null}
               </Box>
               <CloseButton position="absolute" top={2} right={2} onClick={() => setVisibleToast(null)} />
             </Box>
           ) : null}
           {isNavigating ? (
-            <Box position="fixed" top={4} right={4} zIndex={1000} bg="white" borderRadius="full" boxShadow="md" p={2}>
+            <Box position="fixed" top={4} right={4} zIndex={1000} bg="app.panelSolid" borderWidth="1px" borderColor="app.border" borderRadius="full" boxShadow="md" p={2}>
               <Spinner size="sm" color="teal.500" />
             </Box>
           ) : null}

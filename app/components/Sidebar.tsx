@@ -1,4 +1,4 @@
-import { Form } from "react-router";
+import { Form, useFetcher } from "react-router";
 import { Box, Heading, Text, Stack, chakra, Input, Button } from "@chakra-ui/react";
 
 export default function Sidebar({
@@ -16,10 +16,14 @@ export default function Sidebar({
   isFiltering: boolean;
   isCreatingCollection: boolean;
 }) {
+  const createFetcher = useFetcher<{ error?: string; ok?: boolean }>();
+  const isSubmittingCreate = createFetcher.state !== "idle";
+  const createError = createFetcher.data?.error ?? actionError;
+
   return (
     <Stack gap={6}>
       {filters.tab !== "collections" ? (
-        <Box p={{ base: 4, md: 4 }} borderRadius="md" bg="white" boxShadow="sm">
+        <Box p={{ base: 4, md: 4 }} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="sm" backdropFilter="blur(18px)">
           <Heading as="h3" size="md" mb={3}>Filters</Heading>
           <Form method="get">
             <input type="hidden" name="tab" value={filters.tab} />
@@ -31,7 +35,7 @@ export default function Sidebar({
 
             <Stack gap={3}>
               <Box>
-                <Text fontSize="sm" mb={1}>Genre</Text>
+                <Text fontSize="sm" mb={1} color="app.muted">Genre</Text>
                 <chakra.select name="genre" defaultValue={filters.genre}>
                   <option value="">All genres</option>
                   {genres.map((genre) => (
@@ -41,7 +45,7 @@ export default function Sidebar({
               </Box>
 
               <Box>
-                <Text fontSize="sm" mb={1}>Artist name</Text>
+                <Text fontSize="sm" mb={1} color="app.muted">Artist name</Text>
                 <Input name="artist" defaultValue={filters.artist} placeholder="Filter library by artist" />
               </Box>
 
@@ -51,23 +55,23 @@ export default function Sidebar({
         </Box>
       ) : null}
 
-      <Box p={{ base: 4, md: 4 }} borderRadius="md" bg="white" boxShadow="sm">
+      <Box p={{ base: 4, md: 4 }} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="sm" backdropFilter="blur(18px)">
         <Heading as="h3" size="md" mb={3}>Create Collection</Heading>
-        <Form method="post">
+        <createFetcher.Form method="post">
           <input type="hidden" name="intent" value="create_collection" />
           <Stack gap={3}>
             <Box>
-              <Text fontSize="sm" mb={1}>Name</Text>
+              <Text fontSize="sm" mb={1} color="app.muted">Name</Text>
               <Input name="name" required />
             </Box>
             <Box>
-              <Text fontSize="sm" mb={1}>Description</Text>
+              <Text fontSize="sm" mb={1} color="app.muted">Description</Text>
               <Input name="description" />
             </Box>
-            <Button type="submit" colorScheme="blue" loading={isCreatingCollection} loadingText="Creating...">Create</Button>
-            {actionError ? <Text color="red.500">{actionError}</Text> : null}
+            <Button type="submit" colorScheme="blue" loading={isSubmittingCreate || isCreatingCollection} loadingText="Creating...">Create</Button>
+            {createError ? <Text color="app.danger">{createError}</Text> : null}
           </Stack>
-        </Form>
+        </createFetcher.Form>
       </Box>
     </Stack>
   );

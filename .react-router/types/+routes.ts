@@ -20,6 +20,9 @@ type Pages = {
   "/index-action-helpers/test": {
     params: {};
   };
+  "/api/spotify-search": {
+    params: {};
+  };
   "/index-helpers": {
     params: {};
   };
@@ -40,7 +43,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/index-action-helpers" | "/index-action-helpers/test" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/logout";
+    page: "/" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/logout";
   };
   "routes/index-action-helpers.ts": {
     id: "routes/index-action-helpers";
@@ -49,6 +52,10 @@ type RouteFiles = {
   "routes/index-action-helpers.test.ts": {
     id: "routes/index-action-helpers.test";
     page: "/index-action-helpers/test";
+  };
+  "routes/api.spotify-search.ts": {
+    id: "routes/api.spotify-search";
+    page: "/api/spotify-search";
   };
   "routes/index-helpers.ts": {
     id: "routes/index-helpers";
@@ -80,6 +87,7 @@ type RouteModules = {
   "root": typeof import("./app/root.tsx");
   "routes/index-action-helpers": typeof import("./app/routes/index-action-helpers.ts");
   "routes/index-action-helpers.test": typeof import("./app/routes/index-action-helpers.test.ts");
+  "routes/api.spotify-search": typeof import("./app/routes/api.spotify-search.ts");
   "routes/index-helpers": typeof import("./app/routes/index-helpers.ts");
   "routes/index-helpers.test": typeof import("./app/routes/index-helpers.test.ts");
   "routes/auth.spotify": typeof import("./app/routes/auth.spotify.tsx");

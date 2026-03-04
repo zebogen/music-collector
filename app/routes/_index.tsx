@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
-import { Form, useActionData, useLoaderData, useLocation, useNavigate, useNavigation } from "react-router";
+import { Form, Link, useActionData, useFetchers, useLoaderData, useLocation, useNavigate, useNavigation } from "react-router";
+import { AnimatePresence } from "framer-motion";
 import {
   Box,
   Grid,
@@ -29,13 +30,12 @@ import {
   syncSpotifyData,
   updateCollection
 } from "~/utils/library.server";
-import { getUserId, redirectWithToast, requireUserId } from "~/utils/session.server";
+import { getUserId, requireUserId } from "~/utils/session.server";
 import {
   ensureValidAccessToken,
   fetchSpotifyFollowedArtists,
   fetchSpotifyPlaylists,
-  fetchSpotifySavedAlbums,
-  searchSpotifyAlbums
+  fetchSpotifySavedAlbums
 } from "~/utils/spotify.server";
 import { getUserById } from "~/utils/user.server";
 import SpotifySearchSection from "~/components/SpotifySearchSection";
@@ -44,6 +44,7 @@ import AlbumsTab from "~/components/home/AlbumsTab";
 import ArtistsTab from "~/components/home/ArtistsTab";
 import PlaylistsTab from "~/components/home/PlaylistsTab";
 import CollectionsTab from "~/components/home/CollectionsTab";
+import { AnimatedView } from "~/components/Animated";
 import { buildHomeHref, getSelectedCollection, parseId, parsePage, parseTab, type TabKey } from "./index-helpers";
 import { getOptionalDescription, getPositiveNumber, getRedirectTo, getRequiredName } from "./index-action-helpers";
 
@@ -85,21 +86,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUserById(userId);
   const accessToken = user ? await ensureValidAccessToken(user) : null;
 
-  const [libraryData, collections, searchResults] = await Promise.all([
+  const [libraryData, collections] = await Promise.all([
     getLibraryData(
       userId,
       { genre: genre || undefined, artist: artist || undefined },
       { artistsPage, albumsPage, playlistsPage, pageSize: PAGE_SIZE }
     ),
-    getCollections(userId),
-    accessToken && search ? searchSpotifyAlbums(accessToken, search) : Promise.resolve([])
+    getCollections(userId)
   ]);
 
   return {
     connected: true,
     libraryData,
     collections,
-    searchResults,
     filters: { genre, artist, tab, artistsPage, albumsPage, playlistsPage, selectedAlbumId, selectedCollectionId, search }
   };
 }
@@ -123,7 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
     ]);
 
     await syncSpotifyData({ userId, artists, albums, playlists });
-    return redirectWithToast(request, "/", { type: "success", title: "Library synced" });
+    return data({ ok: true, toast: { type: "success", title: "Library synced" } });
   }
 
   if (intent === "create_collection") {
@@ -142,7 +141,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
       throw error;
     }
-    return redirectWithToast(request, "/", { type: "success", title: "Collection created" });
+    return data({ ok: true, toast: { type: "success", title: "Collection created" } });
   }
 
   if (intent === "update_collection") {
@@ -166,7 +165,7 @@ export async function action({ request }: ActionFunctionArgs) {
       throw error;
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Collection updated" });
+    return data({ ok: true, toast: { type: "success", title: "Collection updated" } });
   }
 
   if (intent === "delete_collection") {
@@ -177,7 +176,7 @@ export async function action({ request }: ActionFunctionArgs) {
       await deleteCollection({ userId, collectionId });
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Collection deleted" });
+    return data({ ok: true, toast: { type: "success", title: "Collection deleted" } });
   }
 
   if (intent === "add_album_to_collection") {
@@ -189,7 +188,7 @@ export async function action({ request }: ActionFunctionArgs) {
       await addAlbumToCollection({ collectionId, albumId, userId });
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Album added to collection" });
+    return data({ ok: true, toast: { type: "success", title: "Album added to collection" } });
   }
 
   if (intent === "add_artist_to_collection") {
@@ -201,7 +200,7 @@ export async function action({ request }: ActionFunctionArgs) {
       await addArtistToCollection({ collectionId, artistId, userId });
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Artist added to collection" });
+    return data({ ok: true, toast: { type: "success", title: "Artist added to collection" } });
   }
 
   if (intent === "add_search_album_to_collection") {
@@ -224,7 +223,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Album added to collection" });
+    return data({ ok: true, toast: { type: "success", title: "Album added to collection" } });
   }
 
   if (intent === "remove_album_from_collection") {
@@ -236,7 +235,7 @@ export async function action({ request }: ActionFunctionArgs) {
       await removeAlbumFromCollection({ collectionId, albumId, userId });
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Album removed from collection" });
+    return data({ ok: true, toast: { type: "success", title: "Album removed from collection" } });
   }
 
   if (intent === "remove_artist_from_collection") {
@@ -248,15 +247,16 @@ export async function action({ request }: ActionFunctionArgs) {
       await removeArtistFromCollection({ collectionId, artistId, userId });
     }
 
-    return redirectWithToast(request, redirectTo, { type: "success", title: "Artist removed from collection" });
+    return data({ ok: true, toast: { type: "success", title: "Artist removed from collection" } });
   }
 
   return redirect("/");
 }
 
 export default function Index() {
-  const { connected, libraryData, collections, filters, searchResults } = useLoaderData<typeof loader>();
+  const { connected, libraryData, collections, filters } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const fetchers = useFetchers();
   const navigate = useNavigate();
   const location = useLocation();
   const navigation = useNavigation();
@@ -266,14 +266,18 @@ export default function Index() {
     | { kind: "spotifySearchAlbum"; album: SpotifySearchAlbum }
     | null
   >(null);
+  const [clientToast, setClientToast] = useState<{ type: "success" | "error"; title: string; description?: string } | null>(null);
+  const [lastToastKey, setLastToastKey] = useState("");
 
   if (!connected || !libraryData) {
     return (
-      <Box p={6} borderRadius="md" bg="white" boxShadow="sm" textAlign="center">
+      <Box p={6} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" textAlign="center">
         <Heading as="h2" size="lg" mb={2}>Connect your Spotify account</Heading>
-        <Text mb={4}>Sign in with Spotify to import your library, playlists, and organize custom collections.</Text>
-        <ChakraLink href="/auth/spotify">
+        <Text mb={4} color="app.muted">Sign in with Spotify to import your library, playlists, and organize custom collections.</Text>
+        <ChakraLink asChild>
+          <Link to="/auth/spotify" prefetch="intent" viewTransition>
           <Button colorScheme="green">Connect Spotify</Button>
+          </Link>
         </ChakraLink>
       </Box>
     );
@@ -326,35 +330,6 @@ export default function Index() {
       }),
     [location.search]
   );
-  const clearSearchHref = useMemo(
-    () =>
-      buildHref({
-        search: "",
-        selectedAlbumId: null,
-      }),
-    [location.search]
-  );
-  const searchHiddenFields = useMemo(() => {
-    const fields: Record<string, string> = {
-      tab: filters.tab,
-      artistsPage: String(filters.artistsPage),
-      albumsPage: String(filters.albumsPage),
-      playlistsPage: String(filters.playlistsPage),
-    };
-
-    if (filters.genre) {
-      fields.genre = filters.genre;
-    }
-    if (filters.artist) {
-      fields.artist = filters.artist;
-    }
-    if (filters.selectedCollectionId) {
-      fields.collection = String(filters.selectedCollectionId);
-    }
-
-    return fields;
-  }, [filters]);
-
   useEffect(() => {
     if (!selectedAlbum) {
       return;
@@ -376,6 +351,30 @@ export default function Index() {
     }
   }, [navigation.state]);
 
+  useEffect(() => {
+    for (const fetcher of fetchers) {
+      const toast = fetcher.data?.toast as { type: "success" | "error"; title: string; description?: string } | undefined;
+      if (!toast) {
+        continue;
+      }
+
+      const key = `${toast.type}:${toast.title}:${toast.description ?? ""}`;
+      if (key !== lastToastKey) {
+        setClientToast(toast);
+        setLastToastKey(key);
+      }
+    }
+  }, [fetchers, lastToastKey]);
+
+  useEffect(() => {
+    if (!clientToast) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setClientToast(null), 3200);
+    return () => window.clearTimeout(timeout);
+  }, [clientToast]);
+
   return (
     <Grid templateColumns={{ base: "1fr", lg: "300px minmax(0, 1fr)" }} gap={{ base: 4, md: 6 }}>
       <Box as="aside" order={{ base: 2, lg: 1 }}>
@@ -390,11 +389,34 @@ export default function Index() {
       </Box>
 
       <Box as="main" order={{ base: 1, lg: 2 }} minW={0}>
+        {clientToast ? (
+          <Box
+            position="fixed"
+            top={{ base: 16, md: 4 }}
+            left="50%"
+            transform="translateX(-50%)"
+            zIndex={1001}
+            bg="app.panelSolid"
+            borderWidth="1px"
+            borderColor={clientToast.type === "success" ? "app.success" : "app.danger"}
+            borderRadius="xl"
+            boxShadow="lg"
+            px={4}
+            py={3}
+            minW={{ base: "calc(100vw - 2rem)", md: "320px" }}
+            maxW={{ base: "calc(100vw - 2rem)", md: "420px" }}
+          >
+            <Text fontWeight="semibold" color={clientToast.type === "success" ? "app.success" : "app.danger"}>
+              {clientToast.title}
+            </Text>
+            {clientToast.description ? <Text fontSize="sm" color="app.muted" mt={1}>{clientToast.description}</Text> : null}
+          </Box>
+        ) : null}
         {isLoadingData ? (
           <Box
             position="fixed"
             inset={0}
-            bg="blackAlpha.200"
+            bg="app.overlay"
             display="flex"
             alignItems="center"
             justifyContent="center"
@@ -404,19 +426,27 @@ export default function Index() {
             <Spinner size="xl" color="teal.500" />
           </Box>
         ) : null}
-        <Box p={{ base: 4, md: 4 }} borderRadius="xl" bg="white" boxShadow="sm">
+        <Box p={{ base: 4, md: 4 }} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" backdropFilter="blur(18px)">
           <SimpleGrid as="nav" columns={{ base: 2, md: 4 }} gap={3}>
-            <ChakraLink href={buildHref({ tab: "albums" })}>
+            <ChakraLink asChild>
+              <Link prefetch="intent" to={buildHref({ tab: "albums" })} viewTransition>
               <Button variant={filters.tab === "albums" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Albums</Button>
+              </Link>
             </ChakraLink>
-            <ChakraLink href={buildHref({ tab: "artists" })}>
+            <ChakraLink asChild>
+              <Link prefetch="intent" to={buildHref({ tab: "artists" })} viewTransition>
               <Button variant={filters.tab === "artists" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Artists</Button>
+              </Link>
             </ChakraLink>
-            <ChakraLink href={buildHref({ tab: "playlists" })}>
+            <ChakraLink asChild>
+              <Link prefetch="intent" to={buildHref({ tab: "playlists" })} viewTransition>
               <Button variant={filters.tab === "playlists" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Playlists</Button>
+              </Link>
             </ChakraLink>
-            <ChakraLink href={buildHref({ tab: "collections", selectedCollectionId: selectedCollection?.id ?? null })}>
+            <ChakraLink asChild>
+              <Link prefetch="intent" to={buildHref({ tab: "collections", selectedCollectionId: selectedCollection?.id ?? null })} viewTransition>
               <Button variant={filters.tab === "collections" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Collections</Button>
+              </Link>
             </ChakraLink>
           </SimpleGrid>
         </Box>
@@ -426,75 +456,81 @@ export default function Index() {
           {/* legacy tab-nav removed; top tab HStack already provides tabs */}
 
           {actionData && "error" in actionData && actionData.error ? (
-            <Box mb={{ base: 5, md: 6 }} borderRadius="xl" bg="red.50" borderWidth="1px" borderColor="red.200" px={{ base: 4, md: 5 }} py={{ base: 4, md: 4 }}>
-              <Heading as="h2" size="sm" color="red.700" mb={1}>Action failed</Heading>
-              <Text color="red.700">{actionData.error}</Text>
+            <Box mb={{ base: 5, md: 6 }} borderRadius="xl" bg="app.panel" borderWidth="1px" borderColor="app.danger" px={{ base: 4, md: 5 }} py={{ base: 4, md: 4 }}>
+              <Heading as="h2" size="sm" color="app.danger" mb={1}>Action failed</Heading>
+              <Text color="app.danger">{actionData.error}</Text>
             </Box>
           ) : null}
 
           <SpotifySearchSection
-            search={filters.search}
-            results={searchResults}
-            hiddenFields={searchHiddenFields}
-            isSearching={isFiltering}
-            clearHref={clearSearchHref}
+            initialSearch=""
             onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
           />
 
-          {filters.tab === "albums" ? (
-            <AlbumsTab
-              albums={libraryData.albums}
-              totalItems={libraryData.pagination.albums.totalItems}
-              page={libraryData.pagination.albums.page}
-              totalPages={libraryData.pagination.albums.totalPages}
-              buildHref={buildHref}
-              collections={safeCollections}
-              onAddToCollection={(targetAlbum) => setAddTarget({ kind: "album", album: targetAlbum })}
-              hasActiveFilters={hasActiveFilters}
-              clearFiltersHref={clearFiltersHref}
-            />
-          ) : null}
+          <AnimatePresence mode="wait" initial={false}>
+            {filters.tab === "albums" ? (
+              <AnimatedView motionKey="albums">
+                <AlbumsTab
+                  albums={libraryData.albums}
+                  totalItems={libraryData.pagination.albums.totalItems}
+                  page={libraryData.pagination.albums.page}
+                  totalPages={libraryData.pagination.albums.totalPages}
+                  buildHref={buildHref}
+                  collections={safeCollections}
+                  onAddToCollection={(targetAlbum) => setAddTarget({ kind: "album", album: targetAlbum })}
+                  hasActiveFilters={hasActiveFilters}
+                  clearFiltersHref={clearFiltersHref}
+                />
+              </AnimatedView>
+            ) : null}
 
-          {filters.tab === "artists" ? (
-            <ArtistsTab
-              artists={libraryData.artists}
-              totalItems={libraryData.pagination.artists.totalItems}
-              page={libraryData.pagination.artists.page}
-              totalPages={libraryData.pagination.artists.totalPages}
-              buildHref={buildHref}
-              collections={safeCollections}
-              onAddToCollection={(artist) => setAddTarget({ kind: "artist", artistId: artist.id, artistName: artist.name })}
-              hasActiveFilters={hasActiveFilters}
-              clearFiltersHref={clearFiltersHref}
-            />
-          ) : null}
+            {filters.tab === "artists" ? (
+              <AnimatedView motionKey="artists">
+                <ArtistsTab
+                  artists={libraryData.artists}
+                  totalItems={libraryData.pagination.artists.totalItems}
+                  page={libraryData.pagination.artists.page}
+                  totalPages={libraryData.pagination.artists.totalPages}
+                  buildHref={buildHref}
+                  collections={safeCollections}
+                  onAddToCollection={(artist) => setAddTarget({ kind: "artist", artistId: artist.id, artistName: artist.name })}
+                  hasActiveFilters={hasActiveFilters}
+                  clearFiltersHref={clearFiltersHref}
+                />
+              </AnimatedView>
+            ) : null}
 
-          {filters.tab === "playlists" ? (
-            <PlaylistsTab
-              playlists={libraryData.playlists}
-              totalItems={libraryData.pagination.playlists.totalItems}
-              page={libraryData.pagination.playlists.page}
-              totalPages={libraryData.pagination.playlists.totalPages}
-              buildHref={buildHref}
-              hasPlaylists={libraryData.playlists.length > 0}
-            />
-          ) : null}
+            {filters.tab === "playlists" ? (
+              <AnimatedView motionKey="playlists">
+                <PlaylistsTab
+                  playlists={libraryData.playlists}
+                  totalItems={libraryData.pagination.playlists.totalItems}
+                  page={libraryData.pagination.playlists.page}
+                  totalPages={libraryData.pagination.playlists.totalPages}
+                  buildHref={buildHref}
+                  hasPlaylists={libraryData.playlists.length > 0}
+                />
+              </AnimatedView>
+            ) : null}
 
-          {filters.tab === "collections" ? (
-            <CollectionsTab
-              collections={safeCollections}
-              selectedCollection={selectedCollection}
-              selectedCollectionAlbums={selectedCollectionAlbums}
-              selectedCollectionArtists={selectedCollectionArtists}
-              buildHref={buildHref}
-              pendingAlbumId={pendingAlbumId}
-              pendingArtistId={pendingArtistId}
-              pendingIntent={pendingIntent}
-              isSavingCollection={isSavingCollection}
-              isDeletingCollection={isDeletingCollection}
-              actionError={actionData && "error" in actionData ? actionData.error : null}
-            />
-          ) : null}
+            {filters.tab === "collections" ? (
+              <AnimatedView motionKey="collections">
+                <CollectionsTab
+                  collections={safeCollections}
+                  selectedCollection={selectedCollection}
+                  selectedCollectionAlbums={selectedCollectionAlbums}
+                  selectedCollectionArtists={selectedCollectionArtists}
+                  buildHref={buildHref}
+                  pendingAlbumId={pendingAlbumId}
+                  pendingArtistId={pendingArtistId}
+                  pendingIntent={pendingIntent}
+                  isSavingCollection={isSavingCollection}
+                  isDeletingCollection={isDeletingCollection}
+                  actionError={actionData && "error" in actionData ? actionData.error : null}
+                />
+              </AnimatedView>
+            ) : null}
+          </AnimatePresence>
         </Box>
 
         {selectedAlbum ? (
@@ -512,11 +548,13 @@ export default function Index() {
             }}
             zIndex={50}
           >
-            <Box bg="white" borderRadius="md" maxW="xl" width="full" p={{ base: 4, md: 6 }} boxShadow="lg" mx={4}>
+            <Box bg="app.panelSolid" borderWidth="1px" borderColor="app.border" borderRadius="2xl" maxW="xl" width="full" p={{ base: 4, md: 6 }} boxShadow="lg" mx={4}>
               <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={3}>
                 <Heading as="h3" size="md">{selectedAlbum.name}</Heading>
-                <ChakraLink href={buildHref({ selectedAlbumId: null })}>
+                <ChakraLink asChild>
+                  <Link prefetch="intent" to={buildHref({ selectedAlbumId: null })} replace viewTransition>
                   <Button size="sm" variant="outline">Close</Button>
+                  </Link>
                 </ChakraLink>
               </HStack>
 
@@ -535,7 +573,7 @@ export default function Index() {
                   ))}
                 </Stack>
               ) : (
-                <Text color="gray.500">Not in any collection yet.</Text>
+                <Text color="app.muted">Not in any collection yet.</Text>
               )}
             </Box>
           </Box>
