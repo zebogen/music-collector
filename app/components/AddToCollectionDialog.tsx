@@ -115,7 +115,7 @@ export default function AddToCollectionDialog({
                       name="collectionId"
                       defaultValue={defaultCollectionId ?? ""}
                       required
-                      style={{ width: "100%", minHeight: "44px", padding: "0 12px", borderRadius: "12px", border: "1px solid var(--chakra-colors-app-border)", background: "var(--chakra-colors-app-panel-solid)", color: "var(--chakra-colors-app-text)" }}
+                      style={{ width: "100%", minHeight: "48px", padding: "0 12px", borderRadius: "10px", border: "1px solid var(--chakra-colors-app-border)", background: "var(--chakra-colors-app-panel-solid)", color: "var(--chakra-colors-app-text)" }}
                     >
                       <option value="">Select a collection</option>
                       {collections.map((collection) => (
@@ -123,8 +123,8 @@ export default function AddToCollectionDialog({
                       ))}
                     </chakra.select>
                     <DialogFooter px={0}>
-                      <Button variant="outline" onClick={onClose}>Cancel</Button>
-                      <Button type="submit" colorScheme="teal" loading={isSubmitting} loadingText="Adding...">
+                      <Button w={{ base: "full", sm: "auto" }} size={{ base: "md", md: "sm" }} variant="outline" onClick={onClose}>Cancel</Button>
+                      <Button w={{ base: "full", sm: "auto" }} size={{ base: "md", md: "sm" }} type="submit" colorScheme="teal" loading={isSubmitting} loadingText="Adding...">
                         Add
                       </Button>
                     </DialogFooter>

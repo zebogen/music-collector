@@ -13,8 +13,8 @@ test("parsePage returns positive integers and falls back to 1", () => {
 test("parseTab only allows supported tabs", () => {
   assert.equal(parseTab("albums"), "albums");
   assert.equal(parseTab("collections"), "collections");
-  assert.equal(parseTab("bad"), "albums");
-  assert.equal(parseTab(null), "albums");
+  assert.equal(parseTab("bad"), "collections");
+  assert.equal(parseTab(null), "collections");
 });
 
 test("parseId returns positive integer ids only", () => {

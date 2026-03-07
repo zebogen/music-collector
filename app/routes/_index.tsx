@@ -9,7 +9,6 @@ import {
   Text,
   Button,
   HStack,
-  SimpleGrid,
   Link as ChakraLink,
   Stack,
   Spinner
@@ -81,7 +80,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       filters: {
         genre: "",
         artist: "",
-        tab: "albums" as TabKey,
+        tab: "collections" as TabKey,
         artistsPage: 1,
         albumsPage: 1,
         playlistsPage: 1,
@@ -102,7 +101,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       filters: {
         genre: "",
         artist: "",
-        tab: "albums" as TabKey,
+        tab: "collections" as TabKey,
         artistsPage: 1,
         albumsPage: 1,
         playlistsPage: 1,
@@ -435,8 +434,8 @@ export default function Index() {
   }, [clientToast]);
 
   return (
-    <Grid templateColumns={{ base: "1fr", lg: "300px minmax(0, 1fr)" }} gap={{ base: 4, md: 6 }}>
-      <Box as="aside" order={{ base: 2, lg: 1 }}>
+    <Grid templateColumns={{ base: "1fr", lg: "320px minmax(0, 1fr)" }} gap={0} minH={{ base: "auto", lg: "calc(100vh - 84px)" }}>
+      <Box as="aside" order={{ base: 2, lg: 1 }} borderRightWidth={{ base: "0", lg: "1px" }} borderColor="app.border" bg="app.panelSolid">
         <Sidebar
           filters={filters}
           genres={libraryData.genres}
@@ -444,10 +443,16 @@ export default function Index() {
           actionError={actionData && "error" in actionData ? actionData.error : null}
           isFiltering={isFiltering}
           isCreatingCollection={isCreatingCollection}
+          isSavingCollection={isSavingCollection}
+          isDeletingCollection={isDeletingCollection}
+          collections={safeCollections}
+          selectedCollection={selectedCollection}
+          buildHref={buildHref}
+          onAddSpotifyAlbum={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
         />
       </Box>
 
-      <Box as="main" order={{ base: 1, lg: 2 }} minW={0}>
+      <Box as="main" order={{ base: 1, lg: 2 }} minW={0} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
         {clientToast ? (
           <Box
             position="fixed"
@@ -485,32 +490,7 @@ export default function Index() {
             <Spinner size="xl" color="teal.500" />
           </Box>
         ) : null}
-        <Box p={{ base: 4, md: 4 }} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" backdropFilter="blur(18px)">
-          <SimpleGrid as="nav" columns={{ base: 2, md: 4 }} gap={3}>
-            <ChakraLink asChild>
-              <Link prefetch="intent" to={buildHref({ tab: "albums" })} viewTransition>
-              <Button variant={filters.tab === "albums" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Albums</Button>
-              </Link>
-            </ChakraLink>
-            <ChakraLink asChild>
-              <Link prefetch="intent" to={buildHref({ tab: "artists" })} viewTransition>
-              <Button variant={filters.tab === "artists" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Artists</Button>
-              </Link>
-            </ChakraLink>
-            <ChakraLink asChild>
-              <Link prefetch="intent" to={buildHref({ tab: "playlists" })} viewTransition>
-              <Button variant={filters.tab === "playlists" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Playlists</Button>
-              </Link>
-            </ChakraLink>
-            <ChakraLink asChild>
-              <Link prefetch="intent" to={buildHref({ tab: "collections", selectedCollectionId: selectedCollection?.id ?? null })} viewTransition>
-              <Button variant={filters.tab === "collections" ? "solid" : "ghost"} w={{ base: "full", sm: "auto" }}>Collections</Button>
-              </Link>
-            </ChakraLink>
-          </SimpleGrid>
-        </Box>
-
-        <Box mt={{ base: 5, md: 4 }}>
+        <Box mt={0}>
           {/* keep the existing tab content markup for now, wrapped in a Box */}
           {/* legacy tab-nav removed; top tab HStack already provides tabs */}
 
@@ -521,10 +501,12 @@ export default function Index() {
             </Box>
           ) : null}
 
-          <SpotifySearchSection
-            initialSearch=""
-            onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
-          />
+          {filters.tab !== "collections" ? (
+            <SpotifySearchSection
+              initialSearch={filters.search}
+              onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
+            />
+          ) : null}
 
           <AnimatePresence mode="wait" initial={false}>
             {filters.tab === "albums" ? (
@@ -583,9 +565,6 @@ export default function Index() {
                   pendingAlbumId={pendingAlbumId}
                   pendingArtistId={pendingArtistId}
                   pendingIntent={pendingIntent}
-                  isSavingCollection={isSavingCollection}
-                  isDeletingCollection={isDeletingCollection}
-                  actionError={actionData && "error" in actionData ? actionData.error : null}
                 />
               </AnimatedView>
             ) : null}

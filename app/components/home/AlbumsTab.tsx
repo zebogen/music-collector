@@ -36,8 +36,8 @@ export default function AlbumsTab({
 }) {
   return (
     <>
-      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
-        <Heading as="h2" size="lg">Saved Albums</Heading>
+      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 5 }} gap={1}>
+        <Heading as="h2" size="md">Saved Albums</Heading>
         <Text color="app.muted">{totalItems} total</Text>
       </HStack>
 

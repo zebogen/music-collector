@@ -6,12 +6,12 @@ const theme = {
     body: {
       bg: "app.bg",
       color: "app.text",
-      fontFamily: '"Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif',
+      fontFamily: '"Circular Std", "Spotify Mix", "Avenir Next", "Segoe UI", sans-serif',
       backgroundImage: {
         base:
-          "radial-gradient(circle at top left, rgba(111, 211, 188, 0.18), transparent 30%), radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 24%), linear-gradient(180deg, var(--chakra-colors-app-bg) 0%, var(--chakra-colors-app-bg-subtle) 100%)",
-        _osDark:
-          "radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 28%), radial-gradient(circle at top right, rgba(249, 115, 22, 0.18), transparent 22%), linear-gradient(180deg, var(--chakra-colors-app-bg) 0%, var(--chakra-colors-app-bg-subtle) 100%)",
+          "radial-gradient(circle at top left, rgba(29, 185, 84, 0.12), transparent 34%), linear-gradient(180deg, var(--chakra-colors-app-bg) 0%, var(--chakra-colors-app-bg-subtle) 100%)",
+        _dark:
+          "radial-gradient(circle at top left, rgba(29, 185, 84, 0.16), transparent 36%), linear-gradient(180deg, var(--chakra-colors-app-bg) 0%, var(--chakra-colors-app-bg-subtle) 100%)",
       },
     },
     "*": {
@@ -25,42 +25,33 @@ const theme = {
   theme: {
     tokens: {
       colors: {
-        brand: {
-          50: { value: "#eefcf8" },
-          100: { value: "#d0f5ea" },
-          200: { value: "#a8ead8" },
-          300: { value: "#75d9c0" },
-          400: { value: "#43c1a2" },
-          500: { value: "#21917a" },
-          600: { value: "#166b5b" },
-          700: { value: "#0f5146" },
-          800: { value: "#0d4038" },
-          900: { value: "#0b342f" },
+        latte: {
+          base: { value: "#eff1f5" },
+          mantle: { value: "#e6e9ef" },
+          crust: { value: "#dce0e8" },
+          text: { value: "#4c4f69" },
+          subtext: { value: "#6c6f85" },
+          overlay: { value: "#9ca0b0" },
+          surface0: { value: "#ccd0da" },
+          surface1: { value: "#bcc0cc" },
+          blue: { value: "#1db954" },
+          mauve: { value: "#8839ef" },
+          green: { value: "#40a02b" },
+          red: { value: "#d20f39" },
         },
-        sand: {
-          50: { value: "#fcfaf4" },
-          100: { value: "#f5efdf" },
-          200: { value: "#eadfbf" },
-          300: { value: "#ddc891" },
-          400: { value: "#cfa75f" },
-          500: { value: "#b9832a" },
-          600: { value: "#94631f" },
-          700: { value: "#724a1a" },
-          800: { value: "#5b3a18" },
-          900: { value: "#4b3116" },
-        },
-        ink: {
-          50: { value: "#f4f7fb" },
-          100: { value: "#e8edf5" },
-          200: { value: "#c8d4e4" },
-          300: { value: "#a2b6d0" },
-          400: { value: "#7894bb" },
-          500: { value: "#55749e" },
-          600: { value: "#3f587d" },
-          700: { value: "#31445f" },
-          800: { value: "#26364b" },
-          900: { value: "#1b2638" },
-          950: { value: "#101724" },
+        mocha: {
+          base: { value: "#121212" },
+          mantle: { value: "#181818" },
+          crust: { value: "#0b0b0b" },
+          text: { value: "#ffffff" },
+          subtext: { value: "#b3b3b3" },
+          overlay: { value: "#727272" },
+          surface0: { value: "#202020" },
+          surface1: { value: "#2b2b2b" },
+          blue: { value: "#1db954" },
+          mauve: { value: "#1ed760" },
+          green: { value: "#1ed760" },
+          red: { value: "#f15e6c" },
         },
       },
     },
@@ -68,49 +59,49 @@ const theme = {
       colors: {
         app: {
           bg: {
-            value: { base: "{colors.sand.50}", _osDark: "{colors.ink.950}" },
+            value: { base: "{colors.latte.base}", _dark: "{colors.mocha.base}" },
           },
           bgSubtle: {
-            value: { base: "#f4f6ef", _osDark: "#172233" },
+            value: { base: "#f5f6f8", _dark: "#101010" },
           },
           panel: {
-            value: { base: "rgba(255,255,255,0.84)", _osDark: "rgba(16,23,36,0.78)" },
+            value: { base: "rgba(255, 255, 255, 0.9)", _dark: "rgba(24, 24, 24, 0.96)" },
           },
           panelSolid: {
-            value: { base: "#fffdf8", _osDark: "#162132" },
+            value: { base: "{colors.latte.mantle}", _dark: "{colors.mocha.mantle}" },
           },
           card: {
-            value: { base: "#fffaf0", _osDark: "#1b283d" },
+            value: { base: "#ffffff", _dark: "{colors.mocha.surface0}" },
           },
           cardAlt: {
-            value: { base: "#f4efe2", _osDark: "#22324a" },
+            value: { base: "{colors.latte.crust}", _dark: "{colors.mocha.surface1}" },
           },
           border: {
-            value: { base: "rgba(84, 95, 114, 0.12)", _osDark: "rgba(185, 204, 230, 0.14)" },
+            value: { base: "rgba(108, 111, 133, 0.28)", _dark: "rgba(255, 255, 255, 0.12)" },
           },
           text: {
-            value: { base: "{colors.ink.900}", _osDark: "#eef4ff" },
+            value: { base: "#16181d", _dark: "#ffffff" },
           },
           muted: {
-            value: { base: "{colors.ink.600}", _osDark: "#a9bad2" },
+            value: { base: "#5e6470", _dark: "#b3b3b3" },
           },
           accent: {
-            value: { base: "{colors.brand.500}", _osDark: "#56d0b2" },
+            value: { base: "{colors.latte.blue}", _dark: "{colors.mocha.blue}" },
           },
           accentSoft: {
-            value: { base: "{colors.brand.100}", _osDark: "rgba(86, 208, 178, 0.18)" },
+            value: { base: "rgba(29, 185, 84, 0.16)", _dark: "rgba(29, 185, 84, 0.22)" },
           },
           accentContrast: {
-            value: { base: "white", _osDark: "{colors.ink.950}" },
+            value: { base: "white", _dark: "#000000" },
           },
           overlay: {
-            value: { base: "rgba(255,255,255,0.65)", _osDark: "rgba(9,14,24,0.6)" },
+            value: { base: "rgba(220, 224, 232, 0.72)", _dark: "rgba(0, 0, 0, 0.72)" },
           },
           success: {
-            value: { base: "#146c58", _osDark: "#63e6be" },
+            value: { base: "{colors.latte.green}", _dark: "{colors.mocha.green}" },
           },
           danger: {
-            value: { base: "#b93838", _osDark: "#ff8a8a" },
+            value: { base: "{colors.latte.red}", _dark: "{colors.mocha.red}" },
           },
         },
       },
@@ -118,42 +109,49 @@ const theme = {
         xs: {
           value: {
             base: "0 8px 24px rgba(32, 39, 55, 0.06)",
-            _osDark: "0 12px 32px rgba(0, 0, 0, 0.24)",
+            _dark: "0 12px 32px rgba(0, 0, 0, 0.24)",
           },
         },
         md: {
           value: {
             base: "0 18px 48px rgba(32, 39, 55, 0.12)",
-            _osDark: "0 22px 56px rgba(0, 0, 0, 0.34)",
+            _dark: "0 22px 56px rgba(0, 0, 0, 0.34)",
           },
         },
       },
     },
     recipes: {
-      Button: {
+      button: {
         base: {
-          borderRadius: "12px",
-          fontWeight: "600",
+          borderRadius: "9999px",
+          fontWeight: "700",
+          letterSpacing: "0.01em",
+        },
+        defaultVariants: {
+          variant: "solid",
         },
         variants: {
-          solid: {
-            bg: "app.accent",
-            color: "app.accentContrast",
-            _hover: { opacity: 0.92 },
-          },
-          outline: {
-            bg: "transparent",
-            color: "app.text",
-            borderColor: "app.border",
-            _hover: { bg: "app.accentSoft" },
-          },
-          ghost: {
-            color: "app.text",
-            _hover: { bg: "app.accentSoft" },
+          variant: {
+            solid: {
+              bg: "app.accent",
+              color: "app.accentContrast",
+              borderColor: "transparent",
+              _hover: { bg: "app.accent", opacity: 0.9, transform: "translateY(-1px)" },
+            },
+            outline: {
+              bg: "transparent",
+              color: "app.text",
+              borderColor: "app.border",
+              _hover: { bg: "app.accentSoft", borderColor: "app.accent" },
+            },
+            ghost: {
+              color: "app.text",
+              _hover: { bg: "app.accentSoft" },
+            },
           },
         },
       },
-      Input: {
+      input: {
         base: {
           borderRadius: "12px",
         },

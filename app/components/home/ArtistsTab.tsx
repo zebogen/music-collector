@@ -35,8 +35,8 @@ export default function ArtistsTab({
 }) {
   return (
     <>
-      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 4 }} gap={1}>
-        <Heading as="h2" size="lg">Artists</Heading>
+      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 5 }} gap={1}>
+        <Heading as="h2" size="md">Artists</Heading>
         <Text color="app.muted">{totalItems} total</Text>
       </HStack>
 

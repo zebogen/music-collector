@@ -16,20 +16,20 @@ export default function AlbumCard({
   const spotifyAppUrl = `spotify:album:${album.spotifyId}`;
 
   return (
-    <Box borderWidth="1px" borderColor="app.border" borderRadius="2xl" overflow="hidden" bg="app.card" boxShadow="sm">
+    <Box borderWidth="1px" borderColor="app.border" borderRadius="xl" overflow="hidden" bg="app.card" boxShadow="sm">
       <ChakraLink asChild display="block">
         <Link prefetch="intent" to={buildHref({ selectedAlbumId: album.id })} viewTransition>
         {album.imageUrl ? (
-          <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" h={{ base: "220px", md: "200px" }} />
+          <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" h={{ base: "180px", md: "200px" }} />
         ) : (
-          <Box h={{ base: "220px", md: "200px" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">
+          <Box h={{ base: "180px", md: "200px" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">
             <Text color="app.muted">No Art</Text>
           </Box>
         )}
         </Link>
       </ChakraLink>
 
-      <Box p={{ base: 4, md: 3 }}>
+      <Box p={{ base: 3, md: 3 }}>
         <ChakraLink asChild _hover={{ textDecoration: "none" }}>
           <Link prefetch="intent" to={buildHref({ selectedAlbumId: album.id })} viewTransition>
           <Heading as="h3" size="sm" mb={2} lineHeight="1.35">{album.name}</Heading>
@@ -37,14 +37,14 @@ export default function AlbumCard({
         </ChakraLink>
         <Text fontSize="sm" color="app.muted" mb={4} lineHeight="1.5">{album.artistNames.join(", ") || "Unknown artist"}</Text>
 
-        <Stack gap={2} align="stretch" direction={{ base: "column", sm: "row" }} mb={3}>
+        <Stack gap={2} align="stretch" direction={{ base: "column", sm: "row" }} mb={2}>
           <ChakraLink href={spotifyAppUrl} display="inline-block">
-            <Button size="sm" variant="solid" w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
+            <Button size={{ base: "md", md: "sm" }} variant="solid" w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
           </ChakraLink>
         </Stack>
 
         {canAddToCollection ? (
-          <Button size="sm" colorScheme="teal" w="full" onClick={() => onAddToCollection(album)}>
+          <Button size={{ base: "md", md: "sm" }} colorScheme="teal" w="full" onClick={() => onAddToCollection(album)}>
             Add to Collection
           </Button>
         ) : null}

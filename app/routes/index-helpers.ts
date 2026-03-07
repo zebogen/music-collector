@@ -21,7 +21,7 @@ export function parsePage(value: string | null) {
 }
 
 export function parseTab(value: string | null): TabKey {
-  return TABS.includes(value as TabKey) ? (value as TabKey) : "albums";
+  return TABS.includes(value as TabKey) ? (value as TabKey) : "collections";
 }
 
 export function parseId(value: string | null) {

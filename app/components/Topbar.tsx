@@ -1,4 +1,4 @@
-import { Form, Link, useFetcher } from "react-router";
+import { Form, Link, useFetcher, useLocation } from "react-router";
 import {
   Flex,
   Box,
@@ -10,8 +10,11 @@ import {
   MenuItem,
   MenuPositioner,
   MenuRoot,
-  MenuTrigger
+  MenuTrigger,
+  HStack
 } from "@chakra-ui/react";
+import { useThemeMode } from "~/hooks/useThemeMode";
+import { TABS, type TabKey } from "~/routes/index-helpers";
 
 export default function Topbar({
   user,
@@ -22,30 +25,94 @@ export default function Topbar({
 }) {
   const syncFetcher = useFetcher<{ ok?: boolean; toast?: { type: "success" | "error"; title: string } }>();
   const isSyncing = syncFetcher.state !== "idle";
+  const { mode, toggleThemeMode } = useThemeMode();
+  const location = useLocation();
+  const currentTab = (new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections";
+
+  function tabHref(tab: TabKey) {
+    const params = new URLSearchParams(location.search);
+    params.set("tab", tab);
+
+    // Clear state that is only relevant to specific tabs.
+    params.delete("album");
+    if (tab !== "collections") {
+      params.delete("collection");
+    }
+
+    // Keep only the active tab's page index.
+    if (tab === "albums") {
+      params.set("albumsPage", params.get("albumsPage") ?? "1");
+      params.delete("artistsPage");
+      params.delete("playlistsPage");
+    } else if (tab === "artists") {
+      params.set("artistsPage", params.get("artistsPage") ?? "1");
+      params.delete("albumsPage");
+      params.delete("playlistsPage");
+    } else if (tab === "playlists") {
+      params.set("playlistsPage", params.get("playlistsPage") ?? "1");
+      params.delete("artistsPage");
+      params.delete("albumsPage");
+    } else {
+      params.delete("artistsPage");
+      params.delete("albumsPage");
+      params.delete("playlistsPage");
+    }
+
+    return `/?${params.toString()}`;
+  }
 
   return (
     <Flex
       as="header"
-      align={{ base: "flex-start", md: "center" }}
+      align={{ base: "stretch", md: "center" }}
       justify="space-between"
-      direction={{ base: "column", md: "row" }}
-      gap={{ base: 3, md: 4 }}
-      p={{ base: 4, md: 4 }}
-      bg="app.panel"
-      borderWidth="1px"
+      direction={{ base: "column", lg: "row" }}
+      gap={{ base: 2, md: 3 }}
+      px={{ base: 3, md: 5 }}
+      py={{ base: 3, md: 3 }}
+      bg="app.panelSolid"
+      borderBottomWidth="1px"
       borderColor="app.border"
-      borderRadius="2xl"
-      boxShadow="md"
-      backdropFilter="blur(18px)"
+      borderRadius="0"
     >
       <Box minW={0}>
-        <Heading as="h1" size="md">Spotify Library Organizer</Heading>
-        <Text fontSize="sm" color="app.muted">{user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}</Text>
+        <Heading as="h1" size="sm" lineHeight="1.2">Spotify Library Organizer</Heading>
+        <Text display={{ base: "none", md: "block" }} fontSize="xs" color="app.muted" mt={1}>
+          {user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}
+        </Text>
       </Box>
+
+      {user ? (
+        <HStack
+          as="nav"
+          gap={2}
+          wrap="nowrap"
+          align="center"
+          overflowX="auto"
+          pb={{ base: 1, md: 0 }}
+          css={{ scrollbarWidth: "none" }}
+        >
+          {TABS.map((tab) => (
+            <Link key={tab} to={tabHref(tab)} prefetch="intent" viewTransition>
+              <Button size="sm" minH="40px" px={4} variant={currentTab === tab ? "solid" : "ghost"} textTransform="capitalize">
+                {tab}
+              </Button>
+            </Link>
+          ))}
+        </HStack>
+      ) : null}
 
       <Box w={{ base: "full", md: "auto" }}>
         {user ? (
-          <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }}>
+          <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }} gap={2}>
+            <IconButton
+              aria-label={`Switch to ${mode === "dark" ? "light" : "dark"} mode`}
+              variant="outline"
+              size="sm"
+              onClick={toggleThemeMode}
+            >
+              {mode === "dark" ? "Light" : "Dark"}
+            </IconButton>
             <MenuRoot positioning={{ placement: "bottom-end" }}>
               <MenuTrigger asChild>
                 <IconButton aria-label="Open account menu" variant="outline" size="sm">
@@ -90,11 +157,19 @@ export default function Topbar({
             </MenuRoot>
           </Flex>
         ) : (
-          <Box as="nav" w={{ base: "full", md: "auto" }}>
+          <Flex as="nav" w={{ base: "full", md: "auto" }} gap={2} justify={{ base: "stretch", md: "flex-end" }} direction={{ base: "column", sm: "row" }}>
+            <IconButton
+              aria-label={`Switch to ${mode === "dark" ? "light" : "dark"} mode`}
+              variant="outline"
+              size="sm"
+              onClick={toggleThemeMode}
+            >
+              {mode === "dark" ? "Light" : "Dark"}
+            </IconButton>
             <Link to="/auth/login" prefetch="intent" viewTransition>
               <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Log In</Button>
             </Link>
-          </Box>
+          </Flex>
         )}
       </Box>
     </Flex>

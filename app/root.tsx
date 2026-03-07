@@ -12,6 +12,20 @@ export const meta = () => [
   { title: "Spotify Library Organizer" },
   { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" }
 ];
+const themeInitScript = `
+(() => {
+  try {
+    const saved = localStorage.getItem("theme-preference");
+    const mode = saved === "light" || saved === "dark"
+      ? saved
+      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(mode);
+    root.style.colorScheme = mode;
+  } catch {}
+})();
+`;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const auth = await getAuthSession(request);
@@ -75,6 +89,7 @@ export default function App() {
       <head>
         <Meta />
         <Links />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
         <Chakra>
@@ -108,7 +123,7 @@ export default function App() {
             </Box>
           ) : null}
           <main>
-            <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0.75rem" }}>
+            <div style={{ width: "100%", margin: 0, padding: 0 }}>
               <Outlet />
             </div>
           </main>

@@ -56,7 +56,7 @@ export default function PaginationControls({
     <Stack gap={3} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
       <ChakraLink asChild>
         <Link prefetch="intent" to={href(Math.max(1, currentPage - 1))} viewTransition>
-        <Button variant="outline" size="sm" disabled={currentPage <= 1}>Previous</Button>
+        <Button variant="outline" size={{ base: "md", md: "sm" }} disabled={currentPage <= 1}>Previous</Button>
         </Link>
       </ChakraLink>
 
@@ -67,7 +67,7 @@ export default function PaginationControls({
           ) : (
             <ChakraLink key={`${list}-${item}`} asChild>
               <Link prefetch="intent" to={href(item)} viewTransition>
-              <Button size="sm" variant={item === currentPage ? "solid" : "ghost"} aria-current={item === currentPage ? "page" : undefined}>
+              <Button size={{ base: "md", md: "sm" }} minW={{ base: "44px", md: "36px" }} variant={item === currentPage ? "solid" : "ghost"} aria-current={item === currentPage ? "page" : undefined}>
                 {item}
               </Button>
               </Link>
@@ -78,7 +78,7 @@ export default function PaginationControls({
 
       <ChakraLink asChild>
         <Link prefetch="intent" to={href(Math.min(totalPages, currentPage + 1))} viewTransition>
-        <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>Next</Button>
+        <Button variant="outline" size={{ base: "md", md: "sm" }} disabled={currentPage >= totalPages}>Next</Button>
         </Link>
       </ChakraLink>
     </Stack>

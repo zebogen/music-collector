@@ -7,9 +7,11 @@ import { AnimatedItem } from "~/components/Animated";
 export default function SpotifySearchSection({
   initialSearch,
   onAdd,
+  compact = false,
 }: {
   initialSearch: string;
   onAdd: (album: SpotifySearchAlbum) => void;
+  compact?: boolean;
 }) {
   const fetcher = useFetcher<{ results: SpotifySearchAlbum[]; error?: string }>();
   const [query, setQuery] = useState(initialSearch);
@@ -38,11 +40,11 @@ export default function SpotifySearchSection({
   };
 
   return (
-    <Box p={{ base: 4, md: 5 }} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" backdropFilter="blur(18px)" mb={{ base: 5, md: 6 }}>
-      <Stack gap={4}>
+    <Box p={compact ? { base: 2, md: 2 } : { base: 4, md: 5 }} borderRadius={compact ? "md" : "2xl"} bg={compact ? "transparent" : "app.panel"} borderWidth={compact ? "0" : "1px"} borderColor="app.border" boxShadow={compact ? "none" : "md"} backdropFilter={compact ? "none" : "blur(18px)"} mb={compact ? 0 : { base: 5, md: 6 }}>
+      <Stack gap={compact ? 2 : 4}>
         <Box>
-          <Heading as="h2" size="md" mb={1}>Search Spotify</Heading>
-          <Text color="app.muted">Look up albums and add them directly to one of your collections.</Text>
+          <Heading as="h2" size={compact ? "sm" : "md"} mb={1}>Search Spotify</Heading>
+          {compact ? null : <Text color="app.muted">Look up albums and add them directly to one of your collections.</Text>}
         </Box>
 
         <fetcher.Form
@@ -62,13 +64,13 @@ export default function SpotifySearchSection({
               value={query}
               onChange={(event) => setQuery(event.currentTarget.value)}
               placeholder="Search Spotify albums"
-              size="lg"
+              size={compact ? "sm" : "lg"}
             />
-            <Button type="submit" colorScheme="teal" size="lg" w={{ base: "full", md: "auto" }} loading={isSearching} loadingText="Searching...">
+            <Button type="submit" colorScheme="teal" size={compact ? "sm" : "lg"} w={{ base: "full", md: "auto" }} loading={isSearching} loadingText="Searching...">
               Search
             </Button>
             {query ? (
-              <Button variant="outline" size="lg" w={{ base: "full", md: "auto" }} onClick={clearSearch}>
+              <Button variant="outline" size={compact ? "sm" : "lg"} w={{ base: "full", md: "auto" }} onClick={clearSearch}>
                 Clear
               </Button>
             ) : null}
@@ -81,10 +83,10 @@ export default function SpotifySearchSection({
               Results for "{query.trim()}"
             </Text>
             {results.length > 0 ? (
-              <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={{ base: 4, md: 4 }}>
+              <SimpleGrid columns={compact ? { base: 1 } : { base: 1, md: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
                 {results.map((album, index) => (
                   <AnimatedItem key={album.spotifyId} index={index}>
-                    <Box p={{ base: 4, md: 4 }} bg="app.card" borderWidth="1px" borderColor="app.border" borderRadius="xl">
+                    <Box p={{ base: 3, md: 3 }} bg="app.card" borderWidth="1px" borderColor="app.border" borderRadius="lg">
                       {album.imageUrl ? (
                         <Image
                           src={album.imageUrl}
