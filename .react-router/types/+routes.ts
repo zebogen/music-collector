@@ -41,6 +41,9 @@ type Pages = {
   "/auth/login": {
     params: {};
   };
+  "/health": {
+    params: {};
+  };
   "/logout": {
     params: {};
   };
@@ -49,7 +52,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/auth/login" | "/logout";
+    page: "/" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/auth/login" | "/health" | "/logout";
   };
   "routes/index-action-helpers.ts": {
     id: "routes/index-action-helpers";
@@ -91,6 +94,10 @@ type RouteFiles = {
     id: "routes/_index";
     page: "/";
   };
+  "routes/health.ts": {
+    id: "routes/health";
+    page: "/health";
+  };
   "routes/logout.tsx": {
     id: "routes/logout";
     page: "/logout";
@@ -109,5 +116,6 @@ type RouteModules = {
   "routes/auth.spotify.callback": typeof import("./app/routes/auth.spotify.callback.tsx");
   "routes/auth.login": typeof import("./app/routes/auth.login.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");
+  "routes/health": typeof import("./app/routes/health.ts");
   "routes/logout": typeof import("./app/routes/logout.tsx");
 };

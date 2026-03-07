@@ -3,6 +3,7 @@ import type { DbUser, SpotifySearchAlbum } from "~/types";
 import { updateUserTokens } from "~/utils/user.server";
 
 const SCOPES = ["user-library-read", "playlist-read-private", "playlist-read-collaborative", "user-follow-read"];
+const FETCH_TIMEOUT_MS = 12_000;
 
 type SpotifyTokenResponse = {
   access_token: string;
@@ -11,6 +12,21 @@ type SpotifyTokenResponse = {
   expires_in: number;
   refresh_token?: string;
 };
+
+async function fetchWithTimeout(url: string, init: RequestInit, label: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if ((error as Error).name === "AbortError") {
+      throw new Error(`${label} timed out after ${FETCH_TIMEOUT_MS}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 function getBasicAuthHeader() {
   if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
@@ -45,14 +61,14 @@ export async function exchangeCodeForToken(code: string) {
     grant_type: "authorization_code",
   });
 
-  const response = await fetch("https://accounts.spotify.com/api/token", {
+  const response = await fetchWithTimeout("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: getBasicAuthHeader(),
     },
     body,
-  });
+  }, "Spotify token exchange");
 
   if (!response.ok) {
     throw new Error("Spotify token exchange failed");
@@ -67,14 +83,14 @@ async function refreshAccessToken(refreshToken: string) {
     refresh_token: refreshToken,
   });
 
-  const response = await fetch("https://accounts.spotify.com/api/token", {
+  const response = await fetchWithTimeout("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
       Authorization: getBasicAuthHeader(),
     },
     body,
-  });
+  }, "Spotify token refresh");
 
   if (!response.ok) {
     throw new Error("Spotify token refresh failed");
@@ -103,11 +119,11 @@ export async function ensureValidAccessToken(user: DbUser) {
 }
 
 export async function fetchSpotifyProfile(accessToken: string) {
-  const response = await fetch("https://api.spotify.com/v1/me", {
+  const response = await fetchWithTimeout("https://api.spotify.com/v1/me", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
-  });
+  }, "Spotify profile fetch");
 
   if (!response.ok) {
     throw new Error("Failed to fetch Spotify profile");
@@ -122,9 +138,9 @@ export async function fetchSpotifySavedAlbums(accessToken: string) {
   let hasNext = true;
 
   while (hasNext) {
-    const response = await fetch(`https://api.spotify.com/v1/me/albums?limit=50&offset=${offset}`, {
+    const response = await fetchWithTimeout(`https://api.spotify.com/v1/me/albums?limit=50&offset=${offset}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    }, "Spotify saved albums fetch");
 
     if (!response.ok) {
       throw new Error("Failed to fetch saved albums");
@@ -150,9 +166,9 @@ export async function fetchSpotifyFollowedArtists(accessToken: string) {
       query.set("after", after);
     }
 
-    const response = await fetch(`https://api.spotify.com/v1/me/following?${query.toString()}`, {
+    const response = await fetchWithTimeout(`https://api.spotify.com/v1/me/following?${query.toString()}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    }, "Spotify followed artists fetch");
 
     if (!response.ok) {
       throw new Error("Failed to fetch followed artists");
@@ -175,9 +191,9 @@ export async function fetchSpotifyPlaylists(accessToken: string) {
   let hasNext = true;
 
   while (hasNext) {
-    const response = await fetch(`https://api.spotify.com/v1/me/playlists?limit=50&offset=${offset}`, {
+    const response = await fetchWithTimeout(`https://api.spotify.com/v1/me/playlists?limit=50&offset=${offset}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    }, "Spotify playlists fetch");
 
     if (!response.ok) {
       throw new Error("Failed to fetch playlists");
@@ -199,9 +215,9 @@ export async function searchSpotifyAlbums(accessToken: string, query: string): P
     limit: "12",
   });
 
-  const response = await fetch(`https://api.spotify.com/v1/search?${params.toString()}`, {
+  const response = await fetchWithTimeout(`https://api.spotify.com/v1/search?${params.toString()}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  }, "Spotify album search");
 
   if (!response.ok) {
     throw new Error("Failed to search Spotify albums");

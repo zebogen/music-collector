@@ -105,9 +105,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const selectedCollectionId = parseId(url.searchParams.get("collection"));
   const search = (url.searchParams.get("search") ?? "").trim();
 
-  const user = await getUserById(userId);
-  const accessToken = user ? await ensureValidAccessToken(user) : null;
-
   const [libraryData, collections] = await Promise.all([
     getLibraryData(
       userId,
