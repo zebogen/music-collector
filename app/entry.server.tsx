@@ -20,7 +20,13 @@ function isAuthorized(request: Request) {
     return true;
   }
 
+  const basicAuthEnabled = process.env.BASIC_AUTH_ENABLED === "true";
+  if (!basicAuthEnabled) {
+    return true;
+  }
+
   if (!env.BASIC_AUTH_USERNAME || !env.BASIC_AUTH_PASSWORD) {
+    console.warn("BASIC_AUTH_ENABLED is true, but username/password are not configured.");
     return true;
   }
 
@@ -29,8 +35,20 @@ function isAuthorized(request: Request) {
     return false;
   }
 
-  const decoded = Buffer.from(auth.slice(6), "base64").toString("utf-8");
-  const [username, password] = decoded.split(":");
+  let decoded = "";
+  try {
+    decoded = Buffer.from(auth.slice(6), "base64").toString("utf-8");
+  } catch {
+    return false;
+  }
+
+  const separatorIndex = decoded.indexOf(":");
+  if (separatorIndex < 0) {
+    return false;
+  }
+
+  const username = decoded.slice(0, separatorIndex);
+  const password = decoded.slice(separatorIndex + 1);
 
   return username === env.BASIC_AUTH_USERNAME && password === env.BASIC_AUTH_PASSWORD;
 }
