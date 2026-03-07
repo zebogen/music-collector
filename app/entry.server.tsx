@@ -49,6 +49,30 @@ export default function handleRequest(
 
   return new Promise((resolve, reject) => {
     let didError = false;
+    let settled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    function safeResolve(response: Response) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      resolve(response);
+    }
+
+    function safeReject(error: unknown) {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      reject(error);
+    }
 
     const { pipe, abort } = renderToPipeableStream(
       <ServerRouter context={routerContext} url={request.url} />,
@@ -59,7 +83,7 @@ export default function handleRequest(
 
           responseHeaders.set("Content-Type", "text/html");
 
-          resolve(
+          safeResolve(
             new Response(stream, {
               headers: responseHeaders,
               status: didError ? 500 : responseStatusCode
@@ -69,7 +93,7 @@ export default function handleRequest(
           pipe(body);
         },
         onShellError(error: unknown) {
-          reject(error);
+          safeReject(error);
         },
         onError(error: unknown) {
           didError = true;
@@ -78,6 +102,15 @@ export default function handleRequest(
       }
     );
 
-    setTimeout(abort, ABORT_DELAY);
+    timeoutId = setTimeout(() => {
+      abort();
+      console.error(`SSR timeout after ${ABORT_DELAY}ms for ${request.url}`);
+      safeResolve(
+        new Response("Request timed out while rendering.", {
+          status: 504,
+          headers: { "Content-Type": "text/plain" }
+        })
+      );
+    }, ABORT_DELAY);
   });
 }
