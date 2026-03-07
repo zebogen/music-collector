@@ -445,3 +445,75 @@ export async function getCollections(userId: number): Promise<Collection[]> {
     albums: row.albums
   }));
 }
+
+export async function getCollectionsForView(userId: number, selectedCollectionId: number | null): Promise<Collection[]> {
+  const result = await db.query(
+    `
+      SELECT
+        c.id,
+        c.name,
+        c.description,
+        CASE
+          WHEN $2::int IS NOT NULL AND c.id = $2::int THEN COALESCE(artists.items, '[]'::json)
+          ELSE '[]'::json
+        END AS artists,
+        CASE
+          WHEN $2::int IS NOT NULL AND c.id = $2::int THEN COALESCE(albums.items, '[]'::json)
+          ELSE '[]'::json
+        END AS albums
+      FROM collections c
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object('id', a.id, 'name', a.name, 'genres', a.genres)
+          ORDER BY a.name
+        ) AS items
+        FROM collection_artists ca
+        JOIN artists a ON a.id = ca.artist_id
+        WHERE ca.collection_id = c.id
+      ) AS artists ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', al.id,
+            'spotifyId', al.spotify_id,
+            'name', al.name,
+            'artistNames', al.artist_names,
+            'imageUrl', al.image_url,
+            'releaseDate', al.release_date
+          )
+          ORDER BY al.name
+        ) AS items
+        FROM collection_albums cal
+        JOIN albums al ON al.id = cal.album_id
+        WHERE cal.collection_id = c.id
+      ) AS albums ON TRUE
+      WHERE c.user_id = $1
+      ORDER BY c.created_at DESC
+    `,
+    [userId, selectedCollectionId]
+  );
+
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    artists: row.artists,
+    albums: row.albums
+  }));
+}
+
+export async function getCollectionNamesForAlbum(userId: number, albumId: number): Promise<Array<{ id: number; name: string }>> {
+  const result = await db.query(
+    `
+      SELECT c.id, c.name
+      FROM collections c
+      JOIN collection_albums ca ON ca.collection_id = c.id
+      WHERE c.user_id = $1
+        AND ca.album_id = $2
+      ORDER BY c.name ASC
+    `,
+    [userId, albumId]
+  );
+
+  return result.rows.map((row: any) => ({ id: row.id, name: row.name }));
+}

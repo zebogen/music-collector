@@ -23,7 +23,8 @@ import {
   addSpotifySearchAlbumToCollection,
   createCollection,
   deleteCollection,
-  getCollections,
+  getCollectionNamesForAlbum,
+  getCollectionsForView,
   getLibraryData,
   removeAlbumFromCollection,
   removeArtistFromCollection,
@@ -49,6 +50,23 @@ import { buildHomeHref, getSelectedCollection, parseId, parsePage, parseTab, typ
 import { getOptionalDescription, getPositiveNumber, getRedirectTo, getRequiredName } from "./index-action-helpers";
 
 const PAGE_SIZE = 20;
+const HOME_LOADER_TIMEOUT_MS = 10_000;
+
+function withTimeout<T>(promise: Promise<T>, label: string, ms = HOME_LOADER_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      }
+    );
+  });
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const auth = await getAuthSession(request);
@@ -70,7 +88,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         selectedAlbumId: null as number | null,
         selectedCollectionId: null as number | null,
         search: ""
-      }
+      },
+      selectedAlbumCollections: []
     };
   }
 
@@ -90,7 +109,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         selectedAlbumId: null as number | null,
         selectedCollectionId: null as number | null,
         search: ""
-      }
+      },
+      selectedAlbumCollections: []
     };
   }
 
@@ -105,13 +125,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const selectedCollectionId = parseId(url.searchParams.get("collection"));
   const search = (url.searchParams.get("search") ?? "").trim();
 
-  const [libraryData, collections] = await Promise.all([
-    getLibraryData(
-      userId,
-      { genre: genre || undefined, artist: artist || undefined },
-      { artistsPage, albumsPage, playlistsPage, pageSize: PAGE_SIZE }
+  const [libraryData, collections, selectedAlbumCollections] = await Promise.all([
+    withTimeout(
+      getLibraryData(
+        userId,
+        { genre: genre || undefined, artist: artist || undefined },
+        { artistsPage, albumsPage, playlistsPage, pageSize: PAGE_SIZE }
+      ),
+      "Home library query"
     ),
-    getCollections(userId)
+    withTimeout(getCollectionsForView(userId, selectedCollectionId), "Collections query"),
+    selectedAlbumId
+      ? withTimeout(getCollectionNamesForAlbum(userId, selectedAlbumId), "Selected album collections query")
+      : Promise.resolve([])
   ]);
 
   return {
@@ -119,6 +145,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     connected: true,
     libraryData,
     collections,
+    selectedAlbumCollections,
     filters: { genre, artist, tab, artistsPage, albumsPage, playlistsPage, selectedAlbumId, selectedCollectionId, search }
   };
 }
@@ -274,7 +301,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Index() {
-  const { authenticated, connected, libraryData, collections, filters } = useLoaderData<typeof loader>();
+  const { authenticated, connected, libraryData, collections, filters, selectedAlbumCollections } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const fetchers = useFetchers();
   const navigate = useNavigate();
@@ -344,9 +371,7 @@ export default function Index() {
   }
 
   const selectedAlbum = libraryData.albums.find((album: Album) => album.id === filters.selectedAlbumId) ?? null;
-  const selectedAlbumCollections = selectedAlbum
-    ? safeCollections.filter((collection) => collection.albums.some((album) => album.id === selectedAlbum.id))
-    : [];
+  const selectedAlbumCollectionLinks = selectedAlbum ? selectedAlbumCollections : [];
   const selectedCollection = getSelectedCollection(safeCollections, filters.selectedCollectionId);
   const selectedCollectionArtists = selectedCollection?.artists ?? [];
   const selectedCollectionAlbums = selectedCollection?.albums ?? [];
@@ -600,9 +625,9 @@ export default function Index() {
                 </ChakraLink>
               </Stack>
               <Heading as="h4" size="sm" mt={3} mb={2}>In Collections</Heading>
-              {selectedAlbumCollections.length > 0 ? (
+              {selectedAlbumCollectionLinks.length > 0 ? (
                 <Stack gap={1}>
-                  {selectedAlbumCollections.map((collection) => (
+                  {selectedAlbumCollectionLinks.map((collection) => (
                     <Text key={collection.id}>{collection.name}</Text>
                   ))}
                 </Stack>
