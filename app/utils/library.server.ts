@@ -403,32 +403,35 @@ export async function getCollections(userId: number): Promise<Collection[]> {
         c.id,
         c.name,
         c.description,
-        COALESCE(
-          json_agg(DISTINCT jsonb_build_object('id', a.id, 'name', a.name, 'genres', a.genres))
-          FILTER (WHERE a.id IS NOT NULL),
-          '[]'::json
-        ) AS artists,
-        COALESCE(
-          json_agg(
-            DISTINCT jsonb_build_object(
-              'id', al.id,
-              'spotifyId', al.spotify_id,
-              'name', al.name,
-              'artistNames', al.artist_names,
-              'imageUrl', al.image_url,
-              'releaseDate', al.release_date
-            )
-          )
-          FILTER (WHERE al.id IS NOT NULL),
-          '[]'::json
-        ) AS albums
+        COALESCE(artists.items, '[]'::json) AS artists,
+        COALESCE(albums.items, '[]'::json) AS albums
       FROM collections c
-      LEFT JOIN collection_artists ca ON ca.collection_id = c.id
-      LEFT JOIN artists a ON a.id = ca.artist_id
-      LEFT JOIN collection_albums cal ON cal.collection_id = c.id
-      LEFT JOIN albums al ON al.id = cal.album_id
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object('id', a.id, 'name', a.name, 'genres', a.genres)
+          ORDER BY a.name
+        ) AS items
+        FROM collection_artists ca
+        JOIN artists a ON a.id = ca.artist_id
+        WHERE ca.collection_id = c.id
+      ) AS artists ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', al.id,
+            'spotifyId', al.spotify_id,
+            'name', al.name,
+            'artistNames', al.artist_names,
+            'imageUrl', al.image_url,
+            'releaseDate', al.release_date
+          )
+          ORDER BY al.name
+        ) AS items
+        FROM collection_albums cal
+        JOIN albums al ON al.id = cal.album_id
+        WHERE cal.collection_id = c.id
+      ) AS albums ON TRUE
       WHERE c.user_id = $1
-      GROUP BY c.id
       ORDER BY c.created_at DESC
     `,
     [userId]
