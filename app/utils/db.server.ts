@@ -15,8 +15,8 @@ type DbPool = {
   connect: () => Promise<DbClient>;
 };
 
-function isNeonUrl(connectionString: string) {
-  return connectionString.includes("neon.tech") || connectionString.includes("neon.database");
+function shouldUseNeonServerlessPool() {
+  return process.env.DB_DRIVER === "neon";
 }
 
 function normalizeQueryArgs(args: QueryArgs) {
@@ -54,11 +54,28 @@ function wrapNeonPool(pool: InstanceType<typeof NeonPool>): DbPool {
 }
 
 function createPool(): DbPool {
-  if (isNeonUrl(env.DATABASE_URL) || env.NODE_ENV === "production") {
-    return wrapNeonPool(new NeonPool({ connectionString: env.DATABASE_URL }));
+  if (shouldUseNeonServerlessPool()) {
+    return wrapNeonPool(
+      new NeonPool({
+        connectionString: env.DATABASE_URL,
+        connectionTimeoutMillis: 10_000,
+        idleTimeoutMillis: 10_000,
+        max: 5
+      })
+    );
   }
 
-  return wrapPgPool(new PgPool({ connectionString: env.DATABASE_URL, ssl: false }));
+  return wrapPgPool(
+    new PgPool({
+      connectionString: env.DATABASE_URL,
+      ssl: env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 10_000,
+      query_timeout: 15_000,
+      statement_timeout: 15_000,
+      max: 10
+    })
+  );
 }
 
 declare global {

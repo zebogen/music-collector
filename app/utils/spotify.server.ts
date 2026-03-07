@@ -13,11 +13,17 @@ type SpotifyTokenResponse = {
 };
 
 function getBasicAuthHeader() {
+  if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_CLIENT_SECRET) {
+    throw new Error("SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET are required");
+  }
   const creds = `${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`;
   return `Basic ${Buffer.from(creds).toString("base64")}`;
 }
 
 export function getSpotifyAuthUrl() {
+  if (!env.SPOTIFY_CLIENT_ID || !env.SPOTIFY_REDIRECT_URI) {
+    throw new Error("SPOTIFY_CLIENT_ID and SPOTIFY_REDIRECT_URI are required");
+  }
   const params = new URLSearchParams({
     response_type: "code",
     client_id: env.SPOTIFY_CLIENT_ID,
@@ -30,6 +36,9 @@ export function getSpotifyAuthUrl() {
 }
 
 export async function exchangeCodeForToken(code: string) {
+  if (!env.SPOTIFY_REDIRECT_URI) {
+    throw new Error("SPOTIFY_REDIRECT_URI is required");
+  }
   const body = new URLSearchParams({
     code,
     redirect_uri: env.SPOTIFY_REDIRECT_URI,
