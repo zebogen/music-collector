@@ -4,15 +4,9 @@ export type ThemeMode = "light" | "dark";
 
 const STORAGE_KEY = "theme-preference";
 
-function resolveInitialMode(): ThemeMode {
-  if (typeof document !== "undefined") {
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
-  }
-  return "light";
-}
-
 export function useThemeMode() {
-  const [mode, setMode] = useState<ThemeMode>(resolveInitialMode);
+  // Keep initial render hydration-safe; we resolve real mode in an effect.
+  const [mode, setMode] = useState<ThemeMode>("light");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -44,4 +38,3 @@ export function useThemeMode() {
 
   return { mode, setThemeMode, toggleThemeMode };
 }
-

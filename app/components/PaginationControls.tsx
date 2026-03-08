@@ -63,7 +63,7 @@ export default function PaginationControls({
       <HStack gap={2} wrap="wrap" justify={{ base: "center", md: "flex-start" }}>
         {pageItems.map((item, index) =>
           item === "ellipsis" ? (
-            <Text key={`${list}-ellipsis-${index}`}>…</Text>
+            <Text key={`${list}-ellipsis-${index}`}>...</Text>
           ) : (
             <ChakraLink key={`${list}-${item}`} asChild>
               <Link prefetch="intent" to={href(item)} viewTransition>

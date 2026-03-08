@@ -435,7 +435,15 @@ export default function Index() {
 
   return (
     <Grid templateColumns={{ base: "1fr", lg: "320px minmax(0, 1fr)" }} gap={0} minH={{ base: "auto", lg: "calc(100vh - 84px)" }}>
-      <Box as="aside" order={{ base: 2, lg: 1 }} borderRightWidth={{ base: "0", lg: "1px" }} borderColor="app.border" bg="app.panelSolid">
+      <Box
+        as="aside"
+        order={{ base: 2, lg: 1 }}
+        borderRightWidth={{ base: "0", lg: "1px" }}
+        borderColor="app.border"
+        bg="app.panelSolid"
+        overflowY={{ base: "visible", lg: "auto" }}
+        maxH={{ base: "none", lg: "calc(100vh - 84px)" }}
+      >
         <Sidebar
           filters={filters}
           genres={libraryData.genres}

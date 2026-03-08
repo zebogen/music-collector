@@ -1,3 +1,4 @@
+import { SpotifyApi, type AccessToken } from "@spotify/web-api-ts-sdk";
 import { env } from "~/utils/env.server";
 import type { DbUser, SpotifySearchAlbum } from "~/types";
 import { updateUserTokens } from "~/utils/user.server";
@@ -13,11 +14,11 @@ type SpotifyTokenResponse = {
   refresh_token?: string;
 };
 
-async function fetchWithTimeout(url: string, init: RequestInit, label: string) {
+async function fetchWithTimeout(url: RequestInfo | URL, init?: RequestInit, label = "Spotify request") {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    return await fetch(url, { ...(init ?? {}), signal: controller.signal });
   } catch (error) {
     if ((error as Error).name === "AbortError") {
       throw new Error(`${label} timed out after ${FETCH_TIMEOUT_MS}ms`);
@@ -26,6 +27,24 @@ async function fetchWithTimeout(url: string, init: RequestInit, label: string) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function getSpotifySdk(accessToken: string) {
+  if (!env.SPOTIFY_CLIENT_ID) {
+    throw new Error("SPOTIFY_CLIENT_ID is required");
+  }
+
+  const token: AccessToken = {
+    access_token: accessToken,
+    token_type: "Bearer",
+    expires_in: 3600,
+    refresh_token: "",
+    expires: Date.now() + 3600_000
+  };
+
+  return SpotifyApi.withAccessToken(env.SPOTIFY_CLIENT_ID, token, {
+    fetch: (req, init) => fetchWithTimeout(req, init, "Spotify SDK request")
+  });
 }
 
 function getBasicAuthHeader() {
@@ -119,63 +138,35 @@ export async function ensureValidAccessToken(user: DbUser) {
 }
 
 export async function fetchSpotifyProfile(accessToken: string) {
-  const response = await fetchWithTimeout("https://api.spotify.com/v1/me", {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  }, "Spotify profile fetch");
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch Spotify profile");
-  }
-
-  return response.json();
+  const sdk = getSpotifySdk(accessToken);
+  return sdk.currentUser.profile();
 }
 
 export async function fetchSpotifySavedAlbums(accessToken: string) {
+  const sdk = getSpotifySdk(accessToken);
   const albums: any[] = [];
   let offset = 0;
   let hasNext = true;
 
   while (hasNext) {
-    const response = await fetchWithTimeout(`https://api.spotify.com/v1/me/albums?limit=50&offset=${offset}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }, "Spotify saved albums fetch");
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch saved albums");
-    }
-
-    const json = await response.json();
-    albums.push(...json.items);
-    offset += json.items.length;
-    hasNext = Boolean(json.next);
+    const page = await sdk.currentUser.albums.savedAlbums(50, offset);
+    albums.push(...page.items);
+    offset += page.items.length;
+    hasNext = Boolean(page.next);
   }
 
   return albums;
 }
 
 export async function fetchSpotifyFollowedArtists(accessToken: string) {
+  const sdk = getSpotifySdk(accessToken);
   const artists: any[] = [];
   let after: string | null = null;
   let hasNext = true;
 
   while (hasNext) {
-    const query = new URLSearchParams({ type: "artist", limit: "50" });
-    if (after) {
-      query.set("after", after);
-    }
-
-    const response = await fetchWithTimeout(`https://api.spotify.com/v1/me/following?${query.toString()}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }, "Spotify followed artists fetch");
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch followed artists");
-    }
-
-    const json = await response.json();
-    const block = json.artists;
+    const followed = await sdk.currentUser.followedArtists(after ?? undefined, 50);
+    const block = followed.artists as any;
 
     artists.push(...block.items);
     after = block.cursors?.after ?? null;
@@ -186,45 +177,26 @@ export async function fetchSpotifyFollowedArtists(accessToken: string) {
 }
 
 export async function fetchSpotifyPlaylists(accessToken: string) {
+  const sdk = getSpotifySdk(accessToken);
   const playlists: any[] = [];
   let offset = 0;
   let hasNext = true;
 
   while (hasNext) {
-    const response = await fetchWithTimeout(`https://api.spotify.com/v1/me/playlists?limit=50&offset=${offset}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }, "Spotify playlists fetch");
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch playlists");
-    }
-
-    const json = await response.json();
-    playlists.push(...json.items);
-    offset += json.items.length;
-    hasNext = Boolean(json.next);
+    const page = await sdk.currentUser.playlists.playlists(50, offset);
+    playlists.push(...page.items);
+    offset += page.items.length;
+    hasNext = Boolean(page.next);
   }
 
   return playlists;
 }
 
 export async function searchSpotifyAlbums(accessToken: string, query: string): Promise<SpotifySearchAlbum[]> {
-  const params = new URLSearchParams({
-    q: query,
-    type: "album",
-    limit: "12",
-  });
+  const sdk = getSpotifySdk(accessToken);
+  const result = await sdk.search(query, ["album"], undefined, 12, 0);
 
-  const response = await fetchWithTimeout(`https://api.spotify.com/v1/search?${params.toString()}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  }, "Spotify album search");
-
-  if (!response.ok) {
-    throw new Error("Failed to search Spotify albums");
-  }
-
-  const json = await response.json();
-  return (json.albums?.items ?? []).map((album: any) => ({
+  return (result.albums?.items ?? []).map((album: any) => ({
     spotifyId: album.id,
     name: album.name,
     albumType: album.album_type ?? null,

@@ -12,12 +12,13 @@
     "migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.4",
     "@chakra-ui/react": "^3.33.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@neondatabase/serverless": "^0.10.4",
     "@react-router/node": "^7.13",
     "@react-router/serve": "^7.13",
+    "@spotify/web-api-ts-sdk": "^1.2.0",
     "@vercel/react-router": "^1.2.5",
     "framer-motion": "^12.34.3",
     "pg": "^8.14.1",

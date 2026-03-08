@@ -25,7 +25,7 @@ export default function Topbar({
 }) {
   const syncFetcher = useFetcher<{ ok?: boolean; toast?: { type: "success" | "error"; title: string } }>();
   const isSyncing = syncFetcher.state !== "idle";
-  const { mode, toggleThemeMode } = useThemeMode();
+  const { toggleThemeMode } = useThemeMode();
   const location = useLocation();
   const currentTab = (new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections";
 
@@ -106,17 +106,17 @@ export default function Topbar({
         {user ? (
           <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }} gap={2}>
             <IconButton
-              aria-label={`Switch to ${mode === "dark" ? "light" : "dark"} mode`}
+              aria-label="Toggle theme"
               variant="outline"
               size="sm"
               onClick={toggleThemeMode}
             >
-              {mode === "dark" ? "Light" : "Dark"}
+              Theme
             </IconButton>
             <MenuRoot positioning={{ placement: "bottom-end" }}>
               <MenuTrigger asChild>
                 <IconButton aria-label="Open account menu" variant="outline" size="sm">
-                  &#8942;
+                  Menu
                 </IconButton>
               </MenuTrigger>
               <MenuPositioner>
@@ -159,12 +159,12 @@ export default function Topbar({
         ) : (
           <Flex as="nav" w={{ base: "full", md: "auto" }} gap={2} justify={{ base: "stretch", md: "flex-end" }} direction={{ base: "column", sm: "row" }}>
             <IconButton
-              aria-label={`Switch to ${mode === "dark" ? "light" : "dark"} mode`}
+              aria-label="Toggle theme"
               variant="outline"
               size="sm"
               onClick={toggleThemeMode}
             >
-              {mode === "dark" ? "Light" : "Dark"}
+              Theme
             </IconButton>
             <Link to="/auth/login" prefetch="intent" viewTransition>
               <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Log In</Button>

@@ -85,13 +85,13 @@ export default function App() {
   }, [visibleToast]);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <Meta />
         <Links />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Chakra>
           <Topbar user={data.user} isLoggingOut={isLoggingOut} />
           {visibleToast ? (

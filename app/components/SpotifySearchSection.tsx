@@ -1,5 +1,5 @@
 import { useFetcher } from "react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Button, Heading, Image, Input, SimpleGrid, Stack, Text, Link as ChakraLink } from "@chakra-ui/react";
 import type { SpotifySearchAlbum } from "~/types";
 import { AnimatedItem } from "~/components/Animated";
@@ -15,28 +15,43 @@ export default function SpotifySearchSection({
 }) {
   const fetcher = useFetcher<{ results: SpotifySearchAlbum[]; error?: string }>();
   const [query, setQuery] = useState(initialSearch);
+  const [results, setResults] = useState<SpotifySearchAlbum[]>([]);
+  const lastRequestedQueryRef = useRef("");
   const isSearching = fetcher.state !== "idle";
-  const results = fetcher.data?.results ?? [];
 
   useEffect(() => {
     setQuery(initialSearch);
   }, [initialSearch]);
 
   useEffect(() => {
-    if (query.trim().length < 2) {
+    if (fetcher.data?.results) {
+      setResults(fetcher.data.results);
+    }
+  }, [fetcher.data]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      lastRequestedQueryRef.current = "";
+      return;
+    }
+    if (trimmed === lastRequestedQueryRef.current) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      fetcher.load(`/api/spotify-search?q=${encodeURIComponent(query.trim())}`);
+      lastRequestedQueryRef.current = trimmed;
+      fetcher.load(`/api/spotify-search?q=${encodeURIComponent(trimmed)}`);
     }, 280);
 
     return () => window.clearTimeout(timeout);
-  }, [fetcher, query]);
+  }, [query]);
 
   const showResults = query.trim().length >= 2;
   const clearSearch = () => {
     setQuery("");
+    setResults([]);
+    lastRequestedQueryRef.current = "";
   };
 
   return (
@@ -55,7 +70,7 @@ export default function SpotifySearchSection({
             if (query.trim().length < 2) {
               return;
             }
-            fetcher.load(`/api/spotify-search?q=${encodeURIComponent(query.trim())}`);
+            // The debounced effect above performs the request.
           }}
         >
           <Stack align="stretch" direction={{ base: "column", md: "row" }}>
@@ -84,8 +99,8 @@ export default function SpotifySearchSection({
             </Text>
             {results.length > 0 ? (
               <SimpleGrid columns={compact ? { base: 1 } : { base: 1, md: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
-                {results.map((album, index) => (
-                  <AnimatedItem key={album.spotifyId} index={index}>
+                {results.map((album) => (
+                  <Box key={album.spotifyId}>
                     <Box p={{ base: 3, md: 3 }} bg="app.card" borderWidth="1px" borderColor="app.border" borderRadius="lg">
                       {album.imageUrl ? (
                         <Image
@@ -115,7 +130,7 @@ export default function SpotifySearchSection({
                         </Button>
                       </Stack>
                     </Box>
-                  </AnimatedItem>
+                  </Box>
                 ))}
               </SimpleGrid>
             ) : (
