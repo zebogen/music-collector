@@ -1,8 +1,10 @@
 import { useFetcher } from "react-router";
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, Heading, Image, Input, SimpleGrid, Stack, Text, Link as ChakraLink } from "@chakra-ui/react";
+import { Box, Button, Heading, Image, Input, SimpleGrid, Spinner, Stack, Text, Link as ChakraLink } from "@chakra-ui/react";
 import type { SpotifySearchAlbum } from "~/types";
-import { AnimatedItem } from "~/components/Animated";
+
+const SEARCH_DEBOUNCE_MS = 500;
+const SEARCH_PENDING_UI_DELAY_MS = 200;
 
 export default function SpotifySearchSection({
   initialSearch,
@@ -16,6 +18,7 @@ export default function SpotifySearchSection({
   const fetcher = useFetcher<{ results: SpotifySearchAlbum[]; error?: string }>();
   const [query, setQuery] = useState(initialSearch);
   const [results, setResults] = useState<SpotifySearchAlbum[]>([]);
+  const [isPendingQuery, setIsPendingQuery] = useState(false);
   const lastRequestedQueryRef = useRef("");
   const isSearching = fetcher.state !== "idle";
 
@@ -33,25 +36,41 @@ export default function SpotifySearchSection({
     const trimmed = query.trim();
     if (trimmed.length < 2) {
       lastRequestedQueryRef.current = "";
+      setIsPendingQuery(false);
       return;
     }
     if (trimmed === lastRequestedQueryRef.current) {
+      setIsPendingQuery(false);
       return;
     }
+
+    const pendingUiTimer = window.setTimeout(() => {
+      setIsPendingQuery(true);
+    }, SEARCH_PENDING_UI_DELAY_MS);
 
     const timeout = window.setTimeout(() => {
       lastRequestedQueryRef.current = trimmed;
       fetcher.load(`/api/spotify-search?q=${encodeURIComponent(trimmed)}`);
-    }, 280);
+    }, SEARCH_DEBOUNCE_MS);
 
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(pendingUiTimer);
+      window.clearTimeout(timeout);
+    };
   }, [query]);
+
+  useEffect(() => {
+    if (!isSearching) {
+      setIsPendingQuery(false);
+    }
+  }, [isSearching]);
 
   const showResults = query.trim().length >= 2;
   const clearSearch = () => {
     setQuery("");
     setResults([]);
     lastRequestedQueryRef.current = "";
+    setIsPendingQuery(false);
   };
 
   return (
@@ -93,10 +112,24 @@ export default function SpotifySearchSection({
         </fetcher.Form>
 
         {showResults ? (
-          <Box>
+          <Box position="relative">
             <Text fontSize="sm" color="app.muted" mb={3}>
               Results for "{query.trim()}"
             </Text>
+            {isSearching || isPendingQuery ? (
+              <Box
+                position="absolute"
+                inset={0}
+                bg="app.overlay"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                borderRadius="lg"
+                zIndex={2}
+              >
+                <Spinner size="md" color="app.accent" />
+              </Box>
+            ) : null}
             {results.length > 0 ? (
               <SimpleGrid columns={compact ? { base: 1 } : { base: 1, md: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
                 {results.map((album) => (

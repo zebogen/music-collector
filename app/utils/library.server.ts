@@ -517,3 +517,125 @@ export async function getCollectionNamesForAlbum(userId: number, albumId: number
 
   return result.rows.map((row: any) => ({ id: row.id, name: row.name }));
 }
+
+export async function getCollectionSummaries(userId: number): Promise<Array<{
+  id: number;
+  name: string;
+  description: string | null;
+  albumsCount: number;
+  artistsCount: number;
+  coverImageUrl: string | null;
+}>> {
+  const result = await db.query(
+    `
+      SELECT
+        c.id,
+        c.name,
+        c.description,
+        (
+          SELECT COUNT(*)::int
+          FROM collection_albums cal
+          WHERE cal.collection_id = c.id
+        ) AS albums_count,
+        (
+          SELECT COUNT(*)::int
+          FROM collection_artists ca
+          WHERE ca.collection_id = c.id
+        ) AS artists_count,
+        (
+          SELECT al.image_url
+          FROM collection_albums cal
+          JOIN albums al ON al.id = cal.album_id
+          WHERE cal.collection_id = c.id
+          ORDER BY al.updated_at DESC NULLS LAST
+          LIMIT 1
+        ) AS cover_image_url
+      FROM collections c
+      WHERE c.user_id = $1
+      ORDER BY c.created_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    albumsCount: row.albums_count ?? 0,
+    artistsCount: row.artists_count ?? 0,
+    coverImageUrl: row.cover_image_url ?? null
+  }));
+}
+
+export async function getCollectionById(userId: number, collectionId: number): Promise<Collection | null> {
+  const result = await db.query(
+    `
+      SELECT
+        c.id,
+        c.name,
+        c.description,
+        COALESCE(artists.items, '[]'::json) AS artists,
+        COALESCE(albums.items, '[]'::json) AS albums
+      FROM collections c
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object('id', a.id, 'name', a.name, 'genres', a.genres)
+          ORDER BY a.name
+        ) AS items
+        FROM collection_artists ca
+        JOIN artists a ON a.id = ca.artist_id
+        WHERE ca.collection_id = c.id
+      ) AS artists ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT json_agg(
+          jsonb_build_object(
+            'id', al.id,
+            'spotifyId', al.spotify_id,
+            'name', al.name,
+            'artistNames', al.artist_names,
+            'imageUrl', al.image_url,
+            'releaseDate', al.release_date
+          )
+          ORDER BY al.name
+        ) AS items
+        FROM collection_albums cal
+        JOIN albums al ON al.id = cal.album_id
+        WHERE cal.collection_id = c.id
+      ) AS albums ON TRUE
+      WHERE c.user_id = $1 AND c.id = $2
+      LIMIT 1
+    `,
+    [userId, collectionId]
+  );
+
+  if (!result.rowCount) {
+    return null;
+  }
+
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    artists: row.artists,
+    albums: row.albums
+  };
+}
+
+export async function getPlaylistById(userId: number, playlistId: number): Promise<Playlist | null> {
+  const result = await db.query(
+    `
+      SELECT *
+      FROM playlists
+      WHERE user_id = $1 AND id = $2
+      LIMIT 1
+    `,
+    [userId, playlistId]
+  );
+
+  if (!result.rowCount) {
+    return null;
+  }
+
+  return mapPlaylist(result.rows[0]);
+}

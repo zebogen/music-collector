@@ -23,7 +23,7 @@ import {
   createCollection,
   deleteCollection,
   getCollectionNamesForAlbum,
-  getCollectionsForView,
+  getCollectionSummaries,
   getLibraryData,
   removeAlbumFromCollection,
   removeArtistFromCollection,
@@ -45,11 +45,12 @@ import ArtistsTab from "~/components/home/ArtistsTab";
 import PlaylistsTab from "~/components/home/PlaylistsTab";
 import CollectionsTab from "~/components/home/CollectionsTab";
 import { AnimatedView } from "~/components/Animated";
-import { buildHomeHref, getSelectedCollection, parseId, parsePage, parseTab, type TabKey } from "./index-helpers";
+import { buildHomeHref, parseId, parsePage, parseTab, type TabKey } from "./index-helpers";
 import { getOptionalDescription, getPositiveNumber, getRedirectTo, getRequiredName } from "./index-action-helpers";
 
 const PAGE_SIZE = 20;
 const HOME_LOADER_TIMEOUT_MS = 10_000;
+type AlbumCollectionLink = { id: number; name: string };
 
 function withTimeout<T>(promise: Promise<T>, label: string, ms = HOME_LOADER_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -88,7 +89,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         selectedCollectionId: null as number | null,
         search: ""
       },
-      selectedAlbumCollections: []
+      selectedAlbumCollections: [] as AlbumCollectionLink[]
     };
   }
 
@@ -109,7 +110,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         selectedCollectionId: null as number | null,
         search: ""
       },
-      selectedAlbumCollections: []
+      selectedAlbumCollections: [] as AlbumCollectionLink[]
     };
   }
 
@@ -124,7 +125,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const selectedCollectionId = parseId(url.searchParams.get("collection"));
   const search = (url.searchParams.get("search") ?? "").trim();
 
-  const [libraryData, collections, selectedAlbumCollections] = await Promise.all([
+  const [libraryData, collectionSummaries, selectedAlbumCollections] = await Promise.all([
     withTimeout(
       getLibraryData(
         userId,
@@ -133,17 +134,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
       ),
       "Home library query"
     ),
-    withTimeout(getCollectionsForView(userId, selectedCollectionId), "Collections query"),
+    withTimeout(getCollectionSummaries(userId), "Collections query"),
     selectedAlbumId
       ? withTimeout(getCollectionNamesForAlbum(userId, selectedAlbumId), "Selected album collections query")
-      : Promise.resolve([])
+      : Promise.resolve([] as AlbumCollectionLink[])
   ]);
 
   return {
     authenticated: true,
     connected: true,
     libraryData,
-    collections,
+    collections: collectionSummaries.map((collection) => ({
+      ...collection,
+      artists: [],
+      albums: []
+    })),
     selectedAlbumCollections,
     filters: { genre, artist, tab, artistsPage, albumsPage, playlistsPage, selectedAlbumId, selectedCollectionId, search }
   };
@@ -370,10 +375,7 @@ export default function Index() {
   }
 
   const selectedAlbum = libraryData.albums.find((album: Album) => album.id === filters.selectedAlbumId) ?? null;
-  const selectedAlbumCollectionLinks = selectedAlbum ? selectedAlbumCollections : [];
-  const selectedCollection = getSelectedCollection(safeCollections, filters.selectedCollectionId);
-  const selectedCollectionArtists = selectedCollection?.artists ?? [];
-  const selectedCollectionAlbums = selectedCollection?.albums ?? [];
+  const selectedAlbumCollectionLinks: AlbumCollectionLink[] = selectedAlbum ? selectedAlbumCollections : [];
   const currentHref = useMemo(() => buildHref(), [location.search]);
   const hasActiveFilters = Boolean(filters.genre || filters.artist);
   const clearFiltersHref = useMemo(
@@ -453,10 +455,8 @@ export default function Index() {
           isCreatingCollection={isCreatingCollection}
           isSavingCollection={isSavingCollection}
           isDeletingCollection={isDeletingCollection}
-          collections={safeCollections}
-          selectedCollection={selectedCollection}
+          selectedCollection={null}
           buildHref={buildHref}
-          onAddSpotifyAlbum={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
         />
       </Box>
 
@@ -566,13 +566,6 @@ export default function Index() {
               <AnimatedView motionKey="collections">
                 <CollectionsTab
                   collections={safeCollections}
-                  selectedCollection={selectedCollection}
-                  selectedCollectionAlbums={selectedCollectionAlbums}
-                  selectedCollectionArtists={selectedCollectionArtists}
-                  buildHref={buildHref}
-                  pendingAlbumId={pendingAlbumId}
-                  pendingArtistId={pendingArtistId}
-                  pendingIntent={pendingIntent}
                 />
               </AnimatedView>
             ) : null}
@@ -631,7 +624,7 @@ export default function Index() {
           collections={safeCollections}
           target={addTarget}
           redirectTo={currentHref}
-          defaultCollectionId={selectedCollection?.id ?? null}
+          defaultCollectionId={null}
         />
       </Box>
     </Grid>

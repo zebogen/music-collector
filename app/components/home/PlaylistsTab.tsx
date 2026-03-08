@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Box, Heading, HStack, Stack, Text } from "@chakra-ui/react";
 import type { Playlist } from "~/types";
 import PaginationControls from "~/components/PaginationControls";
@@ -39,10 +40,12 @@ export default function PlaylistsTab({
           <Stack gap={4} mb={5}>
             {playlists.map((playlist, index) => (
               <AnimatedItem key={playlist.id} index={index}>
-                <Box p={{ base: 4, md: 3 }} bg="app.card" borderWidth="1px" borderColor="app.border" borderRadius="xl">
-                  <Heading as="h3" size="sm">{playlist.name}</Heading>
-                  <Text fontSize="sm" color="app.muted" mt={1}>{playlist.tracksTotal} tracks</Text>
-                </Box>
+                <Link to={`/playlists/${playlist.id}`} prefetch="intent" viewTransition>
+                  <Box p={{ base: 4, md: 3 }} bg="app.card" borderWidth="1px" borderColor="app.border" borderRadius="xl">
+                    <Heading as="h3" size="sm">{playlist.name}</Heading>
+                    <Text fontSize="sm" color="app.muted" mt={1}>{playlist.tracksTotal} tracks</Text>
+                  </Box>
+                </Link>
               </AnimatedItem>
             ))}
           </Stack>

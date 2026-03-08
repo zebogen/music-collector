@@ -1,7 +1,6 @@
-import { Form, Link, useFetcher } from "react-router";
+import { Form, useFetcher } from "react-router";
 import { Box, Heading, Text, Stack, chakra, Input, Button } from "@chakra-ui/react";
-import type { Collection, SpotifySearchAlbum } from "~/types";
-import SpotifySearchSection from "~/components/SpotifySearchSection";
+import type { Collection } from "~/types";
 
 export default function Sidebar({
   filters,
@@ -12,10 +11,8 @@ export default function Sidebar({
   isCreatingCollection,
   isSavingCollection,
   isDeletingCollection,
-  collections,
   selectedCollection,
   buildHref,
-  onAddSpotifyAlbum,
 }: {
   filters: any;
   genres: string[];
@@ -25,7 +22,6 @@ export default function Sidebar({
   isCreatingCollection: boolean;
   isSavingCollection: boolean;
   isDeletingCollection: boolean;
-  collections: Collection[];
   selectedCollection: Collection | null;
   buildHref: (overrides?: {
     genre?: string;
@@ -38,7 +34,6 @@ export default function Sidebar({
     selectedCollectionId?: number | null;
     search?: string;
   }) => string;
-  onAddSpotifyAlbum: (album: SpotifySearchAlbum) => void;
 }) {
   const createFetcher = useFetcher<{ error?: string; ok?: boolean }>();
   const updateFetcher = useFetcher<{ error?: string; ok?: boolean }>();
@@ -67,26 +62,13 @@ export default function Sidebar({
               ))}
             </chakra.select>
             <Input size="sm" name="artist" defaultValue={filters.artist} placeholder="Artist filter" />
-            <Input size="sm" name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
+            {filters.tab !== "collections" ? (
+              <Input size="sm" name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
+            ) : null}
             <Button type="submit" size={{ base: "md", md: "sm" }} loading={isFiltering} loadingText="Applying...">Apply</Button>
           </Stack>
         </Form>
       </Box>
-
-      {filters.tab === "collections" ? (
-        <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
-          <Heading as="h3" fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>Collections</Heading>
-          <Stack gap={1} maxH="220px" overflowY="auto" pr={1}>
-            {collections.map((collection) => (
-              <Link key={collection.id} to={buildHref({ tab: "collections", selectedCollectionId: collection.id })} prefetch="intent" viewTransition>
-                <Button size={{ base: "md", md: "sm" }} px={3} variant={selectedCollection?.id === collection.id ? "solid" : "ghost"} w="full" justifyContent="flex-start">
-                  {collection.name}
-                </Button>
-              </Link>
-            ))}
-          </Stack>
-        </Box>
-      ) : null}
 
       <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
         <Heading as="h3" fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>Create Collection</Heading>
@@ -101,7 +83,7 @@ export default function Sidebar({
         </createFetcher.Form>
       </Box>
 
-      {filters.tab === "collections" && selectedCollection ? (
+      {selectedCollection ? (
         <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
           <Heading as="h3" fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>Edit Collection</Heading>
           <updateFetcher.Form method="post">
@@ -127,10 +109,6 @@ export default function Sidebar({
             {deleteError ? <Text color="app.danger" mt={2}>{deleteError}</Text> : null}
           </deleteFetcher.Form>
         </Box>
-      ) : null}
-
-      {filters.tab === "collections" ? (
-        <SpotifySearchSection compact initialSearch={filters.search} onAdd={onAddSpotifyAlbum} />
       ) : null}
     </Stack>
   );

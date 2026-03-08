@@ -14,6 +14,15 @@ type SpotifyTokenResponse = {
   refresh_token?: string;
 };
 
+export type SpotifyPlaylistTrack = {
+  id: string;
+  name: string;
+  artists: string[];
+  albumName: string;
+  albumImageUrl: string | null;
+  durationMs: number;
+};
+
 async function fetchWithTimeout(url: RequestInfo | URL, init?: RequestInit, label = "Spotify request") {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -204,4 +213,37 @@ export async function searchSpotifyAlbums(accessToken: string, query: string): P
     artistNames: (album.artists ?? []).map((artist: any) => artist.name),
     imageUrl: album.images?.[0]?.url ?? null,
   }));
+}
+
+export async function fetchSpotifyPlaylistTracks(accessToken: string, playlistId: string, page: number, pageSize = 20): Promise<{
+  items: SpotifyPlaylistTrack[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> {
+  const sdk = getSpotifySdk(accessToken);
+  const safePageSize = Math.min(50, Math.max(1, Math.trunc(pageSize)));
+  const offset = (Math.max(1, page) - 1) * safePageSize;
+  const limitArg = safePageSize as Parameters<typeof sdk.playlists.getPlaylistItems>[3];
+  const result = await sdk.playlists.getPlaylistItems(playlistId, undefined, undefined, limitArg, offset);
+
+  const items = (result.items ?? [])
+    .map((item: any) => item.track)
+    .filter((track: any) => Boolean(track && track.id))
+    .map((track: any) => ({
+      id: track.id,
+      name: track.name,
+      artists: (track.artists ?? []).map((artist: any) => artist.name),
+      albumName: track.album?.name ?? "Unknown album",
+      albumImageUrl: track.album?.images?.[0]?.url ?? null,
+      durationMs: track.duration_ms ?? 0
+    }));
+
+  const total = result.total ?? 0;
+  return {
+    items,
+    total,
+    page: Math.max(1, page),
+    totalPages: Math.max(1, Math.ceil(total / safePageSize))
+  };
 }
