@@ -23,6 +23,13 @@ export type SpotifyPlaylistTrack = {
   durationMs: number;
 };
 
+export type SpotifyRelatedArtist = {
+  spotifyId: string;
+  name: string;
+  genres: string[];
+  imageUrl: string | null;
+};
+
 async function fetchWithTimeout(url: RequestInfo | URL, init?: RequestInit, label = "Spotify request") {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -246,4 +253,42 @@ export async function fetchSpotifyPlaylistTracks(accessToken: string, playlistId
     page: Math.max(1, page),
     totalPages: Math.max(1, Math.ceil(total / safePageSize))
   };
+}
+
+export async function fetchSpotifyRelatedArtists(accessToken: string, artistSpotifyId: string): Promise<SpotifyRelatedArtist[]> {
+  const response = await fetchWithTimeout(
+    `https://api.spotify.com/v1/artists/${encodeURIComponent(artistSpotifyId)}/related-artists`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    },
+    "Spotify related artists"
+  );
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as { artists?: any[] };
+  return (payload.artists ?? []).map((artist: any) => ({
+    spotifyId: artist.id,
+    name: artist.name,
+    genres: artist.genres ?? [],
+    imageUrl: artist.images?.[0]?.url ?? null
+  }));
+}
+
+export async function searchSpotifyAlbumsByArtist(accessToken: string, artistName: string, limit = 8): Promise<SpotifySearchAlbum[]> {
+  const sdk = getSpotifySdk(accessToken);
+  const safeLimit = Math.min(20, Math.max(1, Math.trunc(limit)));
+  const limitArg = safeLimit as Parameters<typeof sdk.search>[3];
+  const result = await sdk.search(`artist:${artistName}`, ["album"], undefined, limitArg, 0);
+
+  return (result.albums?.items ?? []).map((album: any) => ({
+    spotifyId: album.id,
+    name: album.name,
+    albumType: album.album_type ?? null,
+    releaseDate: album.release_date ?? null,
+    artistNames: (album.artists ?? []).map((artist: any) => artist.name),
+    imageUrl: album.images?.[0]?.url ?? null
+  }));
 }

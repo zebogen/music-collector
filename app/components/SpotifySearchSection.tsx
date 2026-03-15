@@ -5,6 +5,7 @@ import type { SpotifySearchAlbum } from "~/types";
 
 const SEARCH_DEBOUNCE_MS = 500;
 const SEARCH_PENDING_UI_DELAY_MS = 200;
+const SEARCH_CACHE_TTL_MS = 2 * 60 * 1000;
 
 export default function SpotifySearchSection({
   initialSearch,
@@ -20,6 +21,8 @@ export default function SpotifySearchSection({
   const [results, setResults] = useState<SpotifySearchAlbum[]>([]);
   const [isPendingQuery, setIsPendingQuery] = useState(false);
   const lastRequestedQueryRef = useRef("");
+  const activeRequestQueryRef = useRef("");
+  const cacheRef = useRef<Map<string, { results: SpotifySearchAlbum[]; timestamp: number }>>(new Map());
   const isSearching = fetcher.state !== "idle";
 
   useEffect(() => {
@@ -28,9 +31,16 @@ export default function SpotifySearchSection({
 
   useEffect(() => {
     if (fetcher.data?.results) {
+      if (query.trim() !== activeRequestQueryRef.current) {
+        return;
+      }
       setResults(fetcher.data.results);
+      cacheRef.current.set(activeRequestQueryRef.current, {
+        results: fetcher.data.results,
+        timestamp: Date.now()
+      });
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, query]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -44,12 +54,21 @@ export default function SpotifySearchSection({
       return;
     }
 
+    const cached = cacheRef.current.get(trimmed);
+    if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+      setResults(cached.results);
+      lastRequestedQueryRef.current = trimmed;
+      setIsPendingQuery(false);
+      return;
+    }
+
     const pendingUiTimer = window.setTimeout(() => {
       setIsPendingQuery(true);
     }, SEARCH_PENDING_UI_DELAY_MS);
 
     const timeout = window.setTimeout(() => {
       lastRequestedQueryRef.current = trimmed;
+      activeRequestQueryRef.current = trimmed;
       fetcher.load(`/api/spotify-search?q=${encodeURIComponent(trimmed)}`);
     }, SEARCH_DEBOUNCE_MS);
 
@@ -70,6 +89,7 @@ export default function SpotifySearchSection({
     setQuery("");
     setResults([]);
     lastRequestedQueryRef.current = "";
+    activeRequestQueryRef.current = "";
     setIsPendingQuery(false);
   };
 

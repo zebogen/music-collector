@@ -639,3 +639,109 @@ export async function getPlaylistById(userId: number, playlistId: number): Promi
 
   return mapPlaylist(result.rows[0]);
 }
+
+export async function getSavedArtistSeeds(userId: number, limit = 8): Promise<Array<{
+  id: number;
+  spotifyId: string;
+  name: string;
+  genres: string[];
+  imageUrl: string | null;
+}>> {
+  const result = await db.query(
+    `
+      SELECT a.id, a.spotify_id, a.name, a.genres, a.image_url
+      FROM artists a
+      JOIN user_saved_artists usa ON usa.artist_id = a.id
+      WHERE usa.user_id = $1
+      ORDER BY array_length(a.genres, 1) DESC NULLS LAST, a.name ASC
+      LIMIT $2
+    `,
+    [userId, Math.max(1, limit)]
+  );
+
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    spotifyId: row.spotify_id,
+    name: row.name,
+    genres: row.genres ?? [],
+    imageUrl: row.image_url ?? null
+  }));
+}
+
+export async function getSavedSpotifyIdSets(userId: number): Promise<{
+  artistSpotifyIds: Set<string>;
+  albumSpotifyIds: Set<string>;
+}> {
+  const [artistRows, albumRows] = await Promise.all([
+    db.query(
+      `
+        SELECT a.spotify_id
+        FROM artists a
+        JOIN user_saved_artists usa ON usa.artist_id = a.id
+        WHERE usa.user_id = $1
+      `,
+      [userId]
+    ),
+    db.query(
+      `
+        SELECT al.spotify_id
+        FROM albums al
+        JOIN user_saved_albums usa ON usa.album_id = al.id
+        WHERE usa.user_id = $1
+      `,
+      [userId]
+    )
+  ]);
+
+  return {
+    artistSpotifyIds: new Set(artistRows.rows.map((row: any) => String(row.spotify_id))),
+    albumSpotifyIds: new Set(albumRows.rows.map((row: any) => String(row.spotify_id)))
+  };
+}
+
+export async function getRediscoveryQueue(userId: number, limit = 24): Promise<Array<{
+  id: number;
+  spotifyId: string;
+  name: string;
+  artistNames: string[];
+  imageUrl: string | null;
+  releaseDate: string | null;
+  inCollection: boolean;
+}>> {
+  const result = await db.query(
+    `
+      SELECT
+        al.id,
+        al.spotify_id,
+        al.name,
+        al.artist_names,
+        al.image_url,
+        al.release_date,
+        EXISTS (
+          SELECT 1
+          FROM collection_albums ca
+          JOIN collections c ON c.id = ca.collection_id
+          WHERE c.user_id = $1 AND ca.album_id = al.id
+        ) AS in_collection
+      FROM albums al
+      JOIN user_saved_albums usa ON usa.album_id = al.id
+      WHERE usa.user_id = $1
+      ORDER BY
+        in_collection ASC,
+        CASE WHEN al.release_date ~ '^[0-9]{4}' THEN split_part(al.release_date, '-', 1)::int ELSE 9999 END ASC,
+        al.name ASC
+      LIMIT $2
+    `,
+    [userId, Math.max(1, limit)]
+  );
+
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    spotifyId: row.spotify_id,
+    name: row.name,
+    artistNames: row.artist_names ?? [],
+    imageUrl: row.image_url ?? null,
+    releaseDate: row.release_date ?? null,
+    inCollection: Boolean(row.in_collection)
+  }));
+}

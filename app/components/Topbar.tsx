@@ -28,6 +28,7 @@ export default function Topbar({
   const { toggleThemeMode } = useThemeMode();
   const location = useLocation();
   const currentTab = (new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections";
+  const onDiscover = location.pathname.startsWith("/discover");
 
   function tabHref(tab: TabKey) {
     const params = new URLSearchParams(location.search);
@@ -99,6 +100,11 @@ export default function Topbar({
               </Button>
             </Link>
           ))}
+          <Link to="/discover" prefetch="intent" viewTransition>
+            <Button size="sm" minH="40px" px={4} variant={onDiscover ? "solid" : "ghost"}>
+              Discover
+            </Button>
+          </Link>
         </HStack>
       ) : null}
 

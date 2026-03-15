@@ -1,6 +1,16 @@
-import { Form, useFetcher } from "react-router";
+import { Form, useFetcher, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 import { Box, Heading, Text, Stack, chakra, Input, Button } from "@chakra-ui/react";
 import type { Collection } from "~/types";
+
+type FilterPreset = {
+  id: string;
+  name: string;
+  genre: string;
+  artist: string;
+};
+
+const FILTER_PRESETS_KEY = "music-collector.filter-presets.v1";
 
 export default function Sidebar({
   filters,
@@ -38,10 +48,72 @@ export default function Sidebar({
   const createFetcher = useFetcher<{ error?: string; ok?: boolean }>();
   const updateFetcher = useFetcher<{ error?: string; ok?: boolean }>();
   const deleteFetcher = useFetcher<{ error?: string; ok?: boolean }>();
+  const navigate = useNavigate();
+  const [presets, setPresets] = useState<FilterPreset[]>([]);
+  const [presetsReady, setPresetsReady] = useState(false);
   const isSubmittingCreate = createFetcher.state !== "idle";
   const createError = createFetcher.data?.error ?? actionError;
   const updateError = updateFetcher.data?.error ?? actionError;
   const deleteError = deleteFetcher.data?.error ?? actionError;
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FILTER_PRESETS_KEY);
+      if (!raw) {
+        setPresetsReady(true);
+        return;
+      }
+      const parsed = JSON.parse(raw) as FilterPreset[];
+      setPresets(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setPresets([]);
+    } finally {
+      setPresetsReady(true);
+    }
+  }, []);
+
+  function persistPresets(next: FilterPreset[]) {
+    setPresets(next);
+    window.localStorage.setItem(FILTER_PRESETS_KEY, JSON.stringify(next));
+  }
+
+  function saveCurrentFiltersAsPreset() {
+    const name = window.prompt("Preset name");
+    if (!name) {
+      return;
+    }
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return;
+    }
+    const next: FilterPreset[] = [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: trimmedName,
+        genre: filters.genre ?? "",
+        artist: filters.artist ?? ""
+      },
+      ...presets
+    ].slice(0, 12);
+    persistPresets(next);
+  }
+
+  function applyPreset(preset: FilterPreset) {
+    navigate(
+      buildHref({
+        genre: preset.genre,
+        artist: preset.artist,
+        artistsPage: 1,
+        albumsPage: 1,
+        playlistsPage: 1,
+        selectedAlbumId: null
+      })
+    );
+  }
+
+  function removePreset(id: string) {
+    persistPresets(presets.filter((preset) => preset.id !== id));
+  }
 
   return (
     <Stack gap={{ base: 4, md: 5 }} h="100%" p={{ base: 3, md: 4 }}>
@@ -69,6 +141,37 @@ export default function Sidebar({
           </Stack>
         </Form>
       </Box>
+
+      {presetsReady ? (
+        <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
+          <Heading as="h3" fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>Saved Filters</Heading>
+          <Stack gap={2}>
+            <Button size={{ base: "md", md: "sm" }} variant="outline" onClick={saveCurrentFiltersAsPreset}>
+              Save Current Filters
+            </Button>
+            {presets.length > 0 ? (
+              presets.map((preset) => (
+                <Stack key={preset.id} direction="row" gap={2}>
+                  <Button size={{ base: "md", md: "sm" }} variant="ghost" onClick={() => applyPreset(preset)} flex="1" justifyContent="flex-start">
+                    {preset.name}
+                  </Button>
+                  <Button
+                    size={{ base: "md", md: "sm" }}
+                    variant="ghost"
+                    colorScheme="red"
+                    onClick={() => removePreset(preset.id)}
+                    aria-label={`Delete preset ${preset.name}`}
+                  >
+                    Delete
+                  </Button>
+                </Stack>
+              ))
+            ) : (
+              <Text color="app.muted" fontSize="sm">No saved presets yet.</Text>
+            )}
+          </Stack>
+        </Box>
+      ) : null}
 
       <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
         <Heading as="h3" fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>Create Collection</Heading>
