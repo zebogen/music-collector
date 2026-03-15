@@ -4,12 +4,10 @@ import type { Album } from "~/types";
 
 export default function AlbumCard({
   album,
-  buildHref,
   canAddToCollection,
   onAddToCollection,
 }: {
   album: Album;
-  buildHref: (overrides?: { selectedAlbumId?: number | null }) => string;
   canAddToCollection: boolean;
   onAddToCollection: (album: Album) => void;
 }) {
@@ -18,7 +16,7 @@ export default function AlbumCard({
   return (
     <Box borderWidth="1px" borderColor="app.border" borderRadius="xl" overflow="hidden" bg="app.card" boxShadow="sm">
       <ChakraLink asChild display="block">
-        <Link prefetch="intent" to={buildHref({ selectedAlbumId: album.id })} viewTransition>
+        <Link prefetch="intent" to={`/albums/${album.id}`} viewTransition>
         {album.imageUrl ? (
           <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" h={{ base: "180px", md: "200px" }} />
         ) : (
@@ -31,7 +29,7 @@ export default function AlbumCard({
 
       <Box p={{ base: 3, md: 3 }}>
         <ChakraLink asChild _hover={{ textDecoration: "none" }}>
-          <Link prefetch="intent" to={buildHref({ selectedAlbumId: album.id })} viewTransition>
+          <Link prefetch="intent" to={`/albums/${album.id}`} viewTransition>
           <Heading as="h3" size="sm" mb={2} lineHeight="1.35">{album.name}</Heading>
           </Link>
         </ChakraLink>

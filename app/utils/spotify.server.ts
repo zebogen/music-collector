@@ -292,3 +292,67 @@ export async function searchSpotifyAlbumsByArtist(accessToken: string, artistNam
     imageUrl: album.images?.[0]?.url ?? null
   }));
 }
+
+export async function fetchSpotifyArtistDetails(accessToken: string, artistSpotifyId: string) {
+  const response = await fetchWithTimeout(
+    `https://api.spotify.com/v1/artists/${encodeURIComponent(artistSpotifyId)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+    "Spotify artist details"
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch artist details");
+  }
+
+  return (await response.json()) as any;
+}
+
+export async function fetchSpotifyArtistAlbums(
+  accessToken: string,
+  artistSpotifyId: string,
+  page: number,
+  pageSize = 20
+): Promise<{ items: any[]; total: number; page: number; totalPages: number }> {
+  const safePageSize = Math.min(50, Math.max(1, Math.trunc(pageSize)));
+  const safePage = Math.max(1, Math.trunc(page));
+  const offset = (safePage - 1) * safePageSize;
+  const params = new URLSearchParams({
+    include_groups: "album,single,appears_on,compilation",
+    market: "US",
+    limit: String(safePageSize),
+    offset: String(offset)
+  });
+
+  const response = await fetchWithTimeout(
+    `https://api.spotify.com/v1/artists/${encodeURIComponent(artistSpotifyId)}/albums?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+    "Spotify artist albums"
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch artist albums");
+  }
+
+  const payload = (await response.json()) as { items?: any[]; total?: number };
+  const total = payload.total ?? 0;
+  return {
+    items: payload.items ?? [],
+    total,
+    page: safePage,
+    totalPages: Math.max(1, Math.ceil(total / safePageSize))
+  };
+}
+
+export async function fetchSpotifyAlbumDetails(accessToken: string, albumSpotifyId: string) {
+  const response = await fetchWithTimeout(
+    `https://api.spotify.com/v1/albums/${encodeURIComponent(albumSpotifyId)}?market=US`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+    "Spotify album details"
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch album details");
+  }
+
+  return (await response.json()) as any;
+}

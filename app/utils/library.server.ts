@@ -745,3 +745,41 @@ export async function getRediscoveryQueue(userId: number, limit = 24): Promise<A
     inCollection: Boolean(row.in_collection)
   }));
 }
+
+export async function getArtistById(userId: number, artistId: number): Promise<Artist | null> {
+  const result = await db.query(
+    `
+      SELECT a.*
+      FROM artists a
+      JOIN user_saved_artists usa ON usa.artist_id = a.id
+      WHERE usa.user_id = $1 AND a.id = $2
+      LIMIT 1
+    `,
+    [userId, artistId]
+  );
+
+  if (!result.rowCount) {
+    return null;
+  }
+
+  return mapArtist(result.rows[0]);
+}
+
+export async function getAlbumById(userId: number, albumId: number): Promise<Album | null> {
+  const result = await db.query(
+    `
+      SELECT al.*
+      FROM albums al
+      JOIN user_saved_albums usa ON usa.album_id = al.id
+      WHERE usa.user_id = $1 AND al.id = $2
+      LIMIT 1
+    `,
+    [userId, albumId]
+  );
+
+  if (!result.rowCount) {
+    return null;
+  }
+
+  return mapAlbum(result.rows[0]);
+}

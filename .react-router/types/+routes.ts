@@ -33,6 +33,16 @@ type Pages = {
   "/api/spotify-search": {
     params: {};
   };
+  "/artists/:artistId": {
+    params: {
+      "artistId": string;
+    };
+  };
+  "/albums/:albumId": {
+    params: {
+      "albumId": string;
+    };
+  };
   "/auth/callback": {
     params: {};
   };
@@ -65,7 +75,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/collections/:collectionId" | "/playlists/:playlistId" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/auth/login" | "/discover" | "/health" | "/logout";
+    page: "/" | "/collections/:collectionId" | "/playlists/:playlistId" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/artists/:artistId" | "/albums/:albumId" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/auth/login" | "/discover" | "/health" | "/logout";
   };
   "routes/collections.$collectionId.tsx": {
     id: "routes/collections.$collectionId";
@@ -86,6 +96,14 @@ type RouteFiles = {
   "routes/api.spotify-search.ts": {
     id: "routes/api.spotify-search";
     page: "/api/spotify-search";
+  };
+  "routes/artists.$artistId.tsx": {
+    id: "routes/artists.$artistId";
+    page: "/artists/:artistId";
+  };
+  "routes/albums.$albumId.tsx": {
+    id: "routes/albums.$albumId";
+    page: "/albums/:albumId";
   };
   "routes/auth.callback.tsx": {
     id: "routes/auth.callback";
@@ -136,6 +154,8 @@ type RouteModules = {
   "routes/index-action-helpers": typeof import("./app/routes/index-action-helpers.ts");
   "routes/index-action-helpers.test": typeof import("./app/routes/index-action-helpers.test.ts");
   "routes/api.spotify-search": typeof import("./app/routes/api.spotify-search.ts");
+  "routes/artists.$artistId": typeof import("./app/routes/artists.$artistId.tsx");
+  "routes/albums.$albumId": typeof import("./app/routes/albums.$albumId.tsx");
   "routes/auth.callback": typeof import("./app/routes/auth.callback.tsx");
   "routes/index-helpers": typeof import("./app/routes/index-helpers.ts");
   "routes/index-helpers.test": typeof import("./app/routes/index-helpers.test.ts");

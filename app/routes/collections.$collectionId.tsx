@@ -203,6 +203,9 @@ export default function CollectionDetailRoute() {
                 </HStack>
                 <Text fontWeight="semibold">{album.name}</Text>
                 <Text fontSize="sm" color="app.muted">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                <Link to={`/albums/${album.id}`} prefetch="intent" viewTransition>
+                  <Button size="xs" mt={2} variant="outline">Details</Button>
+                </Link>
               </Box>
             </Box>
           ))}
@@ -237,6 +240,9 @@ export default function CollectionDetailRoute() {
               </HStack>
               <Text fontWeight="semibold">{artist.name}</Text>
               <Text fontSize="sm" color="app.muted">{artist.genres.join(", ") || "No genres"}</Text>
+              <Link to={`/artists/${artist.id}`} prefetch="intent" viewTransition>
+                <Button size="xs" mt={2} variant="outline">Details</Button>
+              </Link>
             </Box>
           ))}
         </Stack>

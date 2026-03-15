@@ -1,4 +1,5 @@
-import { Box, Button, Heading, HStack, Stack, Text } from "@chakra-ui/react";
+import { Link } from "react-router";
+import { Box, Button, Heading, HStack, Link as ChakraLink, Stack, Text } from "@chakra-ui/react";
 import type { Artist, Collection } from "~/types";
 import PaginationControls from "~/components/PaginationControls";
 import EmptyState from "~/components/EmptyState";
@@ -56,7 +57,11 @@ export default function ArtistsTab({
                   borderRadius="xl"
                 >
                   <Box>
-                    <Heading as="h3" size="sm">{artist.name}</Heading>
+                    <ChakraLink asChild _hover={{ textDecoration: "none" }}>
+                      <Link to={`/artists/${artist.id}`} prefetch="intent" viewTransition>
+                        <Heading as="h3" size="sm">{artist.name}</Heading>
+                      </Link>
+                    </ChakraLink>
                     <Text fontSize="sm" color="app.muted">{artist.genres.join(", ") || "No genres"}</Text>
                   </Box>
                   {collections.length > 0 ? (

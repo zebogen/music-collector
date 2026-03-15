@@ -48,7 +48,6 @@ export default function AlbumsTab({
               <AnimatedItem key={album.id} index={index}>
                 <AlbumCard
                   album={album}
-                  buildHref={buildHref}
                   canAddToCollection={collections.length > 0}
                   onAddToCollection={onAddToCollection}
                 />
