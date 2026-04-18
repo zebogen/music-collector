@@ -5,7 +5,6 @@ import {
   Heading,
   Text,
   Button,
-  IconButton,
   MenuContent,
   MenuItem,
   MenuPositioner,
@@ -13,7 +12,6 @@ import {
   MenuTrigger,
   HStack
 } from "@chakra-ui/react";
-import { useThemeMode } from "~/hooks/useThemeMode";
 import { TABS, type TabKey } from "~/routes/index-helpers";
 
 export default function Topbar({
@@ -25,7 +23,6 @@ export default function Topbar({
 }) {
   const syncFetcher = useFetcher<{ ok?: boolean; toast?: { type: "success" | "error"; title: string } }>();
   const isSyncing = syncFetcher.state !== "idle";
-  const { toggleThemeMode } = useThemeMode();
   const location = useLocation();
   const currentTab = location.pathname === "/collections"
     ? ((new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections")
@@ -127,19 +124,11 @@ export default function Topbar({
       <Box w={{ base: "full", md: "auto" }}>
         {user ? (
           <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }} gap={2}>
-            <IconButton
-              aria-label="Toggle theme"
-              variant="outline"
-              size="sm"
-              onClick={toggleThemeMode}
-            >
-              Theme
-            </IconButton>
             <MenuRoot positioning={{ placement: "bottom-end" }}>
               <MenuTrigger asChild>
-                <IconButton aria-label="Open account menu" variant="outline" size="sm">
+                <Button aria-label="Open account menu" variant="outline" size="sm">
                   Menu
-                </IconButton>
+                </Button>
               </MenuTrigger>
               <MenuPositioner>
                 <MenuContent minW="180px">
@@ -179,17 +168,9 @@ export default function Topbar({
             </MenuRoot>
           </Flex>
         ) : (
-          <Flex as="nav" w={{ base: "full", md: "auto" }} gap={2} justify={{ base: "stretch", md: "flex-end" }} direction={{ base: "column", sm: "row" }}>
-            <IconButton
-              aria-label="Toggle theme"
-              variant="outline"
-              size="sm"
-              onClick={toggleThemeMode}
-            >
-              Theme
-            </IconButton>
+          <Flex as="nav" w={{ base: "full", md: "auto" }} gap={2} justify={{ base: "flex-start", md: "flex-end" }}>
             <Link to="/auth/login" prefetch="intent" viewTransition>
-              <Button colorScheme="green" w={{ base: "full", sm: "auto" }}>Log In</Button>
+              <Button colorScheme="green" size="sm" w={{ base: "auto", sm: "auto" }}>Log In</Button>
             </Link>
           </Flex>
         )}

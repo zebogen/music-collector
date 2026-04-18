@@ -124,43 +124,67 @@ export default function HomeRoute() {
   if (!authenticated) {
     return (
       <Box px={{ base: 4, md: 6, lg: 8 }} py={{ base: 5, md: 8 }}>
-        <Box
-          bg="app.panel"
-          borderWidth="1px"
-          borderColor="app.border"
-          borderRadius="3xl"
-          p={{ base: 6, md: 10 }}
-          maxW="4xl"
-          mx="auto"
-        >
-          <Stack gap={5}>
-            <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted">
-              Music Collector
-            </Text>
-            <Heading as="h1" size="2xl" maxW="14ch">
-              Start with a spark, not a spreadsheet.
-            </Heading>
-            <Text color="app.muted" fontSize={{ base: "md", md: "lg" }} maxW="2xl">
-              Search for records, surface a random saved album, and jump into discovery without landing straight in the collections workspace.
-            </Text>
-            <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
-              <ChakraLink asChild>
-                <Link to="/auth/login" prefetch="intent" viewTransition>
-                  <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>
-                    Log In
-                  </Button>
-                </Link>
-              </ChakraLink>
-              <ChakraLink asChild>
-                <Link to="/collections?tab=collections" prefetch="intent" viewTransition>
-                  <Button variant="outline" size="lg" w={{ base: "full", sm: "auto" }}>
-                    Preview Collections
-                  </Button>
-                </Link>
-              </ChakraLink>
-            </HStack>
-          </Stack>
-        </Box>
+        <Stack gap={5} maxW="4xl" mx="auto">
+          <Box
+            bg="app.panel"
+            borderWidth="1px"
+            borderColor="app.border"
+            borderRadius="3xl"
+            p={{ base: 6, md: 10 }}
+          >
+            <Stack gap={5}>
+              <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted">
+                Music Collector
+              </Text>
+              <Heading as="h1" size="2xl" maxW="14ch">
+                Start with a spark, not a spreadsheet.
+              </Heading>
+              <Text color="app.muted" fontSize={{ base: "md", md: "lg" }} maxW="2xl">
+                Search for records, surface a random saved album, and jump into discovery without landing straight in the collections workspace.
+              </Text>
+              <Stack align="stretch" direction={{ base: "column", sm: "row" }}>
+                <ChakraLink asChild>
+                  <Link to="/auth/login" prefetch="intent" viewTransition>
+                    <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>
+                      Log In
+                    </Button>
+                  </Link>
+                </ChakraLink>
+                <ChakraLink asChild>
+                  <Link to="/collections?tab=collections" prefetch="intent" viewTransition>
+                    <Button variant="outline" size="lg" w={{ base: "full", sm: "auto" }}>
+                      Open Collections Workspace
+                    </Button>
+                  </Link>
+                </ChakraLink>
+              </Stack>
+            </Stack>
+          </Box>
+
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
+            {[
+              {
+                title: "Random Picks",
+                body: "Shuffle your library when you want something good fast."
+              },
+              {
+                title: "Discovery",
+                body: "Jump into rediscovery and adjacent albums without digging through menus."
+              },
+              {
+                title: "Collections",
+                body: "Save the albums and artists you want to come back to on purpose."
+              }
+            ].map((item) => (
+              <Box key={item.title} bg="app.card" borderWidth="1px" borderColor="app.border" borderRadius="2xl" p={4}>
+                <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>
+                  {item.title}
+                </Text>
+                <Text color="app.muted">{item.body}</Text>
+              </Box>
+            ))}
+          </SimpleGrid>
+        </Stack>
       </Box>
     );
   }
@@ -198,7 +222,7 @@ export default function HomeRoute() {
               <ChakraLink asChild>
                 <Link to="/collections?tab=collections" prefetch="intent" viewTransition>
                   <Button variant="outline" size="lg" w={{ base: "full", sm: "auto" }}>
-                    Open Collections
+                    Open Collections Workspace
                   </Button>
                 </Link>
               </ChakraLink>

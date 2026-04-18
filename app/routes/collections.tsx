@@ -311,28 +311,70 @@ export default function CollectionsRoute() {
 
   if (!authenticated) {
     return (
-      <Box p={6} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" textAlign="center">
-        <Heading as="h2" size="lg" mb={2}>Log in to continue</Heading>
-        <Text mb={4} color="app.muted">Use Auth0 to sign in to the app, then connect Spotify to sync and organize your library.</Text>
-        <ChakraLink asChild>
-          <Link to="/auth/login" prefetch="intent" viewTransition>
-            <Button colorScheme="green">Log In</Button>
-          </Link>
-        </ChakraLink>
+      <Box px={{ base: 4, md: 6, lg: 8 }} py={{ base: 5, md: 8 }}>
+        <Stack gap={5} maxW="4xl" mx="auto">
+          <Box p={{ base: 6, md: 8 }} borderRadius="3xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md">
+            <Stack gap={4} textAlign={{ base: "left", md: "center" }}>
+              <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted">Collections Workspace</Text>
+              <Heading as="h2" size="lg">Log in to organize your library</Heading>
+              <Text color="app.muted">
+                Collections is where your saved artists, albums, and playlists become something you can actually curate. Sign in first, then connect Spotify to unlock the full workspace.
+              </Text>
+              <Stack direction={{ base: "column", sm: "row" }} align="stretch">
+                <ChakraLink asChild>
+                  <Link to="/auth/login" prefetch="intent" viewTransition>
+                    <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>Log In</Button>
+                  </Link>
+                </ChakraLink>
+                <ChakraLink asChild>
+                  <Link to="/" prefetch="intent" viewTransition>
+                    <Button variant="outline" size="lg" w={{ base: "full", sm: "auto" }}>Back Home</Button>
+                  </Link>
+                </ChakraLink>
+              </Stack>
+            </Stack>
+          </Box>
+
+          <SimpleGrid columns={{ base: 1, md: 3 }} gap={4}>
+            {[
+              "Create named collections for moods, scenes, and listening projects.",
+              "Filter your saved library by artist and genre without losing track of context.",
+              "Jump from broad browsing into album, artist, and playlist views when you need detail."
+            ].map((body, index) => (
+              <Box key={index} p={4} borderRadius="2xl" bg="app.card" borderWidth="1px" borderColor="app.border">
+                <Text color="app.muted">{body}</Text>
+              </Box>
+            ))}
+          </SimpleGrid>
+        </Stack>
       </Box>
     );
   }
 
   if (!connected || !libraryData) {
     return (
-      <Box p={6} borderRadius="2xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" textAlign="center">
-        <Heading as="h2" size="lg" mb={2}>Connect your Spotify account</Heading>
-        <Text mb={4} color="app.muted">Your Auth0 login is active. Connect Spotify to import your library, playlists, and organize custom collections.</Text>
-        <ChakraLink asChild>
-          <Link to="/auth/spotify" prefetch="intent" viewTransition>
-            <Button colorScheme="green">Connect Spotify</Button>
-          </Link>
-        </ChakraLink>
+      <Box px={{ base: 4, md: 6, lg: 8 }} py={{ base: 5, md: 8 }}>
+        <Box p={{ base: 6, md: 8 }} borderRadius="3xl" bg="app.panel" borderWidth="1px" borderColor="app.border" boxShadow="md" maxW="4xl" mx="auto">
+          <Stack gap={4} textAlign={{ base: "left", md: "center" }}>
+            <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted">One More Step</Text>
+            <Heading as="h2" size="lg">Connect Spotify to fill this workspace</Heading>
+            <Text color="app.muted">
+              Your login is active. Connect Spotify to import saved albums, followed artists, and playlists so collections has something real to work with.
+            </Text>
+            <Stack direction={{ base: "column", sm: "row" }} align="stretch">
+              <ChakraLink asChild>
+                <Link to="/auth/spotify" prefetch="intent" viewTransition>
+                  <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>Connect Spotify</Button>
+                </Link>
+              </ChakraLink>
+              <ChakraLink asChild>
+                <Link to="/" prefetch="intent" viewTransition>
+                  <Button variant="outline" size="lg" w={{ base: "full", sm: "auto" }}>Back Home</Button>
+                </Link>
+              </ChakraLink>
+            </Stack>
+          </Stack>
+        </Box>
       </Box>
     );
   }
