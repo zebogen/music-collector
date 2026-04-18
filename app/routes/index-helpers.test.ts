@@ -34,7 +34,6 @@ test("buildHomeHref preserves filters and applies overrides", () => {
       playlistsPage: 4,
       selectedAlbumId: 10,
       selectedCollectionId: 7,
-      search: "punisher",
     },
     {
       artists: { page: 2 },
@@ -50,11 +49,11 @@ test("buildHomeHref preserves filters and applies overrides", () => {
 
   assert.equal(
     href,
-    "/?genre=rock&artist=phoebe&tab=collections&artistsPage=2&albumsPage=1&playlistsPage=4&collection=7&search=punisher"
+    "/collections?genre=rock&artist=phoebe&tab=collections&artistsPage=2&albumsPage=1&playlistsPage=4&collection=7"
   );
 });
 
-test("buildHomeHref can clear filters and search", () => {
+test("buildHomeHref can clear filters", () => {
   const href = buildHomeHref(
     {
       genre: "rock",
@@ -65,7 +64,6 @@ test("buildHomeHref can clear filters and search", () => {
       playlistsPage: 4,
       selectedAlbumId: null,
       selectedCollectionId: null,
-      search: "punisher",
     },
     {
       artists: { page: 2 },
@@ -75,12 +73,11 @@ test("buildHomeHref can clear filters and search", () => {
     {
       genre: "",
       artist: "",
-      search: "",
       albumsPage: 1,
     }
   );
 
-  assert.equal(href, "/?tab=albums&artistsPage=2&albumsPage=1&playlistsPage=4");
+  assert.equal(href, "/collections?tab=albums&artistsPage=2&albumsPage=1&playlistsPage=4");
 });
 
 test("getSelectedCollection returns selected item or first fallback", () => {

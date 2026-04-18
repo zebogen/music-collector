@@ -280,6 +280,22 @@ export async function getLibraryData(
   };
 }
 
+export async function getRandomSavedAlbum(userId: number): Promise<Album | null> {
+  const result = await db.query(
+    `
+      SELECT al.*
+      FROM albums al
+      JOIN user_saved_albums usa ON usa.album_id = al.id
+      WHERE usa.user_id = $1
+      ORDER BY RANDOM()
+      LIMIT 1
+    `,
+    [userId]
+  );
+
+  return result.rows[0] ? mapAlbum(result.rows[0]) : null;
+}
+
 export async function createCollection(input: { userId: number; name: string; description?: string }) {
   await db.query(
     `

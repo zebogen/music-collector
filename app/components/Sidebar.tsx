@@ -42,7 +42,6 @@ export default function Sidebar({
     playlistsPage?: number;
     selectedAlbumId?: number | null;
     selectedCollectionId?: number | null;
-    search?: string;
   }) => string;
 }) {
   const createFetcher = useFetcher<{ error?: string; ok?: boolean }>();
@@ -134,9 +133,6 @@ export default function Sidebar({
               ))}
             </chakra.select>
             <Input size="sm" name="artist" defaultValue={filters.artist} placeholder="Artist filter" />
-            {filters.tab !== "collections" ? (
-              <Input size="sm" name="search" defaultValue={filters.search} placeholder="Search Spotify albums" />
-            ) : null}
             <Button type="submit" size={{ base: "md", md: "sm" }} loading={isFiltering} loadingText="Applying...">Apply</Button>
           </Stack>
         </Form>

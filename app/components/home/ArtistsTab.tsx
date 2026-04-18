@@ -26,7 +26,6 @@ export default function ArtistsTab({
     playlistsPage?: number;
     selectedAlbumId?: number | null;
     selectedCollectionId?: number | null;
-    search?: string;
     tab?: "albums" | "artists" | "playlists" | "collections";
   }) => string;
   collections: Collection[];

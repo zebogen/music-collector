@@ -23,7 +23,6 @@ export default function PlaylistsTab({
     playlistsPage?: number;
     selectedAlbumId?: number | null;
     selectedCollectionId?: number | null;
-    search?: string;
     tab?: "albums" | "artists" | "playlists" | "collections";
   }) => string;
   hasPlaylists: boolean;

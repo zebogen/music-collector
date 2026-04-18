@@ -12,7 +12,6 @@ export type HomeFilters = {
   playlistsPage: number;
   selectedAlbumId: number | null;
   selectedCollectionId: number | null;
-  search: string;
 };
 
 export function parsePage(value: string | null) {
@@ -45,7 +44,6 @@ export function buildHomeHref(
     playlistsPage?: number;
     selectedAlbumId?: number | null;
     selectedCollectionId?: number | null;
-    search?: string;
   }
 ) {
   const params = new URLSearchParams();
@@ -68,7 +66,6 @@ export function buildHomeHref(
     overrides && "selectedAlbumId" in overrides ? overrides.selectedAlbumId : filters.selectedAlbumId;
   const selectedCollectionId =
     overrides && "selectedCollectionId" in overrides ? overrides.selectedCollectionId : filters.selectedCollectionId;
-  const search = overrides && "search" in overrides ? overrides.search : filters.search;
 
   params.set("tab", tab);
   params.set("artistsPage", String(artistsPage));
@@ -80,11 +77,8 @@ export function buildHomeHref(
   if (selectedCollectionId) {
     params.set("collection", String(selectedCollectionId));
   }
-  if (search) {
-    params.set("search", search);
-  }
 
-  return `/?${params.toString()}`;
+  return `/collections?${params.toString()}`;
 }
 
 export function getSelectedCollection(collections: Collection[], selectedCollectionId: number | null) {

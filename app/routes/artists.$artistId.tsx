@@ -42,7 +42,7 @@ export default function ArtistDetailRoute() {
 
   return (
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
-      <Link to="/?tab=artists" prefetch="intent" viewTransition>Back to Artists</Link>
+      <Link to="/collections?tab=artists" prefetch="intent" viewTransition>Back to Artists</Link>
 
       <HStack mt={3} mb={4} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
         {spotifyArtist.images?.[0]?.url ? (

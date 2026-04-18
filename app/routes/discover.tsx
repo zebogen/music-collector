@@ -371,7 +371,7 @@ export default function DiscoverRoute() {
       </Stack>
 
       <HStack mt={8}>
-        <Link to="/?tab=collections" prefetch="intent" viewTransition>
+        <Link to="/collections?tab=collections" prefetch="intent" viewTransition>
           <Button variant="outline">Back to Library</Button>
         </Link>
       </HStack>

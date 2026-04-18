@@ -6,8 +6,8 @@ test("getRedirectTo falls back when missing", () => {
   const formData = new FormData();
   assert.equal(getRedirectTo(formData), "/");
 
-  formData.set("redirectTo", "/?tab=collections");
-  assert.equal(getRedirectTo(formData), "/?tab=collections");
+  formData.set("redirectTo", "/collections?tab=collections");
+  assert.equal(getRedirectTo(formData), "/collections?tab=collections");
 });
 
 test("getRequiredName trims whitespace", () => {

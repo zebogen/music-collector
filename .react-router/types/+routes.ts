@@ -14,11 +14,6 @@ type Pages = {
   "/": {
     params: {};
   };
-  "/collections/:collectionId": {
-    params: {
-      "collectionId": string;
-    };
-  };
   "/playlists/:playlistId": {
     params: {
       "playlistId": string;
@@ -58,6 +53,14 @@ type Pages = {
   "/auth/spotify/callback": {
     params: {};
   };
+  "/collections": {
+    params: {};
+  };
+  "/collections/:collectionId": {
+    params: {
+      "collectionId": string;
+    };
+  };
   "/auth/login": {
     params: {};
   };
@@ -75,11 +78,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/collections/:collectionId" | "/playlists/:playlistId" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/artists/:artistId" | "/albums/:albumId" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/auth/login" | "/discover" | "/health" | "/logout";
-  };
-  "routes/collections.$collectionId.tsx": {
-    id: "routes/collections.$collectionId";
-    page: "/collections/:collectionId";
+    page: "/" | "/playlists/:playlistId" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/artists/:artistId" | "/albums/:albumId" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/collections" | "/collections/:collectionId" | "/auth/login" | "/discover" | "/health" | "/logout";
   };
   "routes/playlists.$playlistId.tsx": {
     id: "routes/playlists.$playlistId";
@@ -125,6 +124,14 @@ type RouteFiles = {
     id: "routes/auth.spotify.callback";
     page: "/auth/spotify/callback";
   };
+  "routes/collections.tsx": {
+    id: "routes/collections";
+    page: "/collections" | "/collections/:collectionId";
+  };
+  "routes/collections.$collectionId.tsx": {
+    id: "routes/collections.$collectionId";
+    page: "/collections/:collectionId";
+  };
   "routes/auth.login.tsx": {
     id: "routes/auth.login";
     page: "/auth/login";
@@ -149,7 +156,6 @@ type RouteFiles = {
 
 type RouteModules = {
   "root": typeof import("./app/root.tsx");
-  "routes/collections.$collectionId": typeof import("./app/routes/collections.$collectionId.tsx");
   "routes/playlists.$playlistId": typeof import("./app/routes/playlists.$playlistId.tsx");
   "routes/index-action-helpers": typeof import("./app/routes/index-action-helpers.ts");
   "routes/index-action-helpers.test": typeof import("./app/routes/index-action-helpers.test.ts");
@@ -161,6 +167,8 @@ type RouteModules = {
   "routes/index-helpers.test": typeof import("./app/routes/index-helpers.test.ts");
   "routes/auth.spotify": typeof import("./app/routes/auth.spotify.tsx");
   "routes/auth.spotify.callback": typeof import("./app/routes/auth.spotify.callback.tsx");
+  "routes/collections": typeof import("./app/routes/collections.tsx");
+  "routes/collections.$collectionId": typeof import("./app/routes/collections.$collectionId.tsx");
   "routes/auth.login": typeof import("./app/routes/auth.login.tsx");
   "routes/discover": typeof import("./app/routes/discover.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");

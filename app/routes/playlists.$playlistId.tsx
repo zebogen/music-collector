@@ -48,7 +48,7 @@ export default function PlaylistDetailRoute() {
 
   return (
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
-      <Link to="/?tab=playlists" prefetch="intent" viewTransition>Back to Playlists</Link>
+      <Link to="/collections?tab=playlists" prefetch="intent" viewTransition>Back to Playlists</Link>
       <Heading as="h1" size="lg" mt={3}>{playlist.name}</Heading>
       <Text color="app.muted" mb={5}>{playlist.description || "No description"}</Text>
 

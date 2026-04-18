@@ -151,7 +151,7 @@ export default function CollectionDetailRoute() {
 
   return (
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
-      <Link to="/?tab=collections" prefetch="intent" viewTransition>Back to Collections</Link>
+      <Link to="/collections?tab=collections" prefetch="intent" viewTransition>Back to Collections</Link>
       <Heading as="h1" size="lg" mt={3}>{collection.name}</Heading>
       <Text color="app.muted" mb={5}>{collection.description || "No description"}</Text>
 

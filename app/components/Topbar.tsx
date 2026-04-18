@@ -27,7 +27,11 @@ export default function Topbar({
   const isSyncing = syncFetcher.state !== "idle";
   const { toggleThemeMode } = useThemeMode();
   const location = useLocation();
-  const currentTab = (new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections";
+  const currentTab = location.pathname === "/collections"
+    ? ((new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections")
+    : null;
+  const onHome = location.pathname === "/";
+  const onCollections = location.pathname === "/collections";
   const onDiscover = location.pathname.startsWith("/discover");
 
   function tabHref(tab: TabKey) {
@@ -59,7 +63,7 @@ export default function Topbar({
       params.delete("playlistsPage");
     }
 
-    return `/?${params.toString()}`;
+    return `/collections?${params.toString()}`;
   }
 
   return (
@@ -93,12 +97,24 @@ export default function Topbar({
           pb={{ base: 1, md: 0 }}
           css={{ scrollbarWidth: "none" }}
         >
+          <Link to="/" prefetch="intent" viewTransition>
+            <Button size="sm" minH="40px" px={4} variant={onHome ? "solid" : "ghost"}>
+              Home
+            </Button>
+          </Link>
+          <Link to={tabHref("collections")} prefetch="intent" viewTransition>
+            <Button size="sm" minH="40px" px={4} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
+              Collections
+            </Button>
+          </Link>
           {TABS.map((tab) => (
+            tab === "collections" ? null : (
             <Link key={tab} to={tabHref(tab)} prefetch="intent" viewTransition>
-              <Button size="sm" minH="40px" px={4} variant={currentTab === tab ? "solid" : "ghost"} textTransform="capitalize">
+              <Button size="sm" minH="40px" px={4} variant={onCollections && currentTab === tab ? "solid" : "ghost"} textTransform="capitalize">
                 {tab}
               </Button>
             </Link>
+            )
           ))}
           <Link to="/discover" prefetch="intent" viewTransition>
             <Button size="sm" minH="40px" px={4} variant={onDiscover ? "solid" : "ghost"}>
@@ -128,7 +144,7 @@ export default function Topbar({
               <MenuPositioner>
                 <MenuContent minW="180px">
                   {user.spotifyConnected ? (
-                    <syncFetcher.Form method="post" action="/?index">
+                    <syncFetcher.Form method="post" action="/collections">
                       <input type="hidden" name="intent" value="sync" />
                       <MenuItem asChild value="sync">
                         <Button

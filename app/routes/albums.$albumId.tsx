@@ -42,7 +42,7 @@ export default function AlbumDetailRoute() {
 
   return (
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
-      <Link to="/?tab=albums" prefetch="intent" viewTransition>Back to Albums</Link>
+      <Link to="/collections?tab=albums" prefetch="intent" viewTransition>Back to Albums</Link>
 
       <HStack mt={3} mb={4} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
         {spotifyAlbum.images?.[0]?.url ? (
