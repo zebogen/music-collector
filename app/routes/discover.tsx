@@ -27,6 +27,19 @@ type RelatedArtist = {
   imageUrl: string | null;
 };
 
+type DiscoverAlbumCandidate = {
+  spotifyId: string;
+  name: string;
+  artistNames: string[];
+  imageUrl: string | null;
+  source: "rediscovery" | "missing" | "collection";
+};
+
+type AlbumPickSession = {
+  id: number;
+  picks: DiscoverAlbumCandidate[];
+};
+
 function uniqueBySpotifyId<T extends { spotifyId: string }>(items: T[]): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
@@ -178,6 +191,56 @@ export default function DiscoverRoute() {
     () => (spotifyId: string) => selectedCollectionByAlbum[spotifyId] ?? firstCollectionId,
     [selectedCollectionByAlbum, firstCollectionId]
   );
+  const randomAlbumPool = useMemo<DiscoverAlbumCandidate[]>(
+    () =>
+      uniqueBySpotifyId([
+        ...rediscoveryQueue.map((album) => ({
+          spotifyId: album.spotifyId,
+          name: album.name,
+          artistNames: album.artistNames,
+          imageUrl: album.imageUrl,
+          source: "rediscovery" as const
+        })),
+        ...missingAlbums.map((album) => ({
+          spotifyId: album.spotifyId,
+          name: album.name,
+          artistNames: album.artistNames,
+          imageUrl: album.imageUrl,
+          source: "missing" as const
+        })),
+        ...collectionRecommendations.map((album) => ({
+          spotifyId: album.spotifyId,
+          name: album.name,
+          artistNames: album.artistNames,
+          imageUrl: album.imageUrl,
+          source: "collection" as const
+        }))
+      ]),
+    [rediscoveryQueue, missingAlbums, collectionRecommendations]
+  );
+  const [randomPickSession, setRandomPickSession] = useState<AlbumPickSession>({ id: 1, picks: [] });
+  const [previousRandomPickSession, setPreviousRandomPickSession] = useState<AlbumPickSession | null>(null);
+
+  function pickRandomAlbum() {
+    if (randomAlbumPool.length === 0) {
+      return;
+    }
+
+    const pickedIds = new Set(randomPickSession.picks.map((pick) => pick.spotifyId));
+    const remaining = randomAlbumPool.filter((album) => !pickedIds.has(album.spotifyId));
+    const source = remaining.length > 0 ? remaining : randomAlbumPool;
+    const randomIndex = Math.floor(Math.random() * source.length);
+    const nextAlbum = source[randomIndex];
+
+    setRandomPickSession((prev) => ({ ...prev, picks: [...prev.picks, nextAlbum] }));
+  }
+
+  function startNewPickSession() {
+    if (randomPickSession.picks.length > 0) {
+      setPreviousRandomPickSession(randomPickSession);
+    }
+    setRandomPickSession((prev) => ({ id: prev.id + 1, picks: [] }));
+  }
 
   function onCollectionPick(spotifyId: string, collectionId: number) {
     setSelectedCollectionByAlbum((prev) => ({ ...prev, [spotifyId]: collectionId }));
@@ -189,6 +252,62 @@ export default function DiscoverRoute() {
       <Text color="app.muted" mb={6}>Rediscover forgotten gems and find close-fit music outside your saved library.</Text>
 
       <Stack gap={8}>
+        <Box>
+          <HStack justify="space-between" mb={3} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }}>
+            <Heading as="h2" size="md">0. Random Album Pick Session</Heading>
+            <Text color="app.muted" fontSize="sm">Session #{randomPickSession.id}</Text>
+          </HStack>
+          <Text color="app.muted" mb={4}>Pick surprise albums from your discovery candidates, then start a new session while keeping the previous one in view.</Text>
+          <HStack mb={4}>
+            <Button onClick={pickRandomAlbum} disabled={randomAlbumPool.length === 0}>
+              Pick random album
+            </Button>
+            <Button variant="outline" onClick={startNewPickSession}>
+              Start new session
+            </Button>
+          </HStack>
+          <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
+            {randomPickSession.picks.length > 0 ? (
+              randomPickSession.picks.map((album, index) => (
+                <Box key={`${album.spotifyId}-${index}`} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" overflow="hidden">
+                  {album.imageUrl ? (
+                    <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" w="100%" h="160px" />
+                  ) : (
+                    <Box h="160px" bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">Album</Box>
+                  )}
+                  <Box p={3}>
+                    <Text fontSize="xs" color="app.muted" textTransform="uppercase" mb={1}>
+                      Pick #{index + 1} · {album.source}
+                    </Text>
+                    <Text fontWeight="semibold">{album.name}</Text>
+                    <Text fontSize="sm" color="app.muted">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                  </Box>
+                </Box>
+              ))
+            ) : (
+              <Box borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" p={4}>
+                <Text color="app.muted">No picks yet. Tap “Pick random album” to start this session.</Text>
+              </Box>
+            )}
+          </SimpleGrid>
+          {previousRandomPickSession ? (
+            <Box mt={6}>
+              <Text fontWeight="semibold" mb={2}>Continuing from session #{previousRandomPickSession.id}</Text>
+              <Text color="app.muted" fontSize="sm" mb={3}>
+                Last session ended with {previousRandomPickSession.picks.length} picks.
+              </Text>
+              <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
+                {previousRandomPickSession.picks.slice(-4).map((album, index) => (
+                  <Box key={`${album.spotifyId}-previous-${index}`} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.cardAlt" p={3}>
+                    <Text fontWeight="semibold">{album.name}</Text>
+                    <Text fontSize="sm" color="app.muted">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                  </Box>
+                ))}
+              </SimpleGrid>
+            </Box>
+          ) : null}
+        </Box>
+
         <Box>
           <HStack justify="space-between" mb={3} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }}>
             <Heading as="h2" size="md">1. Rediscovery Queue</Heading>
