@@ -54,6 +54,11 @@ export async function getUserBySpotifyUserId(spotifyUserId: string) {
   return result.rowCount ? mapUser(result.rows[0]) : null;
 }
 
+export async function listUsers() {
+  const result = await db.query("SELECT * FROM users ORDER BY updated_at DESC, id DESC");
+  return result.rows.map(mapUser);
+}
+
 export async function getUserIdByAuth0Sub(auth0Sub: string) {
   const result = await db.query("SELECT user_id FROM auth_identities WHERE auth0_sub = $1", [auth0Sub]);
   return result.rowCount ? (result.rows[0].user_id as number) : null;

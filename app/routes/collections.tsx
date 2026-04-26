@@ -467,8 +467,9 @@ export default function CollectionsRoute() {
     <Grid templateColumns={{ base: "1fr", lg: "320px minmax(0, 1fr)" }} gap={0} minH={{ base: "auto", lg: "calc(100vh - 84px)" }}>
       <Box
         as="aside"
-        order={{ base: 2, lg: 1 }}
+        order={{ base: 1, lg: 1 }}
         borderRightWidth={{ base: "0", lg: "1px" }}
+        borderBottomWidth={{ base: "1px", lg: "0" }}
         borderColor="app.border"
         bg="app.panelSolid"
         overflowY={{ base: "visible", lg: "auto" }}
@@ -488,7 +489,7 @@ export default function CollectionsRoute() {
         />
       </Box>
 
-      <Box as="main" order={{ base: 1, lg: 2 }} minW={0} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
+      <Box as="main" order={{ base: 2, lg: 2 }} minW={0} px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
         {clientToast ? (
           <Box
             position="fixed"
@@ -527,6 +528,16 @@ export default function CollectionsRoute() {
           </Box>
         ) : null}
         <Box mt={0}>
+          <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 4, md: 5 }} gap={1}>
+            <Box>
+              <Heading as="h1" size="lg">Library</Heading>
+              <Text color="app.muted">Browse collections, albums, artists, and playlists with mobile controls up front.</Text>
+            </Box>
+            <Text fontSize="sm" color="app.muted" textTransform="capitalize">
+              Viewing {filters.tab}
+            </Text>
+          </HStack>
+
           {actionData && "error" in actionData && actionData.error ? (
             <Box mb={{ base: 5, md: 6 }} borderRadius="xl" bg="app.panel" borderWidth="1px" borderColor="app.danger" px={{ base: 4, md: 5 }} py={{ base: 4, md: 4 }}>
               <Heading as="h2" size="sm" color="app.danger" mb={1}>Action failed</Heading>

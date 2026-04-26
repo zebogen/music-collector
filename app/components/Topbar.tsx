@@ -26,20 +26,20 @@ export default function Topbar({
   const currentTab = location.pathname === "/collections"
     ? ((new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections")
     : null;
+  const onHome = location.pathname === "/";
   const onCollections = location.pathname === "/collections";
   const onDiscover = location.pathname.startsWith("/discover");
+  const libraryHref = onCollections && currentTab && currentTab !== "collections" ? tabHref(currentTab) : tabHref("collections");
 
   function tabHref(tab: TabKey) {
     const params = new URLSearchParams(location.search);
     params.set("tab", tab);
 
-    // Clear state that is only relevant to specific tabs.
     params.delete("album");
     if (tab !== "collections") {
       params.delete("collection");
     }
 
-    // Keep only the active tab's page index.
     if (tab === "albums") {
       params.set("albumsPage", params.get("albumsPage") ?? "1");
       params.delete("artistsPage");
@@ -101,19 +101,44 @@ export default function Topbar({
         </Text>
       </Box>
 
-      <Box>
+      {user ? (
+        <HStack as="nav" gap={2} align="center" display={{ base: "none", md: "flex" }}>
+          <Link to={tabHref("collections")} prefetch="intent" viewTransition>
+            <Button size="sm" minH="40px" px={3} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
+              Collections
+            </Button>
+          </Link>
+          <Link to="/discover" prefetch="intent" viewTransition>
+            <Button size="sm" minH="40px" px={3} variant={onDiscover ? "solid" : "ghost"}>
+              Discover
+            </Button>
+          </Link>
+        </HStack>
+      ) : null}
+
+      {user ? (
+        <HStack display={{ base: "flex", md: "none" }} gap={2} wrap="wrap">
+          <Link to="/" prefetch="intent" viewTransition>
+            <Button size="sm" minH="38px" px={3} variant={onHome ? "solid" : "ghost"}>
+              Home
+            </Button>
+          </Link>
+          <Link to={libraryHref} prefetch="intent" viewTransition>
+            <Button size="sm" minH="38px" px={3} variant={onCollections ? "solid" : "ghost"}>
+              Library
+            </Button>
+          </Link>
+          <Link to="/discover" prefetch="intent" viewTransition>
+            <Button size="sm" minH="38px" px={3} variant={onDiscover ? "solid" : "ghost"}>
+              Discover
+            </Button>
+          </Link>
+        </HStack>
+      ) : null}
+
+      <Box w={{ base: "auto", md: "auto" }}>
         {user ? (
-          <HStack as="nav" gap={2} align="center">
-            <Link to={tabHref("collections")} prefetch="intent" viewTransition>
-              <Button size="sm" minH="40px" px={3} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
-                Collections
-              </Button>
-            </Link>
-            <Link to="/discover" prefetch="intent" viewTransition>
-              <Button size="sm" minH="40px" px={3} variant={onDiscover ? "solid" : "ghost"}>
-                Discover
-              </Button>
-            </Link>
+          <Flex as="nav" justify="flex-end" gap={2}>
             <MenuRoot positioning={{ placement: "bottom-end" }}>
               <MenuTrigger asChild>
                 <Button aria-label="Open account menu" variant="outline" size="sm" minH="40px" px={3}>
@@ -122,8 +147,22 @@ export default function Topbar({
               </MenuTrigger>
               <MenuPositioner>
                 <MenuContent minW="200px">
+                  <Box display={{ base: "block", md: "none" }} px={2} py={2}>
+                    <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>
+                      Library Views
+                    </Text>
+                    <HStack gap={2} wrap="wrap">
+                      {TABS.map((tab) => (
+                        <Link key={tab} to={tabHref(tab)} prefetch="intent" viewTransition>
+                          <Button size="xs" variant={onCollections && currentTab === tab ? "solid" : "outline"} textTransform="capitalize">
+                            {tab}
+                          </Button>
+                        </Link>
+                      ))}
+                    </HStack>
+                  </Box>
                   {TABS.filter((tab) => tab !== "collections").map((tab) => (
-                    <MenuItem asChild key={tab} value={tab}>
+                    <MenuItem asChild key={tab} value={tab} display={{ base: "none", md: "flex" }}>
                       <Link to={tabHref(tab)} prefetch="intent" viewTransition style={{ width: "100%", textTransform: "capitalize" }}>
                         {tab}
                       </Link>
@@ -163,7 +202,7 @@ export default function Topbar({
                 </MenuContent>
               </MenuPositioner>
             </MenuRoot>
-          </HStack>
+          </Flex>
         ) : (
           <Flex as="nav" gap={2} justify="flex-end">
             <Link to="/auth/login" prefetch="intent" viewTransition>

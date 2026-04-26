@@ -50,6 +50,7 @@ Optional (used in production basic auth):
 
 - `BASIC_AUTH_USERNAME`
 - `BASIC_AUTH_PASSWORD`
+- `DEV_AUTH_OVERRIDE=true` to enable a local-only auth picker that signs into an existing row from your local `users` table
 
 ## Auth0 Setup
 
@@ -117,6 +118,16 @@ npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 App will be available at `http://127.0.0.1:5173`.
+
+### Local Dev Auth Override
+
+If you want to bypass Auth0 locally while still using your real local Postgres test data:
+
+1. Set `DEV_AUTH_OVERRIDE=true` in your local env file.
+2. Start the app normally.
+3. Click `Log In` and choose one of the existing users from your local `users` table.
+
+This override is only enabled outside production and still uses your existing local database records for libraries, collections, and discovery data.
 
 ## Containerized Development
 

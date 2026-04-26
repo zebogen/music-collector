@@ -247,7 +247,7 @@ export default function HomeRoute() {
           overflow="hidden"
           position="relative"
         >
-          <Stack gap={5}>
+          <Stack gap={{ base: 4, md: 5 }}>
             <Stack gap={2} maxW="3xl">
               <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted">
                 Home Base
@@ -255,7 +255,7 @@ export default function HomeRoute() {
               <Heading as="h1" size={{ base: "lg", md: "xl" }}>
                 Pick something fast, then dive deeper when you want to.
               </Heading>
-              <Text color="app.muted" fontSize={{ base: "md", md: "lg" }}>
+              <Text color="app.muted" fontSize={{ base: "sm", md: "lg" }}>
                 This homepage keeps search, random listening, and discovery in one place so the collections workspace can stay focused.
               </Text>
             </Stack>
@@ -279,9 +279,22 @@ export default function HomeRoute() {
           </Stack>
         </Box>
 
-        <SimpleGrid columns={{ base: 1, xl: 2 }} gap={{ base: 5, md: 6 }}>
+        <Box>
+          <SpotifySearchSection
+            initialSearch=""
+            onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
+            compact
+          />
+          {safeCollections.length === 0 ? (
+            <Text color="app.muted" mt={3}>
+              Create a collection in the collections workspace before adding a search result.
+            </Text>
+          ) : null}
+        </Box>
+
+        <SimpleGrid columns={{ base: 1, xl: 2 }} gap={{ base: 4, md: 6 }}>
           <Stack gap={3}>
-            <Button colorScheme="teal" size="lg" alignSelf={{ base: "stretch", sm: "flex-start" }} onClick={() => navigate(`/?pick=${Date.now()}`)}>
+            <Button colorScheme="teal" size={{ base: "md", md: "lg" }} alignSelf={{ base: "stretch", sm: "flex-start" }} onClick={() => navigate(`/?pick=${Date.now()}`)}>
               Shuffle Pick
             </Button>
             <Box
@@ -311,10 +324,10 @@ export default function HomeRoute() {
                 alt={`${randomAlbum.name} cover`}
                 objectFit="cover"
                 w="100%"
-                h={{ base: "280px", md: "320px" }}
+                h={{ base: "220px", md: "320px" }}
               />
             ) : (
-              <Box h={{ base: "280px", md: "320px" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">
+              <Box h={{ base: "220px", md: "320px" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">
                 Album art
               </Box>
             )}
@@ -343,7 +356,7 @@ export default function HomeRoute() {
                   {randomAlbum ? (
                     <Button
                       variant="outline"
-                      size="lg"
+                      size={{ base: "md", md: "lg" }}
                       w={{ base: "full", md: "auto" }}
                       onClick={() => setAddTarget({ kind: "album", album: randomAlbum })}
                     >
@@ -353,7 +366,7 @@ export default function HomeRoute() {
                   {randomAlbum ? (
                     <ChakraLink asChild>
                       <Link to={`/albums/${randomAlbum.id}`} prefetch="intent" viewTransition>
-                        <Button variant="ghost" size="lg" w={{ base: "full", md: "auto" }}>
+                        <Button variant="ghost" size={{ base: "md", md: "lg" }} w={{ base: "full", md: "auto" }}>
                           View Details
                         </Button>
                       </Link>
@@ -361,7 +374,7 @@ export default function HomeRoute() {
                   ) : null}
                   {randomAlbum ? (
                     <ChakraLink href={`spotify:album:${randomAlbum.spotifyId}`}>
-                      <Button variant="ghost" size="lg" w={{ base: "full", md: "auto" }}>
+                      <Button variant="ghost" size={{ base: "md", md: "lg" }} w={{ base: "full", md: "auto" }}>
                         Open in Spotify
                       </Button>
                     </ChakraLink>
@@ -419,14 +432,14 @@ export default function HomeRoute() {
               <Stack align="stretch" direction={{ base: "column", md: "row" }}>
                 <ChakraLink asChild>
                   <Link to="/discover" prefetch="intent" viewTransition>
-                    <Button colorScheme="teal" size="lg" w={{ base: "full", sm: "auto" }}>
+                    <Button colorScheme="teal" size={{ base: "md", md: "lg" }} w={{ base: "full", sm: "auto" }}>
                       Open Discovery Lab
                     </Button>
                   </Link>
                 </ChakraLink>
                 <ChakraLink asChild>
                   <Link to="/collections?tab=albums" prefetch="intent" viewTransition>
-                    <Button variant="outline" size="lg" w={{ base: "full", sm: "auto" }}>
+                    <Button variant="outline" size={{ base: "md", md: "lg" }} w={{ base: "full", sm: "auto" }}>
                       Browse Saved Albums
                     </Button>
                   </Link>
@@ -435,18 +448,6 @@ export default function HomeRoute() {
             </Stack>
           </Box>
         </SimpleGrid>
-
-        <Box>
-          <SpotifySearchSection
-            initialSearch=""
-            onAdd={(album) => setAddTarget({ kind: "spotifySearchAlbum", album })}
-          />
-          {safeCollections.length === 0 ? (
-            <Text color="app.muted" mt={3}>
-              Create a collection in the collections workspace before adding a search result.
-            </Text>
-          ) : null}
-        </Box>
       </Stack>
 
       <AddToCollectionDialog
