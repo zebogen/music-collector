@@ -14,7 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   try {
-    const tokenResponse = await exchangeAuth0CodeForToken(code);
+    const tokenResponse = await exchangeAuth0CodeForToken(request, code);
     const profile = await fetchAuth0Profile(tokenResponse.access_token);
     const { returnTo } = await consumeAuth0Login(request, state);
     const userId = await getUserIdByAuth0Sub(profile.sub);

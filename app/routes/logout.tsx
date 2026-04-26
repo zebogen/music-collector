@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
-import { destroyUserSession } from "~/utils/session.server";
 import { getAuthSession, isDevAuthSub } from "~/utils/session.server";
+import { destroyUserSession } from "~/utils/session.server";
 import { getAuth0LogoutUrl } from "~/utils/auth0.server";
 
 export async function action({ request }: ActionFunctionArgs) {

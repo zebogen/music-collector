@@ -39,6 +39,7 @@ Required:
 - `AUTH0_DOMAIN`
 - `AUTH0_CLIENT_ID`
 - `AUTH0_CLIENT_SECRET`
+- `AUTH0_APP_BASE_URL` (optional)
 - `AUTH0_REDIRECT_URI`
 - `AUTH0_LOGOUT_RETURN_TO`
 - `SPOTIFY_CLIENT_ID`
@@ -64,8 +65,29 @@ Optional (used in production basic auth):
    - `AUTH0_DOMAIN`
    - `AUTH0_CLIENT_ID`
    - `AUTH0_CLIENT_SECRET`
+   - optional: `AUTH0_APP_BASE_URL`
    - `AUTH0_REDIRECT_URI`
    - `AUTH0_LOGOUT_RETURN_TO`
+
+### Auth0 + Vercel Preview Deployments (PR branches)
+
+This app supports dynamic Auth0 callback/logout URLs, so preview deploys can authenticate without hard-coding each deployment URL.
+
+How it works:
+
+- If `AUTH0_REDIRECT_URI` / `AUTH0_LOGOUT_RETURN_TO` are set, those explicit values are used.
+- On Vercel **Preview** (`VERCEL_ENV=preview`), the app always uses preview runtime origin/branch URL so a production `AUTH0_REDIRECT_URI` does not force redirects to prod.
+- Otherwise, the app computes callback/logout URLs from runtime host headers.
+- On Vercel preview deploys, if `VERCEL_BRANCH_URL` is present, the app prefers that stable branch URL (for example, `my-app-git-feature-x.vercel.app`) so auth continues to work across commits in the same PR branch.
+
+Recommended Auth0 settings:
+
+1. In **Allowed Callback URLs**, add:
+   - `http://127.0.0.1:5173/auth/callback`
+   - `https://<your-production-domain>/auth/callback`
+   - `https://<your-project>-git-<branch>-<team>.vercel.app/auth/callback` for each long-lived preview branch you test, or use a wildcard pattern supported by your Auth0 tenant policy.
+2. In **Allowed Logout URLs**, add matching base URLs (without `/auth/callback`).
+3. On Vercel, you can leave `AUTH0_REDIRECT_URI` and `AUTH0_LOGOUT_RETURN_TO` unset for Preview to use dynamic behavior, and set explicit values only for Production if preferred.
 
 ## Spotify App Setup
 
@@ -169,17 +191,21 @@ docker compose up --build
    - `AUTH0_DOMAIN`
    - `AUTH0_CLIENT_ID`
    - `AUTH0_CLIENT_SECRET`
+   - optional: `AUTH0_APP_BASE_URL` (forces a single base URL for callback/logout generation)
    - `AUTH0_REDIRECT_URI`
    - `AUTH0_LOGOUT_RETURN_TO`
    - `SPOTIFY_CLIENT_ID`
    - `SPOTIFY_CLIENT_SECRET`
    - `SPOTIFY_REDIRECT_URI`
    - optional: `BASIC_AUTH_USERNAME`, `BASIC_AUTH_PASSWORD`
-6. Set `AUTH0_REDIRECT_URI` to your deployed Auth0 callback URL:
+6. Either:
+   - set `AUTH0_REDIRECT_URI` and `AUTH0_LOGOUT_RETURN_TO` to explicit production URLs, or
+   - leave them unset and let runtime URL detection generate them dynamically.
+7. If you set `AUTH0_REDIRECT_URI`, use:
    - `https://<your-domain>/auth/callback`
-7. Set `SPOTIFY_REDIRECT_URI` to your deployed Spotify callback URL:
+8. Set `SPOTIFY_REDIRECT_URI` to your deployed Spotify callback URL:
    - `https://<your-domain>/auth/spotify/callback`
-8. Deploy.
+9. Deploy.
 
 Notes:
 - Runtime queries on Vercel use Neon serverless driver via `@neondatabase/serverless`.
