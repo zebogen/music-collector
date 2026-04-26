@@ -64,10 +64,11 @@ export default function Topbar({
   return (
     <Flex
       as="header"
-      align={{ base: "stretch", md: "center" }}
+      align="center"
       justify="space-between"
-      direction={{ base: "column", lg: "row" }}
-      gap={{ base: 2, md: 3 }}
+      direction="row"
+      gap={3}
+      flexWrap="nowrap"
       px={{ base: 3, md: 5 }}
       py={{ base: 3, md: 3 }}
       bg="app.panelSolid"
@@ -100,27 +101,22 @@ export default function Topbar({
         </Text>
       </Box>
 
-      {user ? (
-        <HStack as="nav" gap={2} wrap="wrap" align="center">
-          <Link to={tabHref("collections")} prefetch="intent" viewTransition>
-            <Button size="sm" minH="40px" px={4} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
-              Collections
-            </Button>
-          </Link>
-          <Link to="/discover" prefetch="intent" viewTransition>
-            <Button size="sm" minH="40px" px={4} variant={onDiscover ? "solid" : "ghost"}>
-              Discover
-            </Button>
-          </Link>
-        </HStack>
-      ) : null}
-
-      <Box w={{ base: "full", md: "auto" }}>
+      <Box>
         {user ? (
-          <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }} gap={2}>
+          <HStack as="nav" gap={2} align="center">
+            <Link to={tabHref("collections")} prefetch="intent" viewTransition>
+              <Button size="sm" minH="40px" px={3} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
+                Collections
+              </Button>
+            </Link>
+            <Link to="/discover" prefetch="intent" viewTransition>
+              <Button size="sm" minH="40px" px={3} variant={onDiscover ? "solid" : "ghost"}>
+                Discover
+              </Button>
+            </Link>
             <MenuRoot positioning={{ placement: "bottom-end" }}>
               <MenuTrigger asChild>
-                <Button aria-label="Open account menu" variant="outline" size="sm">
+                <Button aria-label="Open account menu" variant="outline" size="sm" minH="40px" px={3}>
                   Menu
                 </Button>
               </MenuTrigger>
@@ -167,9 +163,9 @@ export default function Topbar({
                 </MenuContent>
               </MenuPositioner>
             </MenuRoot>
-          </Flex>
+          </HStack>
         ) : (
-          <Flex as="nav" w={{ base: "full", md: "auto" }} gap={2} justify={{ base: "flex-start", md: "flex-end" }}>
+          <Flex as="nav" gap={2} justify="flex-end">
             <Link to="/auth/login" prefetch="intent" viewTransition>
               <Button colorScheme="green" size="sm" w={{ base: "auto", sm: "auto" }}>Log In</Button>
             </Link>
