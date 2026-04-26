@@ -56,6 +56,10 @@ function getAuth0AppOrigin(request: Request) {
 }
 
 function getAuth0RedirectUri(request: Request) {
+  if (env.VERCEL_ENV === "preview") {
+    return `${getAuth0AppOrigin(request)}/auth/callback`;
+  }
+
   if (env.AUTH0_REDIRECT_URI) {
     return env.AUTH0_REDIRECT_URI;
   }
@@ -64,6 +68,10 @@ function getAuth0RedirectUri(request: Request) {
 }
 
 function getAuth0LogoutReturnTo(request: Request) {
+  if (env.VERCEL_ENV === "preview") {
+    return getAuth0AppOrigin(request);
+  }
+
   if (env.AUTH0_LOGOUT_RETURN_TO) {
     return env.AUTH0_LOGOUT_RETURN_TO;
   }

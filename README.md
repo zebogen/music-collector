@@ -75,6 +75,7 @@ This app supports dynamic Auth0 callback/logout URLs, so preview deploys can aut
 How it works:
 
 - If `AUTH0_REDIRECT_URI` / `AUTH0_LOGOUT_RETURN_TO` are set, those explicit values are used.
+- On Vercel **Preview** (`VERCEL_ENV=preview`), the app always uses preview runtime origin/branch URL so a production `AUTH0_REDIRECT_URI` does not force redirects to prod.
 - Otherwise, the app computes callback/logout URLs from runtime host headers.
 - On Vercel preview deploys, if `VERCEL_BRANCH_URL` is present, the app prefers that stable branch URL (for example, `my-app-git-feature-x.vercel.app`) so auth continues to work across commits in the same PR branch.
 
