@@ -280,7 +280,31 @@ export default function HomeRoute() {
         </Box>
 
         <SimpleGrid columns={{ base: 1, xl: 2 }} gap={{ base: 5, md: 6 }}>
-          <Box borderWidth="1px" borderColor="app.border" borderRadius="2xl" bg="app.card" overflow="hidden">
+          <Stack gap={3}>
+            <Button colorScheme="teal" size="lg" alignSelf={{ base: "stretch", sm: "flex-start" }} onClick={() => navigate(`/?pick=${Date.now()}`)}>
+              Shuffle Pick
+            </Button>
+            <Box
+              borderWidth="1px"
+              borderColor="app.border"
+              borderRadius="2xl"
+              bg="app.card"
+              overflow="hidden"
+              cursor={randomAlbum ? "pointer" : "default"}
+              onClick={randomAlbum ? () => navigate(`/albums/${randomAlbum.id}`) : undefined}
+              onKeyDown={
+                randomAlbum
+                  ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        navigate(`/albums/${randomAlbum.id}`);
+                      }
+                    }
+                  : undefined
+              }
+              role={randomAlbum ? "link" : undefined}
+              tabIndex={randomAlbum ? 0 : undefined}
+            >
             {randomAlbum?.imageUrl ? (
               <Image
                 src={randomAlbum.imageUrl}
@@ -310,20 +334,17 @@ export default function HomeRoute() {
                   </Text>
                 </Box>
 
-                <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
-                  <Button
-                    colorScheme="teal"
-                    size="lg"
-                    w={{ base: "full", sm: "auto" }}
-                    onClick={() => navigate(`/?pick=${Date.now()}`)}
-                  >
-                    Shuffle Pick
-                  </Button>
+                <HStack
+                  align="stretch"
+                  direction={{ base: "column", md: "row" }}
+                  wrap={{ base: "nowrap", md: "wrap" }}
+                  onClick={(event) => event.stopPropagation()}
+                >
                   {randomAlbum ? (
                     <Button
                       variant="outline"
                       size="lg"
-                      w={{ base: "full", sm: "auto" }}
+                      w={{ base: "full", md: "auto" }}
                       onClick={() => setAddTarget({ kind: "album", album: randomAlbum })}
                     >
                       Add to Collection
@@ -332,7 +353,7 @@ export default function HomeRoute() {
                   {randomAlbum ? (
                     <ChakraLink asChild>
                       <Link to={`/albums/${randomAlbum.id}`} prefetch="intent" viewTransition>
-                        <Button variant="ghost" size="lg" w={{ base: "full", sm: "auto" }}>
+                        <Button variant="ghost" size="lg" w={{ base: "full", md: "auto" }}>
                           View Details
                         </Button>
                       </Link>
@@ -340,7 +361,7 @@ export default function HomeRoute() {
                   ) : null}
                   {randomAlbum ? (
                     <ChakraLink href={`spotify:album:${randomAlbum.spotifyId}`}>
-                      <Button variant="ghost" size="lg" w={{ base: "full", sm: "auto" }}>
+                      <Button variant="ghost" size="lg" w={{ base: "full", md: "auto" }}>
                         Open in Spotify
                       </Button>
                     </ChakraLink>
@@ -348,7 +369,8 @@ export default function HomeRoute() {
                 </HStack>
               </Stack>
             </Box>
-          </Box>
+            </Box>
+          </Stack>
 
           <Box borderWidth="1px" borderColor="app.border" borderRadius="2xl" bg="app.card" p={{ base: 4, md: 5 }}>
             <Stack gap={4}>
