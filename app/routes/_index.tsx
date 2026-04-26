@@ -142,7 +142,7 @@ export default function HomeRoute() {
               <Text color="app.muted" fontSize={{ base: "md", md: "lg" }} maxW="2xl">
                 Search for records, surface a random saved album, and jump into discovery without landing straight in the collections workspace.
               </Text>
-              <Stack align="stretch" direction={{ base: "column", sm: "row" }}>
+              <Stack align="stretch" direction={{ base: "column", md: "row" }}>
                 <ChakraLink asChild>
                   <Link to="/auth/login" prefetch="intent" viewTransition>
                     <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>
@@ -211,7 +211,7 @@ export default function HomeRoute() {
             <Text color="app.muted" fontSize={{ base: "md", md: "lg" }}>
               Once your account is linked, the homepage becomes a quick-launch pad for what to hear next.
             </Text>
-            <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
+            <Stack align="stretch" direction={{ base: "column", md: "row" }}>
               <ChakraLink asChild>
                 <Link to="/auth/spotify" prefetch="intent" viewTransition>
                   <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>
@@ -226,7 +226,7 @@ export default function HomeRoute() {
                   </Button>
                 </Link>
               </ChakraLink>
-            </HStack>
+            </Stack>
           </Stack>
         </Box>
       </Box>
@@ -260,7 +260,7 @@ export default function HomeRoute() {
               </Text>
             </Stack>
 
-            <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
+            <Stack align="stretch" direction={{ base: "column", md: "row" }}>
               <ChakraLink asChild>
                 <Link to="/collections?tab=collections" prefetch="intent" viewTransition>
                   <Button colorScheme="green" size="lg" w={{ base: "full", sm: "auto" }}>
@@ -275,7 +275,7 @@ export default function HomeRoute() {
                   </Button>
                 </Link>
               </ChakraLink>
-            </HStack>
+            </Stack>
           </Stack>
         </Box>
 
@@ -429,7 +429,7 @@ export default function HomeRoute() {
                 </Box>
               )}
 
-              <HStack align="stretch" direction={{ base: "column", sm: "row" }}>
+              <Stack align="stretch" direction={{ base: "column", md: "row" }}>
                 <ChakraLink asChild>
                   <Link to="/discover" prefetch="intent" viewTransition>
                     <Button colorScheme="teal" size={{ base: "md", md: "lg" }} w={{ base: "full", sm: "auto" }}>
@@ -444,7 +444,7 @@ export default function HomeRoute() {
                     </Button>
                   </Link>
                 </ChakraLink>
-              </HStack>
+              </Stack>
             </Stack>
           </Box>
         </SimpleGrid>
