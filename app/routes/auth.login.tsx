@@ -10,5 +10,5 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const state = randomBytes(16).toString("hex");
   const { headers } = await beginAuth0Login(request, { state, returnTo });
 
-  return redirect(getAuth0AuthorizeUrl(state), { headers });
+  return redirect(getAuth0AuthorizeUrl(request, state), { headers });
 }

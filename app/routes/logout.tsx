@@ -9,7 +9,7 @@ export async function action({ request }: ActionFunctionArgs) {
     status: 302,
     headers: {
       "Set-Cookie": response.headers.get("Set-Cookie") ?? "",
-      Location: location === "/" ? getAuth0LogoutUrl() : location ?? getAuth0LogoutUrl(),
+      Location: location === "/" ? getAuth0LogoutUrl(request) : location ?? getAuth0LogoutUrl(request),
     }
   });
 }
