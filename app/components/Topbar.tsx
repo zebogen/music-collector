@@ -2,7 +2,6 @@ import { Form, Link, useFetcher, useLocation } from "react-router";
 import {
   Flex,
   Box,
-  Heading,
   Text,
   Button,
   MenuContent,
@@ -27,7 +26,6 @@ export default function Topbar({
   const currentTab = location.pathname === "/collections"
     ? ((new URLSearchParams(location.search).get("tab") as TabKey | null) ?? "collections")
     : null;
-  const onHome = location.pathname === "/";
   const onCollections = location.pathname === "/collections";
   const onDiscover = location.pathname.startsWith("/discover");
 
@@ -66,10 +64,11 @@ export default function Topbar({
   return (
     <Flex
       as="header"
-      align={{ base: "stretch", md: "center" }}
+      align="center"
       justify="space-between"
-      direction={{ base: "column", lg: "row" }}
-      gap={{ base: 2, md: 3 }}
+      direction="row"
+      gap={3}
+      flexWrap="nowrap"
       px={{ base: 3, md: 5 }}
       py={{ base: 3, md: 3 }}
       bg="app.panelSolid"
@@ -78,60 +77,58 @@ export default function Topbar({
       borderRadius="0"
     >
       <Box minW={0}>
-        <Heading as="h1" size="sm" lineHeight="1.2">Spotify Library Organizer</Heading>
+        <Link to="/" prefetch="intent" viewTransition aria-label="Go to homepage">
+          <Flex align="center" gap={2}>
+            <Box
+              w="30px"
+              h="30px"
+              borderRadius="full"
+              bg="green.500"
+              color="white"
+              fontSize="xs"
+              fontWeight="bold"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              MC
+            </Box>
+            <Text fontSize="sm" fontWeight="semibold">Music Collector</Text>
+          </Flex>
+        </Link>
         <Text display={{ base: "none", md: "block" }} fontSize="xs" color="app.muted" mt={1}>
           {user ? `Signed in as ${user.displayName ?? "Spotify User"}` : "Not connected"}
         </Text>
       </Box>
 
-      {user ? (
-        <HStack
-          as="nav"
-          gap={2}
-          wrap="nowrap"
-          align="center"
-          overflowX="auto"
-          pb={{ base: 1, md: 0 }}
-          css={{ scrollbarWidth: "none" }}
-        >
-          <Link to="/" prefetch="intent" viewTransition>
-            <Button size="sm" minH="40px" px={4} variant={onHome ? "solid" : "ghost"}>
-              Home
-            </Button>
-          </Link>
-          <Link to={tabHref("collections")} prefetch="intent" viewTransition>
-            <Button size="sm" minH="40px" px={4} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
-              Collections
-            </Button>
-          </Link>
-          {TABS.map((tab) => (
-            tab === "collections" ? null : (
-            <Link key={tab} to={tabHref(tab)} prefetch="intent" viewTransition>
-              <Button size="sm" minH="40px" px={4} variant={onCollections && currentTab === tab ? "solid" : "ghost"} textTransform="capitalize">
-                {tab}
+      <Box>
+        {user ? (
+          <HStack as="nav" gap={2} align="center">
+            <Link to={tabHref("collections")} prefetch="intent" viewTransition>
+              <Button size="sm" minH="40px" px={3} variant={onCollections && currentTab === "collections" ? "solid" : "ghost"}>
+                Collections
               </Button>
             </Link>
-            )
-          ))}
-          <Link to="/discover" prefetch="intent" viewTransition>
-            <Button size="sm" minH="40px" px={4} variant={onDiscover ? "solid" : "ghost"}>
-              Discover
-            </Button>
-          </Link>
-        </HStack>
-      ) : null}
-
-      <Box w={{ base: "full", md: "auto" }}>
-        {user ? (
-          <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }} gap={2}>
+            <Link to="/discover" prefetch="intent" viewTransition>
+              <Button size="sm" minH="40px" px={3} variant={onDiscover ? "solid" : "ghost"}>
+                Discover
+              </Button>
+            </Link>
             <MenuRoot positioning={{ placement: "bottom-end" }}>
               <MenuTrigger asChild>
-                <Button aria-label="Open account menu" variant="outline" size="sm">
+                <Button aria-label="Open account menu" variant="outline" size="sm" minH="40px" px={3}>
                   Menu
                 </Button>
               </MenuTrigger>
               <MenuPositioner>
-                <MenuContent minW="180px">
+                <MenuContent minW="200px">
+                  {TABS.filter((tab) => tab !== "collections").map((tab) => (
+                    <MenuItem asChild key={tab} value={tab}>
+                      <Link to={tabHref(tab)} prefetch="intent" viewTransition style={{ width: "100%", textTransform: "capitalize" }}>
+                        {tab}
+                      </Link>
+                    </MenuItem>
+                  ))}
                   {user.spotifyConnected ? (
                     <syncFetcher.Form method="post" action="/collections">
                       <input type="hidden" name="intent" value="sync" />
@@ -166,9 +163,9 @@ export default function Topbar({
                 </MenuContent>
               </MenuPositioner>
             </MenuRoot>
-          </Flex>
+          </HStack>
         ) : (
-          <Flex as="nav" w={{ base: "full", md: "auto" }} gap={2} justify={{ base: "flex-start", md: "flex-end" }}>
+          <Flex as="nav" gap={2} justify="flex-end">
             <Link to="/auth/login" prefetch="intent" viewTransition>
               <Button colorScheme="green" size="sm" w={{ base: "auto", sm: "auto" }}>Log In</Button>
             </Link>
