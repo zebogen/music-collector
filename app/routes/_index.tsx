@@ -330,6 +330,15 @@ export default function HomeRoute() {
                     </Button>
                   ) : null}
                   {randomAlbum ? (
+                    <ChakraLink asChild>
+                      <Link to={`/albums/${randomAlbum.id}`} prefetch="intent" viewTransition>
+                        <Button variant="ghost" size="lg" w={{ base: "full", sm: "auto" }}>
+                          View Details
+                        </Button>
+                      </Link>
+                    </ChakraLink>
+                  ) : null}
+                  {randomAlbum ? (
                     <ChakraLink href={`spotify:album:${randomAlbum.spotifyId}`}>
                       <Button variant="ghost" size="lg" w={{ base: "full", sm: "auto" }}>
                         Open in Spotify
