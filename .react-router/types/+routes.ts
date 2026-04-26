@@ -64,6 +64,9 @@ type Pages = {
   "/auth/login": {
     params: {};
   };
+  "/auth/dev": {
+    params: {};
+  };
   "/discover": {
     params: {};
   };
@@ -78,7 +81,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/playlists/:playlistId" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/artists/:artistId" | "/albums/:albumId" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/collections" | "/collections/:collectionId" | "/auth/login" | "/discover" | "/health" | "/logout";
+    page: "/" | "/playlists/:playlistId" | "/index-action-helpers" | "/index-action-helpers/test" | "/api/spotify-search" | "/artists/:artistId" | "/albums/:albumId" | "/auth/callback" | "/index-helpers" | "/index-helpers/test" | "/auth/spotify" | "/auth/spotify/callback" | "/collections" | "/collections/:collectionId" | "/auth/login" | "/auth/dev" | "/discover" | "/health" | "/logout";
   };
   "routes/playlists.$playlistId.tsx": {
     id: "routes/playlists.$playlistId";
@@ -136,6 +139,10 @@ type RouteFiles = {
     id: "routes/auth.login";
     page: "/auth/login";
   };
+  "routes/auth.dev.tsx": {
+    id: "routes/auth.dev";
+    page: "/auth/dev";
+  };
   "routes/discover.tsx": {
     id: "routes/discover";
     page: "/discover";
@@ -170,6 +177,7 @@ type RouteModules = {
   "routes/collections": typeof import("./app/routes/collections.tsx");
   "routes/collections.$collectionId": typeof import("./app/routes/collections.$collectionId.tsx");
   "routes/auth.login": typeof import("./app/routes/auth.login.tsx");
+  "routes/auth.dev": typeof import("./app/routes/auth.dev.tsx");
   "routes/discover": typeof import("./app/routes/discover.tsx");
   "routes/_index": typeof import("./app/routes/_index.tsx");
   "routes/health": typeof import("./app/routes/health.ts");

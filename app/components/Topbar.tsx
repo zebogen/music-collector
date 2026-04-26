@@ -30,6 +30,7 @@ export default function Topbar({
   const onHome = location.pathname === "/";
   const onCollections = location.pathname === "/collections";
   const onDiscover = location.pathname.startsWith("/discover");
+  const libraryHref = onCollections && currentTab && currentTab !== "collections" ? tabHref(currentTab) : tabHref("collections");
 
   function tabHref(tab: TabKey) {
     const params = new URLSearchParams(location.search);
@@ -93,6 +94,7 @@ export default function Topbar({
           overflowX="auto"
           pb={{ base: 1, md: 0 }}
           css={{ scrollbarWidth: "none" }}
+          display={{ base: "none", md: "flex" }}
         >
           <Link to="/" prefetch="intent" viewTransition>
             <Button size="sm" minH="40px" px={4} variant={onHome ? "solid" : "ghost"}>
@@ -121,6 +123,26 @@ export default function Topbar({
         </HStack>
       ) : null}
 
+      {user ? (
+        <HStack display={{ base: "flex", md: "none" }} gap={2} wrap="wrap">
+          <Link to="/" prefetch="intent" viewTransition>
+            <Button size="sm" minH="38px" px={3} variant={onHome ? "solid" : "ghost"}>
+              Home
+            </Button>
+          </Link>
+          <Link to={libraryHref} prefetch="intent" viewTransition>
+            <Button size="sm" minH="38px" px={3} variant={onCollections ? "solid" : "ghost"}>
+              Library
+            </Button>
+          </Link>
+          <Link to="/discover" prefetch="intent" viewTransition>
+            <Button size="sm" minH="38px" px={3} variant={onDiscover ? "solid" : "ghost"}>
+              Discover
+            </Button>
+          </Link>
+        </HStack>
+      ) : null}
+
       <Box w={{ base: "full", md: "auto" }}>
         {user ? (
           <Flex as="nav" justify={{ base: "flex-end", md: "flex-start" }} gap={2}>
@@ -132,6 +154,20 @@ export default function Topbar({
               </MenuTrigger>
               <MenuPositioner>
                 <MenuContent minW="180px">
+                  <Box display={{ base: "block", md: "none" }} px={2} py={2}>
+                    <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={2}>
+                      Library Views
+                    </Text>
+                    <HStack gap={2} wrap="wrap">
+                      {TABS.map((tab) => (
+                        <Link key={tab} to={tabHref(tab)} prefetch="intent" viewTransition>
+                          <Button size="xs" variant={onCollections && currentTab === tab ? "solid" : "outline"} textTransform="capitalize">
+                            {tab}
+                          </Button>
+                        </Link>
+                      ))}
+                    </HStack>
+                  </Box>
                   {user.spotifyConnected ? (
                     <syncFetcher.Form method="post" action="/collections">
                       <input type="hidden" name="intent" value="sync" />

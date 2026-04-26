@@ -20,6 +20,7 @@ const AUTH0_NAME_SESSION_KEY = "auth0Name";
 const AUTH0_EMAIL_SESSION_KEY = "auth0Email";
 const AUTH0_STATE_SESSION_KEY = "auth0State";
 const AUTH0_RETURN_TO_SESSION_KEY = "auth0ReturnTo";
+const DEV_AUTH_PREFIX = "dev-auth:";
 
 export type AppToast = {
   type: "success" | "error";
@@ -71,6 +72,18 @@ export async function getAuthSession(request: Request) {
   };
 }
 
+export function isDevAuthEnabled() {
+  return env.NODE_ENV !== "production" && env.DEV_AUTH_OVERRIDE === "true";
+}
+
+export function getDevAuthSub(userId: number) {
+  return `${DEV_AUTH_PREFIX}${userId}`;
+}
+
+export function isDevAuthSub(auth0Sub: string | null | undefined) {
+  return typeof auth0Sub === "string" && auth0Sub.startsWith(DEV_AUTH_PREFIX);
+}
+
 export async function requireUserId(request: Request) {
   const userId = await getUserId(request);
   if (!userId) {
@@ -108,6 +121,20 @@ export async function createAuthSession(input: {
     headers: {
       "Set-Cookie": await storage.commitSession(session)
     }
+  });
+}
+
+export async function createDevAuthSession(input: {
+  userId: number;
+  displayName?: string | null;
+  redirectTo: string;
+}) {
+  return createAuthSession({
+    auth0Sub: getDevAuthSub(input.userId),
+    auth0Name: input.displayName ?? null,
+    auth0Email: null,
+    userId: input.userId,
+    redirectTo: input.redirectTo,
   });
 }
 

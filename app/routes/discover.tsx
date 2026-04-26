@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, Link, useFetcher, useLoaderData, useNavigate, useSearchParams } from "react-router";
 import { Box, Button, Heading, HStack, Image, SimpleGrid, Stack, Text, chakra } from "@chakra-ui/react";
@@ -169,33 +169,71 @@ export default function DiscoverRoute() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const addFetcher = useFetcher<{ ok?: boolean; error?: string }>();
+  const [activeSection, setActiveSection] = useState<"rediscover" | "missing" | "collection" | "artists">("rediscover");
 
   const selectedCollectionId = Number(searchParams.get("collectionId") ?? activeCollectionId ?? 0);
   const selectCollectionHref = (collectionId: number) => `/discover?collectionId=${collectionId}`;
   const firstCollectionId = collections[0]?.id ?? 0;
-  const [selectedCollectionByAlbum, setSelectedCollectionByAlbum] = useState<Record<string, number>>({});
-  const activeCollectionByAlbum = useMemo(
-    () => (spotifyId: string) => selectedCollectionByAlbum[spotifyId] ?? firstCollectionId,
-    [selectedCollectionByAlbum, firstCollectionId]
-  );
-
-  function onCollectionPick(spotifyId: string, collectionId: number) {
-    setSelectedCollectionByAlbum((prev) => ({ ...prev, [spotifyId]: collectionId }));
-  }
+  const activeTargetCollectionId = selectedCollectionId > 0 ? selectedCollectionId : firstCollectionId;
+  const sectionButtons = [
+    { key: "rediscover", label: "Rediscover" },
+    { key: "missing", label: "Missing" },
+    { key: "collection", label: "Collection" },
+    { key: "artists", label: "Artists" }
+  ] as const;
 
   return (
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 6 }}>
       <Heading as="h1" size="lg" mb={1}>Discovery Lab</Heading>
-      <Text color="app.muted" mb={6}>Rediscover forgotten gems and find close-fit music outside your saved library.</Text>
+      <Text color="app.muted" mb={4}>Rediscover forgotten gems and find close-fit music outside your saved library.</Text>
+
+      <Stack gap={3} mb={6}>
+        <Box borderWidth="1px" borderColor="app.border" borderRadius="2xl" bg="app.card" p={4}>
+          <Stack gap={3}>
+            <Box>
+              <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.08em" color="app.muted" mb={1}>
+                Active Collection
+              </Text>
+              <Text color="app.muted" fontSize="sm">
+                Add recommendations into one collection at a time instead of choosing the same destination on every card.
+              </Text>
+            </Box>
+            <chakra.select
+              value={activeTargetCollectionId || ""}
+              onChange={(event) => {
+                const href = selectCollectionHref(Number(event.currentTarget.value));
+                navigate(href);
+              }}
+            >
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.id}>{collection.name}</option>
+              ))}
+            </chakra.select>
+          </Stack>
+        </Box>
+        <HStack gap={2} wrap="wrap">
+          {sectionButtons.map((section) => (
+            <Button
+              key={section.key}
+              size="sm"
+              variant={activeSection === section.key ? "solid" : "outline"}
+              onClick={() => setActiveSection(section.key)}
+            >
+              {section.label}
+            </Button>
+          ))}
+        </HStack>
+      </Stack>
 
       <Stack gap={8}>
+        {activeSection === "rediscover" ? (
         <Box>
           <HStack justify="space-between" mb={3} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }}>
-            <Heading as="h2" size="md">1. Rediscovery Queue</Heading>
+            <Heading as="h2" size="md">Rediscovery Queue</Heading>
             <Text color="app.muted" fontSize="sm">{rediscoveryQueue.length} candidates</Text>
           </HStack>
           <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
-            {rediscoveryQueue.map((album) => (
+            {rediscoveryQueue.slice(0, 8).map((album) => (
               <Box key={album.spotifyId} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" overflow="hidden">
                 {album.imageUrl ? (
                   <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" w="100%" h="160px" />
@@ -208,25 +246,17 @@ export default function DiscoverRoute() {
                   <Text fontSize="xs" color="app.muted" mt={2}>
                     {album.inCollection ? "Already in a collection" : "Not in any collection yet"}
                   </Text>
-                  <Stack mt={2} gap={2}>
-                    <HStack>
-                      <chakra.select
-                        value={activeCollectionByAlbum(album.spotifyId)}
-                        onChange={(event) => onCollectionPick(album.spotifyId, Number(event.currentTarget.value))}
-                      >
-                        {collections.map((collection) => (
-                          <option key={collection.id} value={collection.id}>{collection.name}</option>
-                        ))}
-                      </chakra.select>
-                      <addFetcher.Form method="post" action="/discover">
-                        <input type="hidden" name="intent" value="add_existing_album" />
-                        <input type="hidden" name="albumId" value={album.id} />
-                        <input type="hidden" name="collectionId" value={activeCollectionByAlbum(album.spotifyId)} />
-                        <Button size="sm" type="submit" loading={addFetcher.state !== "idle"}>Add</Button>
-                      </addFetcher.Form>
-                    </HStack>
+                  <Stack mt={3} gap={2}>
+                    <addFetcher.Form method="post" action="/discover">
+                      <input type="hidden" name="intent" value="add_existing_album" />
+                      <input type="hidden" name="albumId" value={album.id} />
+                      <input type="hidden" name="collectionId" value={activeTargetCollectionId} />
+                      <Button size="sm" type="submit" loading={addFetcher.state !== "idle"} w="full">
+                        Add to {collections.find((collection) => collection.id === activeTargetCollectionId)?.name ?? "Collection"}
+                      </Button>
+                    </addFetcher.Form>
                     <chakra.a href={`spotify:album:${album.spotifyId}`}>
-                      <Button size="sm" variant="outline">Play in Spotify</Button>
+                      <Button size="sm" variant="outline" w="full">Play in Spotify</Button>
                     </chakra.a>
                   </Stack>
                 </Box>
@@ -234,9 +264,11 @@ export default function DiscoverRoute() {
             ))}
           </SimpleGrid>
         </Box>
+        ) : null}
 
+        {activeSection === "missing" ? (
         <Box>
-          <Heading as="h2" size="md" mb={3}>6. Missing-From-Library Radar</Heading>
+          <Heading as="h2" size="md" mb={3}>Missing-From-Library Radar</Heading>
           <Text color="app.muted" mb={4}>Artists and albums adjacent to your top saved artists but not yet in your library.</Text>
           <SimpleGrid columns={{ base: 1, lg: 2 }} gap={4}>
             <Box borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" p={4}>
@@ -255,7 +287,7 @@ export default function DiscoverRoute() {
             <Box borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" p={4}>
               <Heading as="h3" size="sm" mb={3}>Albums You Might Like</Heading>
               <Stack gap={2}>
-                {missingAlbums.slice(0, 10).map((album) => (
+                {missingAlbums.slice(0, 8).map((album) => (
                   <Box key={album.spotifyId} borderWidth="1px" borderColor="app.border" borderRadius="md" p={2}>
                     <HStack justify="space-between">
                       <Box minW={0}>
@@ -267,17 +299,9 @@ export default function DiscoverRoute() {
                       </chakra.a>
                     </HStack>
                     <HStack mt={2}>
-                      <chakra.select
-                        value={activeCollectionByAlbum(album.spotifyId)}
-                        onChange={(event) => onCollectionPick(album.spotifyId, Number(event.currentTarget.value))}
-                      >
-                        {collections.map((collection) => (
-                          <option key={collection.id} value={collection.id}>{collection.name}</option>
-                        ))}
-                      </chakra.select>
                       <addFetcher.Form method="post" action="/discover">
                         <input type="hidden" name="intent" value="add_search_album" />
-                        <input type="hidden" name="collectionId" value={activeCollectionByAlbum(album.spotifyId)} />
+                        <input type="hidden" name="collectionId" value={activeTargetCollectionId} />
                         <input type="hidden" name="spotifyId" value={album.spotifyId} />
                         <input type="hidden" name="name" value={album.name} />
                         <input type="hidden" name="albumType" value={album.albumType ?? ""} />
@@ -293,55 +317,38 @@ export default function DiscoverRoute() {
             </Box>
           </SimpleGrid>
         </Box>
+        ) : null}
 
+        {activeSection === "collection" ? (
         <Box>
           <HStack justify="space-between" mb={3} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }}>
-            <Heading as="h2" size="md">7. Similar-To-Collection Discovery</Heading>
-            <HStack>
-              <Text fontSize="sm" color="app.muted">Collection</Text>
-              <chakra.select
-                value={selectedCollectionId || ""}
-                onChange={(event) => {
-                  const href = selectCollectionHref(Number(event.currentTarget.value));
-                  navigate(href);
-                }}
-              >
-                {collections.map((collection) => (
-                  <option key={collection.id} value={collection.id}>{collection.name}</option>
-                ))}
-              </chakra.select>
-            </HStack>
+            <Heading as="h2" size="md">Similar-To-Collection Discovery</Heading>
+            <Text fontSize="sm" color="app.muted">
+              Based on {collections.find((collection) => collection.id === activeTargetCollectionId)?.name ?? "your active collection"}
+            </Text>
           </HStack>
           {collectionRecommendations.length > 0 ? (
             <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
-              {collectionRecommendations.map((album) => (
+              {collectionRecommendations.slice(0, 8).map((album) => (
                 <Box key={album.spotifyId} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" p={3}>
                   <Text fontWeight="semibold">{album.name}</Text>
                   <Text fontSize="sm" color="app.muted">{album.artistNames.join(", ") || "Unknown artist"}</Text>
-                  <HStack mt={2}>
-                    <chakra.select
-                      value={activeCollectionByAlbum(album.spotifyId)}
-                      onChange={(event) => onCollectionPick(album.spotifyId, Number(event.currentTarget.value))}
-                    >
-                      {collections.map((collection) => (
-                        <option key={collection.id} value={collection.id}>{collection.name}</option>
-                      ))}
-                    </chakra.select>
+                  <Stack mt={3} gap={2}>
                     <addFetcher.Form method="post" action="/discover">
                       <input type="hidden" name="intent" value="add_search_album" />
-                      <input type="hidden" name="collectionId" value={activeCollectionByAlbum(album.spotifyId)} />
+                      <input type="hidden" name="collectionId" value={activeTargetCollectionId} />
                       <input type="hidden" name="spotifyId" value={album.spotifyId} />
                       <input type="hidden" name="name" value={album.name} />
                       <input type="hidden" name="albumType" value={album.albumType ?? ""} />
                       <input type="hidden" name="releaseDate" value={album.releaseDate ?? ""} />
                       <input type="hidden" name="imageUrl" value={album.imageUrl ?? ""} />
                       <input type="hidden" name="artistNames" value={JSON.stringify(album.artistNames)} />
-                      <Button size="sm" type="submit" loading={addFetcher.state !== "idle"}>Add</Button>
+                      <Button size="sm" type="submit" loading={addFetcher.state !== "idle"} w="full">Add</Button>
                     </addFetcher.Form>
                     <chakra.a href={`spotify:album:${album.spotifyId}`}>
-                      <Button size="sm" variant="outline">Open</Button>
+                      <Button size="sm" variant="outline" w="full">Open</Button>
                     </chakra.a>
-                  </HStack>
+                  </Stack>
                 </Box>
               ))}
             </SimpleGrid>
@@ -349,9 +356,11 @@ export default function DiscoverRoute() {
             <Text color="app.muted">No recommendations yet. Add more artists/albums to collections to improve this.</Text>
           )}
         </Box>
+        ) : null}
 
+        {activeSection === "artists" ? (
         <Box>
-          <Heading as="h2" size="md" mb={3}>11. One-Degree-Away Explorer</Heading>
+          <Heading as="h2" size="md" mb={3}>One-Degree-Away Explorer</Heading>
           <Text color="app.muted" mb={4}>Your seed artists and closely related artists you do not currently have saved.</Text>
           <Stack gap={3}>
             {relatedBySeed.map((entry) => (
@@ -368,6 +377,7 @@ export default function DiscoverRoute() {
             ))}
           </Stack>
         </Box>
+        ) : null}
       </Stack>
 
       <HStack mt={8}>
