@@ -14,36 +14,45 @@ export default function AlbumCard({
   const spotifyAppUrl = `spotify:album:${album.spotifyId}`;
 
   return (
-    <Box borderWidth="1px" borderColor="app.border" borderRadius="xl" overflow="hidden" bg="app.card" boxShadow="sm">
-      <ChakraLink asChild display="block">
+    <Box
+      borderWidth="1px"
+      borderColor="app.border"
+      borderRadius="xl"
+      overflow="hidden"
+      bg="app.card"
+      boxShadow="sm"
+      display={{ base: "grid", sm: "block" }}
+      gridTemplateColumns={{ base: "116px minmax(0, 1fr)", sm: "1fr" }}
+    >
+      <ChakraLink asChild display="block" minW={0}>
         <Link prefetch="intent" to={`/albums/${album.id}`} viewTransition>
         {album.imageUrl ? (
-          <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" h={{ base: "180px", md: "200px" }} />
+          <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" width="100%" h={{ base: "100%", sm: "180px", md: "200px" }} minH={{ base: "116px", sm: "auto" }} />
         ) : (
-          <Box h={{ base: "180px", md: "200px" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">
+          <Box h={{ base: "100%", sm: "180px", md: "200px" }} minH={{ base: "116px", sm: "auto" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">
             <Text color="app.muted">No Art</Text>
           </Box>
         )}
         </Link>
       </ChakraLink>
 
-      <Box p={{ base: 3, md: 3 }}>
+      <Box p={{ base: 3, md: 3 }} minW={0}>
         <ChakraLink asChild _hover={{ textDecoration: "none" }}>
           <Link prefetch="intent" to={`/albums/${album.id}`} viewTransition>
-          <Heading as="h3" size="sm" mb={2} lineHeight="1.35">{album.name}</Heading>
+          <Heading as="h3" size="sm" mb={2} lineHeight="1.35" lineClamp={2}>{album.name}</Heading>
           </Link>
         </ChakraLink>
-        <Text fontSize="sm" color="app.muted" mb={4} lineHeight="1.5">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+        <Text fontSize="sm" color="app.muted" mb={{ base: 3, sm: 4 }} lineHeight="1.5" lineClamp={2}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
 
-        <Stack gap={2} align="stretch" direction={{ base: "column", sm: "row" }} mb={2}>
+        <Stack gap={2} align="stretch" direction={{ base: "column", md: "row" }} mb={2}>
           <ChakraLink href={spotifyAppUrl} display="inline-block">
-            <Button size={{ base: "md", md: "sm" }} variant="solid" w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
+            <Button size={{ base: "sm", md: "sm" }} variant="outline" w={{ base: "full", md: "auto" }}>Spotify</Button>
           </ChakraLink>
         </Stack>
 
         {canAddToCollection ? (
-          <Button size={{ base: "md", md: "sm" }} colorScheme="teal" w="full" onClick={() => onAddToCollection(album)}>
-            Add to Collection
+          <Button size={{ base: "sm", md: "sm" }} colorScheme="teal" w="full" onClick={() => onAddToCollection(album)}>
+            Add
           </Button>
         ) : null}
       </Box>

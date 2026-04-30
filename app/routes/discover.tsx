@@ -228,10 +228,10 @@ export default function DiscoverRoute() {
       <Stack gap={8}>
         {activeSection === "rediscover" ? (
         <Box>
-          <HStack justify="space-between" mb={3} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }}>
+          <Stack direction={{ base: "column", md: "row" }} justify="space-between" mb={3} align={{ base: "stretch", md: "center" }}>
             <Heading as="h2" size="md">Rediscovery Queue</Heading>
             <Text color="app.muted" fontSize="sm">{rediscoveryQueue.length} candidates</Text>
-          </HStack>
+          </Stack>
           <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
             {rediscoveryQueue.slice(0, 8).map((album) => (
               <Box key={album.spotifyId} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" overflow="hidden">
@@ -321,12 +321,12 @@ export default function DiscoverRoute() {
 
         {activeSection === "collection" ? (
         <Box>
-          <HStack justify="space-between" mb={3} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }}>
+          <Stack direction={{ base: "column", md: "row" }} justify="space-between" mb={3} align={{ base: "stretch", md: "center" }}>
             <Heading as="h2" size="md">Similar-To-Collection Discovery</Heading>
             <Text fontSize="sm" color="app.muted">
               Based on {collections.find((collection) => collection.id === activeTargetCollectionId)?.name ?? "your active collection"}
             </Text>
-          </HStack>
+          </Stack>
           {collectionRecommendations.length > 0 ? (
             <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} gap={4}>
               {collectionRecommendations.slice(0, 8).map((album) => (

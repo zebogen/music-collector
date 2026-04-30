@@ -70,7 +70,7 @@ export default function Topbar({
       gap={3}
       flexWrap="nowrap"
       px={{ base: 3, md: 5 }}
-      py={{ base: 3, md: 3 }}
+      py={{ base: 2, md: 3 }}
       bg="app.panelSolid"
       borderBottomWidth="1px"
       borderColor="app.border"
@@ -93,7 +93,7 @@ export default function Topbar({
             >
               MC
             </Box>
-            <Text fontSize="sm" fontWeight="semibold">Music Collector</Text>
+            <Text fontSize="sm" fontWeight="semibold" lineHeight="1.2">Music Collector</Text>
           </Flex>
         </Link>
         <Text display={{ base: "none", md: "block" }} fontSize="xs" color="app.muted" mt={1}>
@@ -110,26 +110,6 @@ export default function Topbar({
           </Link>
           <Link to="/discover" prefetch="intent" viewTransition>
             <Button size="sm" minH="40px" px={3} variant={onDiscover ? "solid" : "ghost"}>
-              Discover
-            </Button>
-          </Link>
-        </HStack>
-      ) : null}
-
-      {user ? (
-        <HStack display={{ base: "flex", md: "none" }} gap={2} wrap="wrap">
-          <Link to="/" prefetch="intent" viewTransition>
-            <Button size="sm" minH="38px" px={3} variant={onHome ? "solid" : "ghost"}>
-              Home
-            </Button>
-          </Link>
-          <Link to={libraryHref} prefetch="intent" viewTransition>
-            <Button size="sm" minH="38px" px={3} variant={onCollections ? "solid" : "ghost"}>
-              Library
-            </Button>
-          </Link>
-          <Link to="/discover" prefetch="intent" viewTransition>
-            <Button size="sm" minH="38px" px={3} variant={onDiscover ? "solid" : "ghost"}>
               Discover
             </Button>
           </Link>
@@ -211,6 +191,41 @@ export default function Topbar({
           </Flex>
         )}
       </Box>
+
+      {user ? (
+        <HStack
+          as="nav"
+          display={{ base: "flex", md: "none" }}
+          position="fixed"
+          left={3}
+          right={3}
+          bottom="calc(env(safe-area-inset-bottom) + 10px)"
+          zIndex={1000}
+          gap={2}
+          p={2}
+          bg="app.panelSolid"
+          borderWidth="1px"
+          borderColor="app.border"
+          borderRadius="2xl"
+          boxShadow="md"
+        >
+          <Link to="/" prefetch="intent" viewTransition style={{ flex: 1 }}>
+            <Button size="sm" minH="44px" px={3} w="full" variant={onHome ? "solid" : "ghost"}>
+              Home
+            </Button>
+          </Link>
+          <Link to={libraryHref} prefetch="intent" viewTransition style={{ flex: 1 }}>
+            <Button size="sm" minH="44px" px={3} w="full" variant={onCollections ? "solid" : "ghost"}>
+              Library
+            </Button>
+          </Link>
+          <Link to="/discover" prefetch="intent" viewTransition style={{ flex: 1 }}>
+            <Button size="sm" minH="44px" px={3} w="full" variant={onDiscover ? "solid" : "ghost"}>
+              Discover
+            </Button>
+          </Link>
+        </HStack>
+      ) : null}
     </Flex>
   );
 }

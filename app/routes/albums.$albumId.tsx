@@ -44,29 +44,29 @@ export default function AlbumDetailRoute() {
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
       <Link to="/collections?tab=albums" prefetch="intent" viewTransition>Back to Albums</Link>
 
-      <HStack mt={3} mb={4} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
+      <Stack mt={3} mb={4} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
         {spotifyAlbum.images?.[0]?.url ? (
-          <Image src={spotifyAlbum.images[0].url} alt={`${spotifyAlbum.name} cover`} boxSize={{ base: "180px", md: "220px" }} borderRadius="lg" objectFit="cover" />
+          <Image src={spotifyAlbum.images[0].url} alt={`${spotifyAlbum.name} cover`} boxSize={{ base: "min(100%, 220px)", md: "220px" }} borderRadius="lg" objectFit="cover" alignSelf={{ base: "flex-start", md: "center" }} />
         ) : null}
-        <Box>
-          <Heading as="h1" size="lg">{spotifyAlbum.name}</Heading>
+        <Box minW={0}>
+          <Heading as="h1" size={{ base: "md", md: "lg" }} lineHeight="1.2">{spotifyAlbum.name}</Heading>
           <Text color="app.muted">{(spotifyAlbum.artists ?? []).map((artist: any) => artist.name).join(", ") || "Unknown artist"}</Text>
           <Text color="app.muted">
-            {spotifyAlbum.release_date || "Unknown date"} • {spotifyAlbum.total_tracks ?? 0} tracks • Popularity {spotifyAlbum.popularity ?? "n/a"}
+            {spotifyAlbum.release_date || "Unknown date"} / {spotifyAlbum.total_tracks ?? 0} tracks / Popularity {spotifyAlbum.popularity ?? "n/a"}
           </Text>
           <Text color="app.muted">Label: {spotifyAlbum.label || "Unknown label"}</Text>
-          <HStack mt={2}>
+          <Stack mt={3} direction={{ base: "column", sm: "row" }} align="stretch">
             <a href={`spotify:album:${spotifyAlbum.id}`}>
-              <Button size="sm">Open in Spotify App</Button>
+              <Button size={{ base: "md", md: "sm" }} w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
             </a>
             {spotifyAlbum.external_urls?.spotify ? (
               <a href={spotifyAlbum.external_urls.spotify} target="_blank" rel="noreferrer">
-                <Button size="sm" variant="outline">Open on Spotify Web</Button>
+                <Button size={{ base: "md", md: "sm" }} w={{ base: "full", sm: "auto" }} variant="outline">Open on Spotify Web</Button>
               </a>
             ) : null}
-          </HStack>
+          </Stack>
         </Box>
-      </HStack>
+      </Stack>
 
       <Heading as="h2" size="md" mb={3}>Tracks</Heading>
       <Stack gap={2} mb={6}>

@@ -1,4 +1,4 @@
-import { Heading, HStack, SimpleGrid, Text } from "@chakra-ui/react";
+import { Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import type { Album, Collection } from "~/types";
 import AlbumCard from "~/components/AlbumCard";
 import PaginationControls from "~/components/PaginationControls";
@@ -35,10 +35,10 @@ export default function AlbumsTab({
 }) {
   return (
     <>
-      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 5 }} gap={1}>
+      <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} mb={{ base: 5, md: 5 }} gap={1}>
         <Heading as="h2" size="md">Saved Albums</Heading>
         <Text color="app.muted">{totalItems} total</Text>
-      </HStack>
+      </Stack>
 
       {albums.length > 0 ? (
         <>

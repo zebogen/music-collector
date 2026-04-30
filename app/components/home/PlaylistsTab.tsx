@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Box, Heading, HStack, Stack, Text } from "@chakra-ui/react";
+import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import type { Playlist } from "~/types";
 import PaginationControls from "~/components/PaginationControls";
 import EmptyState from "~/components/EmptyState";
@@ -29,10 +29,10 @@ export default function PlaylistsTab({
 }) {
   return (
     <>
-      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 5 }} gap={1}>
+      <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} mb={{ base: 5, md: 5 }} gap={1}>
         <Heading as="h2" size="md">Playlists</Heading>
         <Text color="app.muted">{totalItems} total</Text>
-      </HStack>
+      </Stack>
 
       {hasPlaylists ? (
         <>

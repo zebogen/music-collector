@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
-import { Link, useActionData, useFetchers, useLoaderData, useLocation, useNavigate, useNavigation } from "react-router";
+import { Link, Outlet, useActionData, useFetchers, useLoaderData, useLocation, useNavigate, useNavigation, useParams } from "react-router";
 import { AnimatePresence } from "framer-motion";
 import {
   Box,
@@ -10,6 +10,7 @@ import {
   Button,
   HStack,
   Link as ChakraLink,
+  SimpleGrid,
   Stack,
   Spinner
 } from "@chakra-ui/react";
@@ -44,7 +45,7 @@ import ArtistsTab from "~/components/home/ArtistsTab";
 import PlaylistsTab from "~/components/home/PlaylistsTab";
 import CollectionsTab from "~/components/home/CollectionsTab";
 import { AnimatedView } from "~/components/Animated";
-import { buildHomeHref, parseId, parsePage, parseTab, type TabKey } from "./index-helpers";
+import { buildHomeHref, parseId, parsePage, parseTab, TABS, type TabKey } from "./index-helpers";
 import { getOptionalDescription, getPositiveNumber, getRequiredName } from "./index-action-helpers";
 
 const PAGE_SIZE = 20;
@@ -300,6 +301,7 @@ export default function CollectionsRoute() {
   const navigate = useNavigate();
   const location = useLocation();
   const navigation = useNavigation();
+  const params = useParams();
   const [addTarget, setAddTarget] = useState<
     | { kind: "album"; album: Album }
     | { kind: "artist"; artistId: number; artistName: string }
@@ -379,6 +381,10 @@ export default function CollectionsRoute() {
     );
   }
 
+  if (params.collectionId) {
+    return <Outlet />;
+  }
+
   const pageData = libraryData;
   const safeCollections = collections.filter((collection): collection is NonNullable<typeof collection> => Boolean(collection));
   const pendingIntent = navigation.formData?.get("intent");
@@ -405,6 +411,10 @@ export default function CollectionsRoute() {
   const selectedAlbumCollectionLinks: AlbumCollectionLink[] = selectedAlbum ? selectedAlbumCollections : [];
   const currentHref = useMemo(() => buildHref(), [location.search]);
   const hasActiveFilters = Boolean(filters.genre || filters.artist);
+  const activeFilterLabels = [
+    filters.genre ? `Genre: ${filters.genre}` : null,
+    filters.artist ? `Artist: ${filters.artist}` : null,
+  ].filter((label): label is string => Boolean(label));
   const clearFiltersHref = useMemo(
     () =>
       buildHref({
@@ -528,15 +538,42 @@ export default function CollectionsRoute() {
           </Box>
         ) : null}
         <Box mt={0}>
-          <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 4, md: 5 }} gap={1}>
+          <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} mb={{ base: 4, md: 5 }} gap={3}>
             <Box>
               <Heading as="h1" size="lg">Library</Heading>
-              <Text color="app.muted">Browse collections, albums, artists, and playlists with mobile controls up front.</Text>
+              <Text color="app.muted">Browse collections, albums, artists, and playlists.</Text>
             </Box>
             <Text fontSize="sm" color="app.muted" textTransform="capitalize">
               Viewing {filters.tab}
             </Text>
+          </Stack>
+
+          <HStack display={{ base: "flex", md: "none" }} gap={2} overflowX="auto" pb={2} mb={hasActiveFilters ? 2 : 4}>
+            {TABS.map((tab) => (
+              <ChakraLink key={tab} asChild flexShrink={0}>
+                <Link to={buildHref({ tab })} prefetch="intent" viewTransition>
+                  <Button size="sm" minH="40px" variant={filters.tab === tab ? "solid" : "outline"} textTransform="capitalize">
+                    {tab}
+                  </Button>
+                </Link>
+              </ChakraLink>
+            ))}
           </HStack>
+
+          {activeFilterLabels.length > 0 ? (
+            <HStack gap={2} wrap="wrap" mb={{ base: 4, md: 5 }}>
+              {activeFilterLabels.map((label) => (
+                <Box key={label} px={3} py={1.5} borderRadius="full" bg="app.accentSoft" color="app.text" fontSize="sm" fontWeight="semibold">
+                  {label}
+                </Box>
+              ))}
+              <ChakraLink asChild>
+                <Link to={clearFiltersHref} prefetch="intent" viewTransition>
+                  <Button size="xs" variant="outline">Clear</Button>
+                </Link>
+              </ChakraLink>
+            </HStack>
+          ) : null}
 
           {actionData && "error" in actionData && actionData.error ? (
             <Box mb={{ base: 5, md: 6 }} borderRadius="xl" bg="app.panel" borderWidth="1px" borderColor="app.danger" px={{ base: 4, md: 5 }} py={{ base: 4, md: 4 }}>
@@ -617,14 +654,14 @@ export default function CollectionsRoute() {
             zIndex={50}
           >
             <Box bg="app.panelSolid" borderWidth="1px" borderColor="app.border" borderRadius="2xl" maxW="xl" width="full" p={{ base: 4, md: 6 }} boxShadow="lg" mx={4}>
-              <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={3}>
+              <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} mb={3}>
                 <Heading as="h3" size="md">{selectedAlbum.name}</Heading>
                 <ChakraLink asChild>
                   <Link prefetch="intent" to={buildHref({ selectedAlbumId: null })} replace viewTransition>
                     <Button size="sm" variant="outline">Close</Button>
                   </Link>
                 </ChakraLink>
-              </HStack>
+              </Stack>
 
               <Text mb={2}>Artists: {selectedAlbum.artistNames.join(", ") || "Unknown artist"}</Text>
               <Text mb={2}>Release date: {selectedAlbum.releaseDate || "Unknown"}</Text>

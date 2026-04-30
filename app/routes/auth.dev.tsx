@@ -79,7 +79,7 @@ export default function DevAuthRoute() {
                         <Box>
                           <Text fontWeight="semibold">{user.displayName ?? "Unnamed Spotify User"}</Text>
                           <Text fontSize="sm" color="app.muted">
-                            Spotify ID: {user.spotifyUserId} · Local user #{user.id}
+                            Spotify ID: {user.spotifyUserId} / Local user #{user.id}
                           </Text>
                         </Box>
                         <Button type="submit" colorScheme="green" loading={isSubmitting} loadingText="Signing in..." w={{ base: "full", sm: "auto" }}>

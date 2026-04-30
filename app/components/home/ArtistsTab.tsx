@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Box, Button, Heading, HStack, Link as ChakraLink, Stack, Text } from "@chakra-ui/react";
+import { Box, Button, Heading, Link as ChakraLink, Stack, Text } from "@chakra-ui/react";
 import type { Artist, Collection } from "~/types";
 import PaginationControls from "~/components/PaginationControls";
 import EmptyState from "~/components/EmptyState";
@@ -35,20 +35,20 @@ export default function ArtistsTab({
 }) {
   return (
     <>
-      <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} mb={{ base: 5, md: 5 }} gap={1}>
+      <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} mb={{ base: 5, md: 5 }} gap={1}>
         <Heading as="h2" size="md">Artists</Heading>
         <Text color="app.muted">{totalItems} total</Text>
-      </HStack>
+      </Stack>
 
       {artists.length > 0 ? (
         <>
           <Stack gap={4} mb={5}>
             {artists.map((artist, index) => (
               <AnimatedItem key={artist.id} index={index}>
-                <HStack
+                <Stack
+                  direction={{ base: "column", md: "row" }}
                   justify="space-between"
                   align={{ base: "stretch", md: "center" }}
-                  direction={{ base: "column", md: "row" }}
                   p={{ base: 4, md: 3 }}
                   bg="app.card"
                   borderWidth="1px"
@@ -68,7 +68,7 @@ export default function ArtistsTab({
                       Add to Collection
                     </Button>
                   ) : null}
-                </HStack>
+                </Stack>
               </AnimatedItem>
             ))}
           </Stack>
