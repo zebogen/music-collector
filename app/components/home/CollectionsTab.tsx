@@ -45,7 +45,7 @@ export default function CollectionsTab({
                     {collection.description || "No description"}
                   </Text>
                   <Text fontSize="sm" color="app.muted">
-                    {collection.albumsCount} albums • {collection.artistsCount} artists
+                    {collection.albumsCount} albums / {collection.artistsCount} artists
                   </Text>
                 </Box>
               </Box>

@@ -63,7 +63,7 @@ export default function PlaylistDetailRoute() {
             <Box minW={0} flex="1">
               <Text fontWeight="semibold" lineClamp={1}>{track.name}</Text>
               <Text fontSize="sm" color="app.muted" lineClamp={1}>
-                {track.artists.join(", ") || "Unknown artist"} • {track.albumName}
+                {track.artists.join(", ") || "Unknown artist"} / {track.albumName}
               </Text>
             </Box>
             <Text fontSize="sm" color="app.muted">{formatDuration(track.durationMs)}</Text>

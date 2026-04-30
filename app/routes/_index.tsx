@@ -297,7 +297,7 @@ export default function HomeRoute() {
                     </Heading>
                     <Text color="app.muted">
                       {randomAlbum
-                        ? `${randomAlbum.artistNames.join(", ") || "Unknown artist"}${randomAlbum.releaseDate ? ` • ${randomAlbum.releaseDate}` : ""}`
+                        ? `${randomAlbum.artistNames.join(", ") || "Unknown artist"}${randomAlbum.releaseDate ? ` / ${randomAlbum.releaseDate}` : ""}`
                         : "Sync a few saved albums in Spotify to start shuffling through your library."}
                     </Text>
                   </Box>
@@ -347,7 +347,7 @@ export default function HomeRoute() {
                   Discover
                 </Text>
                 <Heading as="h2" size="lg" mb={2}>
-                  Try something adjacent to what you already love. [doesn't work]
+                  Try something adjacent to what you already love.
                 </Heading>
               </Box>
 

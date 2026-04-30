@@ -14,6 +14,9 @@ const theme = {
           "radial-gradient(circle at top left, rgba(29, 185, 84, 0.16), transparent 36%), linear-gradient(180deg, var(--chakra-colors-app-bg) 0%, var(--chakra-colors-app-bg-subtle) 100%)",
       },
     },
+    main: {
+      paddingBottom: { base: "calc(84px + env(safe-area-inset-bottom))", md: "0" },
+    },
     "*": {
       boxSizing: "border-box",
     },

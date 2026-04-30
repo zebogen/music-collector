@@ -44,28 +44,28 @@ export default function ArtistDetailRoute() {
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
       <Link to="/collections?tab=artists" prefetch="intent" viewTransition>Back to Artists</Link>
 
-      <HStack mt={3} mb={4} align={{ base: "flex-start", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
+      <Stack mt={3} mb={4} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }} gap={4}>
         {spotifyArtist.images?.[0]?.url ? (
           <Image src={spotifyArtist.images[0].url} alt={`${spotifyArtist.name} photo`} boxSize={{ base: "96px", md: "120px" }} borderRadius="full" objectFit="cover" />
         ) : null}
-        <Box>
-          <Heading as="h1" size="lg">{spotifyArtist.name}</Heading>
+        <Box minW={0}>
+          <Heading as="h1" size={{ base: "md", md: "lg" }}>{spotifyArtist.name}</Heading>
           <Text color="app.muted">
-            {spotifyArtist.followers?.total?.toLocaleString?.() ?? "0"} followers • Popularity {spotifyArtist.popularity ?? "n/a"}
+            {spotifyArtist.followers?.total?.toLocaleString?.() ?? "0"} followers / Popularity {spotifyArtist.popularity ?? "n/a"}
           </Text>
           <Text color="app.muted">{(spotifyArtist.genres ?? []).join(", ") || "No genres"}</Text>
-          <HStack mt={2}>
+          <Stack mt={3} direction={{ base: "column", sm: "row" }} align="stretch">
             <a href={`spotify:artist:${spotifyArtist.id}`}>
-              <Button size="sm">Open in Spotify App</Button>
+              <Button size={{ base: "md", md: "sm" }} w={{ base: "full", sm: "auto" }}>Open in Spotify App</Button>
             </a>
             {spotifyArtist.external_urls?.spotify ? (
               <a href={spotifyArtist.external_urls.spotify} target="_blank" rel="noreferrer">
-                <Button size="sm" variant="outline">Open on Spotify Web</Button>
+                <Button size={{ base: "md", md: "sm" }} w={{ base: "full", sm: "auto" }} variant="outline">Open on Spotify Web</Button>
               </a>
             ) : null}
-          </HStack>
+          </Stack>
         </Box>
-      </HStack>
+      </Stack>
 
       <Heading as="h2" size="md" mb={3}>Albums and Releases</Heading>
       <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 4 }} gap={4} mb={5}>
@@ -78,7 +78,7 @@ export default function ArtistDetailRoute() {
             )}
             <Box p={3}>
               <Text fontWeight="semibold" lineClamp={1}>{album.name}</Text>
-              <Text fontSize="sm" color="app.muted">{album.album_type} • {album.release_date || "Unknown date"}</Text>
+              <Text fontSize="sm" color="app.muted">{album.album_type} / {album.release_date || "Unknown date"}</Text>
               <HStack mt={2}>
                 <a href={`spotify:album:${album.id}`}>
                   <Button size="xs">Play</Button>

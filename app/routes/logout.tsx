@@ -9,7 +9,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const location = response.headers.get("Location");
   const redirectTarget = isDevAuthSub(auth.auth0Sub)
     ? (location ?? "/")
-    : (location === "/" ? getAuth0LogoutUrl() : location ?? getAuth0LogoutUrl());
+    : (location === "/" ? getAuth0LogoutUrl(request) : location ?? getAuth0LogoutUrl(request));
 
   return new Response(null, {
     status: 302,

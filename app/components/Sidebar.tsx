@@ -51,7 +51,7 @@ export default function Sidebar({
   const [presets, setPresets] = useState<FilterPreset[]>([]);
   const [presetsReady, setPresetsReady] = useState(false);
   const [mobileSections, setMobileSections] = useState({
-    filters: true,
+    filters: false,
     presets: false,
     create: false
   });

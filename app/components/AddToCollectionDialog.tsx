@@ -69,7 +69,7 @@ export default function AddToCollectionDialog({
     >
       <DialogBackdrop />
       <DialogPositioner>
-        <DialogContent mx={4} bg="app.panelSolid" borderWidth="1px" borderColor="app.border" borderRadius="2xl">
+        <DialogContent mx={4} bg="app.panelSolid" borderWidth="1px" borderColor="app.border" borderRadius="2xl" maxH="calc(100dvh - 2rem)" overflow="hidden">
           <DialogHeader>
             <DialogTitle>Add to Collection</DialogTitle>
           </DialogHeader>
@@ -122,7 +122,16 @@ export default function AddToCollectionDialog({
                         <option key={collection.id} value={collection.id}>{collection.name}</option>
                       ))}
                     </chakra.select>
-                    <DialogFooter px={0}>
+                    <DialogFooter
+                      px={0}
+                      pt={3}
+                      position="sticky"
+                      bottom={0}
+                      bg="app.panelSolid"
+                      display="flex"
+                      flexDirection={{ base: "column-reverse", sm: "row" }}
+                      gap={2}
+                    >
                       <Button w={{ base: "full", sm: "auto" }} size={{ base: "md", md: "sm" }} variant="outline" onClick={onClose}>Cancel</Button>
                       <Button w={{ base: "full", sm: "auto" }} size={{ base: "md", md: "sm" }} type="submit" colorScheme="teal" loading={isSubmitting} loadingText="Adding...">
                         Add

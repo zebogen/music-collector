@@ -155,7 +155,7 @@ export default function CollectionDetailRoute() {
       <Heading as="h1" size="lg" mt={3}>{collection.name}</Heading>
       <Text color="app.muted" mb={5}>{collection.description || "No description"}</Text>
 
-      <HStack justify="space-between" mb={4} align={{ base: "stretch", md: "center" }} direction={{ base: "column", md: "row" }}>
+      <Stack direction={{ base: "column", md: "row" }} justify="space-between" mb={4} align={{ base: "stretch", md: "center" }}>
         <Text color="app.muted">
           {selectedAlbumIds.length + selectedArtistIds.length} selected
         </Text>
@@ -169,7 +169,7 @@ export default function CollectionDetailRoute() {
         >
           Remove Selected
         </Button>
-      </HStack>
+      </Stack>
 
       <Heading as="h2" size="md" mb={3}>Albums</Heading>
       <HStack mb={3}>
