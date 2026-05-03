@@ -381,10 +381,6 @@ export default function CollectionsRoute() {
     );
   }
 
-  if (params.collectionId) {
-    return <Outlet />;
-  }
-
   const pageData = libraryData;
   const safeCollections = collections.filter((collection): collection is NonNullable<typeof collection> => Boolean(collection));
   const pendingIntent = navigation.formData?.get("intent");
@@ -473,10 +469,15 @@ export default function CollectionsRoute() {
     return () => window.clearTimeout(timeout);
   }, [clientToast]);
 
+  if (params.collectionId) {
+    return <Outlet />;
+  }
+
   return (
     <Grid templateColumns={{ base: "1fr", lg: "320px minmax(0, 1fr)" }} gap={0} minH={{ base: "auto", lg: "calc(100vh - 84px)" }}>
       <Box
         as="aside"
+        display={{ base: "none", lg: "block" }}
         order={{ base: 1, lg: 1 }}
         borderRightWidth={{ base: "0", lg: "1px" }}
         borderBottomWidth={{ base: "1px", lg: "0" }}
@@ -496,6 +497,7 @@ export default function CollectionsRoute() {
           isDeletingCollection={isDeletingCollection}
           selectedCollection={null}
           buildHref={buildHref}
+          placement="sidebar"
         />
       </Box>
 
@@ -559,6 +561,22 @@ export default function CollectionsRoute() {
               </ChakraLink>
             ))}
           </HStack>
+
+          <Box display={{ base: "block", lg: "none" }} mb={{ base: 4, md: 5 }}>
+            <Sidebar
+              filters={filters}
+              genres={libraryData.genres}
+              selectedCollectionId={filters.selectedCollectionId}
+              actionError={actionData && "error" in actionData ? actionData.error : null}
+              isFiltering={isFiltering}
+              isCreatingCollection={isCreatingCollection}
+              isSavingCollection={isSavingCollection}
+              isDeletingCollection={isDeletingCollection}
+              selectedCollection={null}
+              buildHref={buildHref}
+              placement="inline"
+            />
+          </Box>
 
           {activeFilterLabels.length > 0 ? (
             <HStack gap={2} wrap="wrap" mb={{ base: 4, md: 5 }}>

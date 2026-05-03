@@ -71,8 +71,6 @@ export default function CollectionDetailRoute() {
   const { collection } = useLoaderData<typeof loader>();
   const mutationFetcher = useFetcher<{ ok?: boolean; error?: string; removedAlbumIds?: number[]; removedArtistIds?: number[] }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedAlbumIds, setSelectedAlbumIds] = useState<number[]>([]);
-  const [selectedArtistIds, setSelectedArtistIds] = useState<number[]>([]);
   const [optimisticRemovedAlbumIds, setOptimisticRemovedAlbumIds] = useState<number[]>([]);
   const [optimisticRemovedArtistIds, setOptimisticRemovedArtistIds] = useState<number[]>([]);
   const albumSort = searchParams.get("albumSort") ?? "name-asc";
@@ -113,14 +111,6 @@ export default function CollectionDetailRoute() {
     setSearchParams(next);
   }
 
-  function toggleAlbumSelection(albumId: number) {
-    setSelectedAlbumIds((prev) => (prev.includes(albumId) ? prev.filter((id) => id !== albumId) : [...prev, albumId]));
-  }
-
-  function toggleArtistSelection(artistId: number) {
-    setSelectedArtistIds((prev) => (prev.includes(artistId) ? prev.filter((id) => id !== artistId) : [...prev, artistId]));
-  }
-
   function removeOneAlbum(albumId: number) {
     setOptimisticRemovedAlbumIds((prev) => (prev.includes(albumId) ? prev : [...prev, albumId]));
     mutationFetcher.submit({ intent: "remove_album", albumId: String(albumId) }, { method: "post" });
@@ -130,26 +120,6 @@ export default function CollectionDetailRoute() {
     setOptimisticRemovedArtistIds((prev) => (prev.includes(artistId) ? prev : [...prev, artistId]));
     mutationFetcher.submit({ intent: "remove_artist", artistId: String(artistId) }, { method: "post" });
   }
-
-  function removeSelected() {
-    if (selectedAlbumIds.length === 0 && selectedArtistIds.length === 0) {
-      return;
-    }
-    setOptimisticRemovedAlbumIds((prev) => [...new Set([...prev, ...selectedAlbumIds])]);
-    setOptimisticRemovedArtistIds((prev) => [...new Set([...prev, ...selectedArtistIds])]);
-    mutationFetcher.submit(
-      {
-        intent: "bulk_remove",
-        albumIds: JSON.stringify(selectedAlbumIds),
-        artistIds: JSON.stringify(selectedArtistIds)
-      },
-      { method: "post" }
-    );
-    setSelectedAlbumIds([]);
-    setSelectedArtistIds([]);
-  }
-
-  const selectedCount = selectedAlbumIds.length + selectedArtistIds.length;
 
   return (
     <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }} maxW="7xl" mx="auto">
@@ -163,16 +133,6 @@ export default function CollectionDetailRoute() {
             {albums.length} albums / {artists.length} artists
           </Text>
         </Box>
-        <Button
-          size={{ base: "md", md: "sm" }}
-          colorScheme="red"
-          variant="outline"
-          onClick={removeSelected}
-          loading={mutationFetcher.state !== "idle"}
-          disabled={selectedCount === 0}
-        >
-          {selectedCount > 0 ? `Remove ${selectedCount} Selected` : "Select Items to Remove"}
-        </Button>
       </Stack>
 
       <Stack direction="row" justify="space-between" align="center" mb={3}>
@@ -192,7 +152,7 @@ export default function CollectionDetailRoute() {
             <Box
               key={album.id}
               borderWidth="1px"
-              borderColor={selectedAlbumIds.includes(album.id) ? "app.accent" : "app.border"}
+              borderColor="app.border"
               borderRadius="lg"
               bg="app.card"
               overflow="hidden"
@@ -212,14 +172,7 @@ export default function CollectionDetailRoute() {
                 <Box h={{ base: "100%", md: "160px" }} minH={{ base: "108px", md: "auto" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">Album</Box>
               )}
               <Box p={{ base: 3, md: 3 }} minW={0}>
-                <HStack justify="space-between" mb={2}>
-                  <chakra.input
-                    type="checkbox"
-                    checked={selectedAlbumIds.includes(album.id)}
-                    onChange={() => toggleAlbumSelection(album.id)}
-                    aria-label={`Select album ${album.name}`}
-                    style={{ width: "18px", height: "18px" }}
-                  />
+                <HStack justify="flex-end" mb={2}>
                   <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeOneAlbum(album.id)}>
                     Remove
                   </Button>
@@ -251,14 +204,8 @@ export default function CollectionDetailRoute() {
       {artists.length > 0 ? (
         <Stack gap={2}>
           {artists.map((artist) => (
-            <Box key={artist.id} borderWidth="1px" borderColor={selectedArtistIds.includes(artist.id) ? "app.accent" : "app.border"} borderRadius="lg" bg="app.card" p={3}>
-              <HStack justify="space-between" mb={2}>
-                <chakra.input
-                  type="checkbox"
-                  checked={selectedArtistIds.includes(artist.id)}
-                  onChange={() => toggleArtistSelection(artist.id)}
-                  aria-label={`Select artist ${artist.name}`}
-                />
+            <Box key={artist.id} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" p={3}>
+              <HStack justify="flex-end" mb={2}>
                 <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeOneArtist(artist.id)}>
                   Remove
                 </Button>
