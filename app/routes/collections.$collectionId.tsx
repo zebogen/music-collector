@@ -149,60 +149,83 @@ export default function CollectionDetailRoute() {
     setSelectedArtistIds([]);
   }
 
-  return (
-    <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }}>
-      <Link to="/collections?tab=collections" prefetch="intent" viewTransition>Back to Collections</Link>
-      <Heading as="h1" size="lg" mt={3}>{collection.name}</Heading>
-      <Text color="app.muted" mb={5}>{collection.description || "No description"}</Text>
+  const selectedCount = selectedAlbumIds.length + selectedArtistIds.length;
 
-      <Stack direction={{ base: "column", md: "row" }} justify="space-between" mb={4} align={{ base: "stretch", md: "center" }}>
-        <Text color="app.muted">
-          {selectedAlbumIds.length + selectedArtistIds.length} selected
-        </Text>
+  return (
+    <Box px={{ base: 3, md: 6, lg: 8 }} py={{ base: 4, md: 5 }} maxW="7xl" mx="auto">
+      <Link to="/collections?tab=collections" prefetch="intent" viewTransition>Back to Collections</Link>
+
+      <Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "end" }} gap={3} mt={3} mb={5}>
+        <Box minW={0}>
+          <Heading as="h1" size={{ base: "md", md: "lg" }}>{collection.name}</Heading>
+          <Text color="app.muted" mt={1}>{collection.description || "No description"}</Text>
+          <Text color="app.muted" fontSize="sm" mt={2}>
+            {albums.length} albums / {artists.length} artists
+          </Text>
+        </Box>
         <Button
           size={{ base: "md", md: "sm" }}
           colorScheme="red"
           variant="outline"
           onClick={removeSelected}
           loading={mutationFetcher.state !== "idle"}
-          disabled={selectedAlbumIds.length + selectedArtistIds.length === 0}
+          disabled={selectedCount === 0}
         >
-          Remove Selected
+          {selectedCount > 0 ? `Remove ${selectedCount} Selected` : "Select Items to Remove"}
         </Button>
       </Stack>
 
-      <Heading as="h2" size="md" mb={3}>Albums</Heading>
-      <HStack mb={3}>
-        <Text color="app.muted" fontSize="sm">Sort</Text>
-        <chakra.select value={albumSort} onChange={(event) => updateSort("albumSort", event.currentTarget.value)} style={{ maxWidth: "220px" }}>
-          <option value="name-asc">Name (A-Z)</option>
-          <option value="name-desc">Name (Z-A)</option>
-          <option value="release-desc">Newest release</option>
-        </chakra.select>
-      </HStack>
+      <Stack direction="row" justify="space-between" align="center" mb={3}>
+        <Heading as="h2" size="md">Albums</Heading>
+        <HStack gap={2}>
+          <Text color="app.muted" fontSize="sm">Sort</Text>
+          <chakra.select value={albumSort} onChange={(event) => updateSort("albumSort", event.currentTarget.value)} style={{ maxWidth: "160px" }}>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="release-desc">Newest</option>
+          </chakra.select>
+        </HStack>
+      </Stack>
       {albums.length > 0 ? (
-        <SimpleGrid columns={{ base: 1, sm: 2, lg: 3, xl: 4 }} gap={4} mb={6}>
+        <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={{ base: 3, md: 4 }} mb={6}>
           {albums.map((album) => (
-            <Box key={album.id} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" overflow="hidden">
+            <Box
+              key={album.id}
+              borderWidth="1px"
+              borderColor={selectedAlbumIds.includes(album.id) ? "app.accent" : "app.border"}
+              borderRadius="lg"
+              bg="app.card"
+              overflow="hidden"
+              display={{ base: "grid", md: "block" }}
+              gridTemplateColumns={{ base: "78px minmax(0, 1fr)", md: "1fr" }}
+            >
               {album.imageUrl ? (
-                <Image src={album.imageUrl} alt={`${album.name} cover`} objectFit="cover" w="100%" h="160px" />
+                <Image
+                  src={album.imageUrl}
+                  alt={`${album.name} cover`}
+                  objectFit="cover"
+                  w="100%"
+                  h={{ base: "100%", md: "160px" }}
+                  minH={{ base: "108px", md: "auto" }}
+                />
               ) : (
-                <Box h="160px" bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">Album</Box>
+                <Box h={{ base: "100%", md: "160px" }} minH={{ base: "108px", md: "auto" }} bg="app.cardAlt" display="flex" alignItems="center" justifyContent="center">Album</Box>
               )}
-              <Box p={3}>
+              <Box p={{ base: 3, md: 3 }} minW={0}>
                 <HStack justify="space-between" mb={2}>
                   <chakra.input
                     type="checkbox"
                     checked={selectedAlbumIds.includes(album.id)}
                     onChange={() => toggleAlbumSelection(album.id)}
                     aria-label={`Select album ${album.name}`}
+                    style={{ width: "18px", height: "18px" }}
                   />
                   <Button size="xs" variant="ghost" colorScheme="red" onClick={() => removeOneAlbum(album.id)}>
                     Remove
                   </Button>
                 </HStack>
-                <Text fontWeight="semibold">{album.name}</Text>
-                <Text fontSize="sm" color="app.muted">{album.artistNames.join(", ") || "Unknown artist"}</Text>
+                <Text fontWeight="semibold" lineClamp={2}>{album.name}</Text>
+                <Text fontSize="sm" color="app.muted" lineClamp={1}>{album.artistNames.join(", ") || "Unknown artist"}</Text>
                 <Link to={`/albums/${album.id}`} prefetch="intent" viewTransition>
                   <Button size="xs" mt={2} variant="outline">Details</Button>
                 </Link>
@@ -214,19 +237,21 @@ export default function CollectionDetailRoute() {
         <Text color="app.muted" mb={6}>No albums in this collection.</Text>
       )}
 
-      <Heading as="h2" size="md" mb={3}>Artists</Heading>
-      <HStack mb={3}>
-        <Text color="app.muted" fontSize="sm">Sort</Text>
-        <chakra.select value={artistSort} onChange={(event) => updateSort("artistSort", event.currentTarget.value)} style={{ maxWidth: "220px" }}>
-          <option value="name-asc">Name (A-Z)</option>
-          <option value="name-desc">Name (Z-A)</option>
-          <option value="genres-desc">Most genres</option>
-        </chakra.select>
-      </HStack>
+      <Stack direction="row" justify="space-between" align="center" mb={3}>
+        <Heading as="h2" size="md">Artists</Heading>
+        <HStack gap={2}>
+          <Text color="app.muted" fontSize="sm">Sort</Text>
+          <chakra.select value={artistSort} onChange={(event) => updateSort("artistSort", event.currentTarget.value)} style={{ maxWidth: "160px" }}>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="genres-desc">Most genres</option>
+          </chakra.select>
+        </HStack>
+      </Stack>
       {artists.length > 0 ? (
         <Stack gap={2}>
           {artists.map((artist) => (
-            <Box key={artist.id} borderWidth="1px" borderColor="app.border" borderRadius="lg" bg="app.card" p={3}>
+            <Box key={artist.id} borderWidth="1px" borderColor={selectedArtistIds.includes(artist.id) ? "app.accent" : "app.border"} borderRadius="lg" bg="app.card" p={3}>
               <HStack justify="space-between" mb={2}>
                 <chakra.input
                   type="checkbox"

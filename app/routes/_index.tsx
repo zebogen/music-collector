@@ -242,7 +242,7 @@ export default function HomeRoute() {
               colorScheme="teal"
               size={{ base: "md", md: "lg" }}
               alignSelf={{ base: "stretch", sm: "flex-start" }}
-              onClick={() => navigate(`/?pick=${Date.now()}`)}
+              onClick={() => navigate(`/?pick=${Date.now()}`, { preventScrollReset: true })}
             >
               Shuffle Pick
             </Button>

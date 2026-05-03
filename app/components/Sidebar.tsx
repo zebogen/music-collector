@@ -59,6 +59,7 @@ export default function Sidebar({
   const createError = createFetcher.data?.error ?? actionError;
   const updateError = updateFetcher.data?.error ?? actionError;
   const deleteError = deleteFetcher.data?.error ?? actionError;
+  const showLibraryFilters = filters.tab !== "collections";
 
   useEffect(() => {
     try {
@@ -125,6 +126,7 @@ export default function Sidebar({
 
   return (
     <Stack gap={{ base: 4, md: 5 }} h="100%" p={{ base: 3, md: 4 }}>
+      {showLibraryFilters ? (
       <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
         <Button
           display={{ base: "flex", lg: "none" }}
@@ -160,8 +162,9 @@ export default function Sidebar({
           </Form>
         </Box>
       </Box>
+      ) : null}
 
-      {presetsReady ? (
+      {presetsReady && showLibraryFilters ? (
         <Box pb={{ base: 3, md: 4 }} borderBottomWidth="1px" borderColor="app.border">
           <Button
             display={{ base: "flex", lg: "none" }}
